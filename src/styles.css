@@ -1,0 +1,211 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * CaseMap design system.
+ * Calm, institutional, trustworthy — closer to a credit union than a startup.
+ * Deep slate ink, warm off-white surfaces, one muted teal accent, amber for
+ * "needs your attention". Red is reserved for destructive actions only.
+ * All colors are oklch, all sizes support 16px minimum body and large tap targets.
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-attention: var(--attention);
+  --color-attention-foreground: var(--attention-foreground);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Arabic", "Noto Naskh Arabic", sans-serif;
+}
+
+:root {
+  --radius: 0.5rem;
+  /* Warm off-white surfaces */
+  --background: oklch(0.985 0.006 85);
+  --surface: oklch(0.985 0.006 85);
+  --surface-raised: oklch(0.995 0.004 85);
+  /* Deep slate ink */
+  --foreground: oklch(0.24 0.02 250);
+  --card: oklch(0.995 0.004 85);
+  --card-foreground: oklch(0.24 0.02 250);
+  --popover: oklch(0.995 0.004 85);
+  --popover-foreground: oklch(0.24 0.02 250);
+  /* Muted teal — the one accent */
+  --primary: oklch(0.5 0.07 195);
+  --primary-foreground: oklch(0.985 0.006 85);
+  --secondary: oklch(0.94 0.008 85);
+  --secondary-foreground: oklch(0.24 0.02 250);
+  --muted: oklch(0.945 0.006 85);
+  --muted-foreground: oklch(0.44 0.02 250);
+  --accent: oklch(0.93 0.02 195);
+  --accent-foreground: oklch(0.24 0.02 250);
+  /* Amber — "needs your attention" (never red) */
+  --attention: oklch(0.78 0.12 75);
+  --attention-foreground: oklch(0.28 0.06 60);
+  /* Red reserved for destructive actions only */
+  --destructive: oklch(0.55 0.19 27);
+  --destructive-foreground: oklch(0.985 0.006 85);
+  --border: oklch(0.9 0.01 85);
+  --input: oklch(0.9 0.01 85);
+  --ring: oklch(0.5 0.07 195);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.97 0.006 85);
+  --sidebar-foreground: oklch(0.24 0.02 250);
+  --sidebar-primary: oklch(0.5 0.07 195);
+  --sidebar-primary-foreground: oklch(0.985 0.006 85);
+  --sidebar-accent: oklch(0.94 0.008 85);
+  --sidebar-accent-foreground: oklch(0.24 0.02 250);
+  --sidebar-border: oklch(0.9 0.01 85);
+  --sidebar-ring: oklch(0.5 0.07 195);
+}
+
+.dark {
+  --background: oklch(0.2 0.015 250);
+  --surface: oklch(0.2 0.015 250);
+  --surface-raised: oklch(0.24 0.02 250);
+  --foreground: oklch(0.96 0.006 85);
+  --card: oklch(0.24 0.02 250);
+  --card-foreground: oklch(0.96 0.006 85);
+  --popover: oklch(0.24 0.02 250);
+  --popover-foreground: oklch(0.96 0.006 85);
+  --primary: oklch(0.7 0.08 195);
+  --primary-foreground: oklch(0.2 0.015 250);
+  --secondary: oklch(0.28 0.02 250);
+  --secondary-foreground: oklch(0.96 0.006 85);
+  --muted: oklch(0.28 0.02 250);
+  --muted-foreground: oklch(0.72 0.02 250);
+  --accent: oklch(0.32 0.03 195);
+  --accent-foreground: oklch(0.96 0.006 85);
+  --attention: oklch(0.72 0.12 75);
+  --attention-foreground: oklch(0.16 0.04 60);
+  --destructive: oklch(0.6 0.19 27);
+  --destructive-foreground: oklch(0.985 0.006 85);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.7 0.08 195);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.24 0.02 250);
+  --sidebar-foreground: oklch(0.96 0.006 85);
+  --sidebar-primary: oklch(0.7 0.08 195);
+  --sidebar-primary-foreground: oklch(0.2 0.015 250);
+  --sidebar-accent: oklch(0.28 0.02 250);
+  --sidebar-accent-foreground: oklch(0.96 0.006 85);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.7 0.08 195);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    /* 16px minimum body text per accessibility brief */
+    font-size: 16px;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    line-height: 1.6;
+  }
+
+  /* Large, visible focus indicators — required for keyboard reachability */
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Larger tap targets on touch devices */
+  button, [role="button"], a { min-height: 44px; }
+
+  /* RTL-aware logical properties encouraged; flip only what needs flipping */
+  [dir="rtl"] .lucide { transform: scaleX(-1); }
+}
+
+/* Attention banner — amber, never red */
+@utility banner-attention {
+  background-color: color-mix(in oklch, var(--color-attention) 22%, var(--color-background));
+  color: var(--color-attention-foreground);
+  border: 1px solid color-mix(in oklch, var(--color-attention) 45%, transparent);
+  border-radius: var(--radius-lg);
+  padding: 0.875rem 1rem;
+}
+
+/* Reading column — max 720px for prose-heavy views */
+@utility reading-column {
+  max-width: 720px;
+  margin-inline-start: auto;
+  margin-inline-end: auto;
+  padding-inline-start: 1rem;
+  padding-inline-end: 1rem;
+}
+
+/* Provenance chip — text label, not colour-only */
+@utility chip-provenance {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding-block: 0.125rem;
+  padding-inline: 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface-raised);
+  color: var(--color-foreground);
+  font-size: 0.8125rem;
+  line-height: 1.2;
+}
