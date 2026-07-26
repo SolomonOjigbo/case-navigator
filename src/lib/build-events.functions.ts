@@ -12,10 +12,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import {
-  FORBIDDEN_VOCABULARY,
-  PROBABILITY_PATTERNS,
-} from "./ai-prompts";
+import { FORBIDDEN_VOCABULARY, PROBABILITY_PATTERNS } from "./ai-prompts";
+import { passesGate1 } from "./gate1";
 
 const MODEL = "google/gemini-2.5-flash";
 export const BUILD_EVENTS_PROMPT_VERSION = "build-events@2026-07-25.1";
@@ -26,13 +24,7 @@ const EventProposal = z.object({
   title: z.string().min(1),
   date_start: z.string().nullable(),
   date_end: z.string().nullable(),
-  date_certainty: z.enum([
-    "exact",
-    "approximate",
-    "range",
-    "season",
-    "unknown",
-  ]),
+  date_certainty: z.enum(["exact", "approximate", "range", "season", "unknown"]),
   location_name: z.string().nullable(),
   user_description: z.string(),
   section_key: z.string().nullable(),
@@ -174,10 +166,14 @@ export const buildEvents = createServerFn({ method: "POST" })
       .eq("stale", false)
       .is("superseded_by_id", null);
     if (fErr) throw fErr;
-    const facts = (factsRaw ?? []).filter(
-      (f) =>
-        !f.user_marked_unsure &&
-        (f.user_confirmed || Number(f.extraction_confidence) >= 0.75),
+    const facts = (factsRaw ?? []).filter((f) =>
+      passesGate1({
+        extraction_confidence: f.extraction_confidence,
+        user_confirmed: f.user_confirmed,
+        user_marked_unsure: f.user_marked_unsure,
+        stale: false,
+        superseded_by_id: null,
+      }),
     );
     if (facts.length === 0) return { ok: true as const, created: 0, notes: ["no_eligible_facts"] };
 
@@ -210,7 +206,7 @@ export const buildEvents = createServerFn({ method: "POST" })
       user_confirmed: f.user_confirmed,
       section_key:
         srcTypeById.get(f.source_id) === "story_response"
-          ? storyMap.get(srcRefById.get(f.source_id) ?? "") ?? null
+          ? (storyMap.get(srcRefById.get(f.source_id) ?? "") ?? null)
           : null,
     }));
 
@@ -386,7 +382,8 @@ export const editEvent = createServerFn({ method: "POST" })
     if (!current) throw new Error("event not found");
 
     const descChanged =
-      data.userDescription !== undefined && data.userDescription !== (current.user_description ?? "");
+      data.userDescription !== undefined &&
+      data.userDescription !== (current.user_description ?? "");
 
     if (!descChanged) {
       const patch: Partial<{
@@ -457,9 +454,11 @@ export const editEvent = createServerFn({ method: "POST" })
       .select("source_id, fact_id")
       .eq("event_id", current.id);
     if (links && links.length > 0) {
-      await supabase.from("event_sources").insert(
-        links.map((l) => ({ event_id: newId, source_id: l.source_id, fact_id: l.fact_id })),
-      );
+      await supabase
+        .from("event_sources")
+        .insert(
+          links.map((l) => ({ event_id: newId, source_id: l.source_id, fact_id: l.fact_id })),
+        );
     }
 
     await supabase.from("events").update({ stale: true }).eq("id", current.id);

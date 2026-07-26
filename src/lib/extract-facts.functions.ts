@@ -11,6 +11,7 @@ import {
   buildFactExtractionUserPrompt,
 } from "./ai-prompts";
 import { runGuardrails, type GuardrailCounts } from "./guardrails";
+import { parseCascadeCounts, type CascadeCounts } from "./corrections";
 
 const MODEL = "google/gemini-2.5-flash";
 
@@ -92,10 +93,10 @@ export const extractFacts = createServerFn({ method: "POST" })
     }
 
     // Refuse without ai_processing consent
-    const { data: consentOk, error: consentErr } = await supabase.rpc(
-      "has_active_consent",
-      { _user_id: userId, _consent_type: "ai_processing" },
-    );
+    const { data: consentOk, error: consentErr } = await supabase.rpc("has_active_consent", {
+      _user_id: userId,
+      _consent_type: "ai_processing",
+    });
     if (consentErr) throw consentErr;
     if (!consentOk) {
       throw new Error("consent_required:ai_processing");
@@ -213,6 +214,38 @@ export const extractFacts = createServerFn({ method: "POST" })
 // Confirmation queue actions
 // -------------------------------------------------------------------------
 
+/**
+ * Every correction walks the same dependency chain:
+ *   fact -> events -> evidence links -> clarification items -> summaries
+ * setting stale on each, and notifying any professional who already reviewed
+ * an affected item. The walk lives in one SQL function so no correction path
+ * can forget a step. Returns the counts the applicant is shown.
+ */
+type RpcCapable = {
+  rpc: (fn: never, args: never) => PromiseLike<{ data: unknown; error: unknown }>;
+};
+
+async function cascadeFrom(
+  supabase: RpcCapable,
+  factId: string,
+  correctionId: string | null,
+): Promise<CascadeCounts> {
+  // cascade_stale_from_fact postdates the checked-in generated types; the call
+  // is cast until `supabase gen types` is re-run.
+  const { data, error } = await supabase.rpc(
+    "cascade_stale_from_fact" as never,
+    {
+      _fact_id: factId,
+      _correction_id: correctionId,
+    } as never,
+  );
+  if (error) {
+    // A failed cascade must not silently leave downstream items looking fresh.
+    throw error;
+  }
+  return parseCascadeCounts(data);
+}
+
 const ConfirmSchema = z.object({ factId: z.string().uuid() });
 
 export const confirmFact = createServerFn({ method: "POST" })
@@ -261,17 +294,23 @@ export const removeFact = createServerFn({ method: "POST" })
       .update({ stale: true, user_marked_unsure: false, user_confirmed: false })
       .eq("id", data.factId);
     if (error) throw error;
-    await context.supabase.from("user_corrections").insert({
-      case_id: fact.case_id,
-      target_type: "extracted_fact",
-      target_id: fact.id,
-      field_name: "stale",
-      previous_value: { stale: false },
-      corrected_value: { stale: true },
-      correction_type: "withdrawal",
-      corrected_by: context.userId,
-    });
-    return { ok: true };
+    const { data: correction } = await context.supabase
+      .from("user_corrections")
+      .insert({
+        case_id: fact.case_id,
+        target_type: "extracted_fact",
+        target_id: fact.id,
+        field_name: "stale",
+        previous_value: { stale: false },
+        corrected_value: { stale: true },
+        correction_type: "withdrawal",
+        corrected_by: context.userId,
+      })
+      .select("id")
+      .single();
+
+    const counts = await cascadeFrom(context.supabase, fact.id, correction?.id ?? null);
+    return { ok: true, counts, previousValue: fact.value_text ?? "" };
   });
 
 const FixSchema = z.object({
@@ -288,9 +327,7 @@ export const fixFact = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: orig, error: fErr } = await context.supabase
       .from("extracted_facts")
-      .select(
-        "id, case_id, fact_type, value_text, value_structured, original_wording, source_id",
-      )
+      .select("id, case_id, fact_type, value_text, value_structured, original_wording, source_id")
       .eq("id", data.factId)
       .maybeSingle();
     if (fErr) throw fErr;
@@ -319,17 +356,31 @@ export const fixFact = createServerFn({ method: "POST" })
       .eq("id", orig.id);
     if (supErr) throw supErr;
 
-    await context.supabase.from("user_corrections").insert({
-      case_id: orig.case_id,
-      target_type: "extracted_fact",
-      target_id: orig.id,
-      field_name: "value_text",
-      previous_value: { value_text: orig.value_text },
-      corrected_value: { value_text: data.correctedValueText },
-      correction_type: "extraction_error",
-      user_note: data.userNote ?? null,
-      corrected_by: context.userId,
-    });
+    const { data: correction } = await context.supabase
+      .from("user_corrections")
+      .insert({
+        case_id: orig.case_id,
+        target_type: "extracted_fact",
+        target_id: orig.id,
+        field_name: "value_text",
+        previous_value: { value_text: orig.value_text },
+        corrected_value: { value_text: data.correctedValueText },
+        correction_type: "extraction_error",
+        user_note: data.userNote ?? null,
+        corrected_by: context.userId,
+      })
+      .select("id")
+      .single();
 
-    return { ok: true, newFactId: newId };
+    // Cascade from the ORIGINAL fact: it is the one the events and summaries
+    // were built from. The replacement has no dependents yet.
+    const counts = await cascadeFrom(context.supabase, orig.id, correction?.id ?? null);
+
+    return {
+      ok: true,
+      newFactId: newId,
+      counts,
+      previousValue: orig.value_text ?? "",
+      newValue: data.correctedValueText,
+    };
   });

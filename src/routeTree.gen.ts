@@ -9,69 +9,40 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as RecoveryCodesRouteImport } from './routes/recovery-codes'
-import { Route as ProRouteImport } from './routes/pro'
-import { Route as OrientationRouteImport } from './routes/orientation'
-import { Route as ConsentRouteImport } from './routes/consent'
-import { Route as CommunityRouteImport } from './routes/community'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ProCasesRouteImport } from './routes/pro.cases'
-import { Route as ProCalibrationRouteImport } from './routes/pro.calibration'
-import { Route as CommunityRoomsRouteImport } from './routes/community.rooms'
-import { Route as CommunityProfileRouteImport } from './routes/community.profile'
-import { Route as CommunityFeedRouteImport } from './routes/community.feed'
-import { Route as AppTimelineRouteImport } from './routes/app.timeline'
-import { Route as AppStoryRouteImport } from './routes/app.story'
-import { Route as AppSharingRouteImport } from './routes/app.sharing'
-import { Route as AppReviewDetailsRouteImport } from './routes/app.review-details'
-import { Route as AppReviewRouteImport } from './routes/app.review'
-import { Route as AppQuestionsRouteImport } from './routes/app.questions'
-import { Route as AppEvidenceMapRouteImport } from './routes/app.evidence-map'
-import { Route as AppDocumentsRouteImport } from './routes/app.documents'
-import { Route as AppClarifyRouteImport } from './routes/app.clarify'
+import { Route as AppRouteImport } from './routes/app'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as CommunityRouteImport } from './routes/community'
+import { Route as ConsentRouteImport } from './routes/consent'
+import { Route as OrientationRouteImport } from './routes/orientation'
+import { Route as ProRouteImport } from './routes/pro'
+import { Route as RecoveryCodesRouteImport } from './routes/recovery-codes'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AppActivityRouteImport } from './routes/app.activity'
-import { Route as ProCasesCaseIdRouteImport } from './routes/pro.cases.$caseId'
-import { Route as CommunityRoomsSlugRouteImport } from './routes/community.rooms.$slug'
-import { Route as AppStorySectionRouteImport } from './routes/app.story.$section'
+import { Route as AppClarifyRouteImport } from './routes/app.clarify'
+import { Route as AppDocumentsRouteImport } from './routes/app.documents'
+import { Route as AppEvidenceMapRouteImport } from './routes/app.evidence-map'
+import { Route as AppQuestionsRouteImport } from './routes/app.questions'
+import { Route as AppReviewRouteImport } from './routes/app.review'
+import { Route as AppReviewDetailsRouteImport } from './routes/app.review-details'
+import { Route as AppSharingRouteImport } from './routes/app.sharing'
+import { Route as AppStoryRouteImport } from './routes/app.story'
+import { Route as AppTimelineRouteImport } from './routes/app.timeline'
+import { Route as CommunityFeedRouteImport } from './routes/community.feed'
+import { Route as CommunityProfileRouteImport } from './routes/community.profile'
+import { Route as CommunityRoomsRouteImport } from './routes/community.rooms'
+import { Route as DebugGuardrailsRouteImport } from './routes/debug.guardrails'
+import { Route as ProCalibrationRouteImport } from './routes/pro.calibration'
+import { Route as ProCasesRouteImport } from './routes/pro.cases'
 import { Route as AppDocumentsDocumentIdRouteImport } from './routes/app.documents.$documentId'
+import { Route as AppStorySectionRouteImport } from './routes/app.story.$section'
+import { Route as CommunityRoomsSlugRouteImport } from './routes/community.rooms.$slug'
+import { Route as ProCasesCaseIdRouteImport } from './routes/pro.cases.$caseId'
 import { Route as AppStorySectionHistoryPromptRouteImport } from './routes/app.story.$section.history.$prompt'
 
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RecoveryCodesRoute = RecoveryCodesRouteImport.update({
-  id: '/recovery-codes',
-  path: '/recovery-codes',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProRoute = ProRouteImport.update({
-  id: '/pro',
-  path: '/pro',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OrientationRoute = OrientationRouteImport.update({
-  id: '/orientation',
-  path: '/orientation',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ConsentRoute = ConsentRouteImport.update({
-  id: '/consent',
-  path: '/consent',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CommunityRoute = CommunityRouteImport.update({
-  id: '/community',
-  path: '/community',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRoute = AppRouteImport.update({
@@ -79,74 +50,44 @@ const AppRoute = AppRouteImport.update({
   path: '/app',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProCasesRoute = ProCasesRouteImport.update({
-  id: '/cases',
-  path: '/cases',
-  getParentRoute: () => ProRoute,
+const CommunityRoute = CommunityRouteImport.update({
+  id: '/community',
+  path: '/community',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const ProCalibrationRoute = ProCalibrationRouteImport.update({
-  id: '/calibration',
-  path: '/calibration',
-  getParentRoute: () => ProRoute,
+const ConsentRoute = ConsentRouteImport.update({
+  id: '/consent',
+  path: '/consent',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const CommunityRoomsRoute = CommunityRoomsRouteImport.update({
-  id: '/rooms',
-  path: '/rooms',
-  getParentRoute: () => CommunityRoute,
+const OrientationRoute = OrientationRouteImport.update({
+  id: '/orientation',
+  path: '/orientation',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const CommunityProfileRoute = CommunityProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => CommunityRoute,
+const ProRoute = ProRouteImport.update({
+  id: '/pro',
+  path: '/pro',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const CommunityFeedRoute = CommunityFeedRouteImport.update({
-  id: '/feed',
-  path: '/feed',
-  getParentRoute: () => CommunityRoute,
+const RecoveryCodesRoute = RecoveryCodesRouteImport.update({
+  id: '/recovery-codes',
+  path: '/recovery-codes',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AppTimelineRoute = AppTimelineRouteImport.update({
-  id: '/timeline',
-  path: '/timeline',
-  getParentRoute: () => AppRoute,
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AppStoryRoute = AppStoryRouteImport.update({
-  id: '/story',
-  path: '/story',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppSharingRoute = AppSharingRouteImport.update({
-  id: '/sharing',
-  path: '/sharing',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppReviewDetailsRoute = AppReviewDetailsRouteImport.update({
-  id: '/review-details',
-  path: '/review-details',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppReviewRoute = AppReviewRouteImport.update({
-  id: '/review',
-  path: '/review',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppQuestionsRoute = AppQuestionsRouteImport.update({
-  id: '/questions',
-  path: '/questions',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppEvidenceMapRoute = AppEvidenceMapRouteImport.update({
-  id: '/evidence-map',
-  path: '/evidence-map',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppDocumentsRoute = AppDocumentsRouteImport.update({
-  id: '/documents',
-  path: '/documents',
+const AppActivityRoute = AppActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
   getParentRoute: () => AppRoute,
 } as any)
 const AppClarifyRoute = AppClarifyRouteImport.update({
@@ -154,30 +95,95 @@ const AppClarifyRoute = AppClarifyRouteImport.update({
   path: '/clarify',
   getParentRoute: () => AppRoute,
 } as any)
-const AppActivityRoute = AppActivityRouteImport.update({
-  id: '/activity',
-  path: '/activity',
+const AppDocumentsRoute = AppDocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
   getParentRoute: () => AppRoute,
 } as any)
-const ProCasesCaseIdRoute = ProCasesCaseIdRouteImport.update({
-  id: '/$caseId',
-  path: '/$caseId',
-  getParentRoute: () => ProCasesRoute,
+const AppEvidenceMapRoute = AppEvidenceMapRouteImport.update({
+  id: '/evidence-map',
+  path: '/evidence-map',
+  getParentRoute: () => AppRoute,
 } as any)
-const CommunityRoomsSlugRoute = CommunityRoomsSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => CommunityRoomsRoute,
+const AppQuestionsRoute = AppQuestionsRouteImport.update({
+  id: '/questions',
+  path: '/questions',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppReviewRoute = AppReviewRouteImport.update({
+  id: '/review',
+  path: '/review',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppReviewDetailsRoute = AppReviewDetailsRouteImport.update({
+  id: '/review-details',
+  path: '/review-details',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSharingRoute = AppSharingRouteImport.update({
+  id: '/sharing',
+  path: '/sharing',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppStoryRoute = AppStoryRouteImport.update({
+  id: '/story',
+  path: '/story',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTimelineRoute = AppTimelineRouteImport.update({
+  id: '/timeline',
+  path: '/timeline',
+  getParentRoute: () => AppRoute,
+} as any)
+const CommunityFeedRoute = CommunityFeedRouteImport.update({
+  id: '/feed',
+  path: '/feed',
+  getParentRoute: () => CommunityRoute,
+} as any)
+const CommunityProfileRoute = CommunityProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => CommunityRoute,
+} as any)
+const CommunityRoomsRoute = CommunityRoomsRouteImport.update({
+  id: '/rooms',
+  path: '/rooms',
+  getParentRoute: () => CommunityRoute,
+} as any)
+const DebugGuardrailsRoute = DebugGuardrailsRouteImport.update({
+  id: '/debug/guardrails',
+  path: '/debug/guardrails',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProCalibrationRoute = ProCalibrationRouteImport.update({
+  id: '/calibration',
+  path: '/calibration',
+  getParentRoute: () => ProRoute,
+} as any)
+const ProCasesRoute = ProCasesRouteImport.update({
+  id: '/cases',
+  path: '/cases',
+  getParentRoute: () => ProRoute,
+} as any)
+const AppDocumentsDocumentIdRoute = AppDocumentsDocumentIdRouteImport.update({
+  id: '/$documentId',
+  path: '/$documentId',
+  getParentRoute: () => AppDocumentsRoute,
 } as any)
 const AppStorySectionRoute = AppStorySectionRouteImport.update({
   id: '/$section',
   path: '/$section',
   getParentRoute: () => AppStoryRoute,
 } as any)
-const AppDocumentsDocumentIdRoute = AppDocumentsDocumentIdRouteImport.update({
-  id: '/$documentId',
-  path: '/$documentId',
-  getParentRoute: () => AppDocumentsRoute,
+const CommunityRoomsSlugRoute = CommunityRoomsSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => CommunityRoomsRoute,
+} as any)
+const ProCasesCaseIdRoute = ProCasesCaseIdRouteImport.update({
+  id: '/$caseId',
+  path: '/$caseId',
+  getParentRoute: () => ProCasesRoute,
 } as any)
 const AppStorySectionHistoryPromptRoute =
   AppStorySectionHistoryPromptRouteImport.update({
@@ -209,6 +215,7 @@ export interface FileRoutesByFullPath {
   '/community/feed': typeof CommunityFeedRoute
   '/community/profile': typeof CommunityProfileRoute
   '/community/rooms': typeof CommunityRoomsRouteWithChildren
+  '/debug/guardrails': typeof DebugGuardrailsRoute
   '/pro/calibration': typeof ProCalibrationRoute
   '/pro/cases': typeof ProCasesRouteWithChildren
   '/app/documents/$documentId': typeof AppDocumentsDocumentIdRoute
@@ -240,6 +247,7 @@ export interface FileRoutesByTo {
   '/community/feed': typeof CommunityFeedRoute
   '/community/profile': typeof CommunityProfileRoute
   '/community/rooms': typeof CommunityRoomsRouteWithChildren
+  '/debug/guardrails': typeof DebugGuardrailsRoute
   '/pro/calibration': typeof ProCalibrationRoute
   '/pro/cases': typeof ProCasesRouteWithChildren
   '/app/documents/$documentId': typeof AppDocumentsDocumentIdRoute
@@ -272,6 +280,7 @@ export interface FileRoutesById {
   '/community/feed': typeof CommunityFeedRoute
   '/community/profile': typeof CommunityProfileRoute
   '/community/rooms': typeof CommunityRoomsRouteWithChildren
+  '/debug/guardrails': typeof DebugGuardrailsRoute
   '/pro/calibration': typeof ProCalibrationRoute
   '/pro/cases': typeof ProCasesRouteWithChildren
   '/app/documents/$documentId': typeof AppDocumentsDocumentIdRoute
@@ -305,6 +314,7 @@ export interface FileRouteTypes {
     | '/community/feed'
     | '/community/profile'
     | '/community/rooms'
+    | '/debug/guardrails'
     | '/pro/calibration'
     | '/pro/cases'
     | '/app/documents/$documentId'
@@ -336,6 +346,7 @@ export interface FileRouteTypes {
     | '/community/feed'
     | '/community/profile'
     | '/community/rooms'
+    | '/debug/guardrails'
     | '/pro/calibration'
     | '/pro/cases'
     | '/app/documents/$documentId'
@@ -367,6 +378,7 @@ export interface FileRouteTypes {
     | '/community/feed'
     | '/community/profile'
     | '/community/rooms'
+    | '/debug/guardrails'
     | '/pro/calibration'
     | '/pro/cases'
     | '/app/documents/$documentId'
@@ -386,57 +398,16 @@ export interface RootRouteChildren {
   ProRoute: typeof ProRouteWithChildren
   RecoveryCodesRoute: typeof RecoveryCodesRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  DebugGuardrailsRoute: typeof DebugGuardrailsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/recovery-codes': {
-      id: '/recovery-codes'
-      path: '/recovery-codes'
-      fullPath: '/recovery-codes'
-      preLoaderRoute: typeof RecoveryCodesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/pro': {
-      id: '/pro'
-      path: '/pro'
-      fullPath: '/pro'
-      preLoaderRoute: typeof ProRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/orientation': {
-      id: '/orientation'
-      path: '/orientation'
-      fullPath: '/orientation'
-      preLoaderRoute: typeof OrientationRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/consent': {
-      id: '/consent'
-      path: '/consent'
-      fullPath: '/consent'
-      preLoaderRoute: typeof ConsentRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/community': {
-      id: '/community'
-      path: '/community'
-      fullPath: '/community'
-      preLoaderRoute: typeof CommunityRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app': {
@@ -446,102 +417,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/pro/cases': {
-      id: '/pro/cases'
-      path: '/cases'
-      fullPath: '/pro/cases'
-      preLoaderRoute: typeof ProCasesRouteImport
-      parentRoute: typeof ProRoute
+    '/community': {
+      id: '/community'
+      path: '/community'
+      fullPath: '/community'
+      preLoaderRoute: typeof CommunityRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/pro/calibration': {
-      id: '/pro/calibration'
-      path: '/calibration'
-      fullPath: '/pro/calibration'
-      preLoaderRoute: typeof ProCalibrationRouteImport
-      parentRoute: typeof ProRoute
+    '/consent': {
+      id: '/consent'
+      path: '/consent'
+      fullPath: '/consent'
+      preLoaderRoute: typeof ConsentRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/community/rooms': {
-      id: '/community/rooms'
-      path: '/rooms'
-      fullPath: '/community/rooms'
-      preLoaderRoute: typeof CommunityRoomsRouteImport
-      parentRoute: typeof CommunityRoute
+    '/orientation': {
+      id: '/orientation'
+      path: '/orientation'
+      fullPath: '/orientation'
+      preLoaderRoute: typeof OrientationRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/community/profile': {
-      id: '/community/profile'
-      path: '/profile'
-      fullPath: '/community/profile'
-      preLoaderRoute: typeof CommunityProfileRouteImport
-      parentRoute: typeof CommunityRoute
+    '/pro': {
+      id: '/pro'
+      path: '/pro'
+      fullPath: '/pro'
+      preLoaderRoute: typeof ProRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/community/feed': {
-      id: '/community/feed'
-      path: '/feed'
-      fullPath: '/community/feed'
-      preLoaderRoute: typeof CommunityFeedRouteImport
-      parentRoute: typeof CommunityRoute
+    '/recovery-codes': {
+      id: '/recovery-codes'
+      path: '/recovery-codes'
+      fullPath: '/recovery-codes'
+      preLoaderRoute: typeof RecoveryCodesRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/app/timeline': {
-      id: '/app/timeline'
-      path: '/timeline'
-      fullPath: '/app/timeline'
-      preLoaderRoute: typeof AppTimelineRouteImport
-      parentRoute: typeof AppRoute
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/app/story': {
-      id: '/app/story'
-      path: '/story'
-      fullPath: '/app/story'
-      preLoaderRoute: typeof AppStoryRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/sharing': {
-      id: '/app/sharing'
-      path: '/sharing'
-      fullPath: '/app/sharing'
-      preLoaderRoute: typeof AppSharingRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/review-details': {
-      id: '/app/review-details'
-      path: '/review-details'
-      fullPath: '/app/review-details'
-      preLoaderRoute: typeof AppReviewDetailsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/review': {
-      id: '/app/review'
-      path: '/review'
-      fullPath: '/app/review'
-      preLoaderRoute: typeof AppReviewRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/questions': {
-      id: '/app/questions'
-      path: '/questions'
-      fullPath: '/app/questions'
-      preLoaderRoute: typeof AppQuestionsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/evidence-map': {
-      id: '/app/evidence-map'
-      path: '/evidence-map'
-      fullPath: '/app/evidence-map'
-      preLoaderRoute: typeof AppEvidenceMapRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/documents': {
-      id: '/app/documents'
-      path: '/documents'
-      fullPath: '/app/documents'
-      preLoaderRoute: typeof AppDocumentsRouteImport
+    '/app/activity': {
+      id: '/app/activity'
+      path: '/activity'
+      fullPath: '/app/activity'
+      preLoaderRoute: typeof AppActivityRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/clarify': {
@@ -551,26 +480,110 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppClarifyRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/activity': {
-      id: '/app/activity'
-      path: '/activity'
-      fullPath: '/app/activity'
-      preLoaderRoute: typeof AppActivityRouteImport
+    '/app/documents': {
+      id: '/app/documents'
+      path: '/documents'
+      fullPath: '/app/documents'
+      preLoaderRoute: typeof AppDocumentsRouteImport
       parentRoute: typeof AppRoute
     }
-    '/pro/cases/$caseId': {
-      id: '/pro/cases/$caseId'
-      path: '/$caseId'
-      fullPath: '/pro/cases/$caseId'
-      preLoaderRoute: typeof ProCasesCaseIdRouteImport
-      parentRoute: typeof ProCasesRoute
+    '/app/evidence-map': {
+      id: '/app/evidence-map'
+      path: '/evidence-map'
+      fullPath: '/app/evidence-map'
+      preLoaderRoute: typeof AppEvidenceMapRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/community/rooms/$slug': {
-      id: '/community/rooms/$slug'
-      path: '/$slug'
-      fullPath: '/community/rooms/$slug'
-      preLoaderRoute: typeof CommunityRoomsSlugRouteImport
-      parentRoute: typeof CommunityRoomsRoute
+    '/app/questions': {
+      id: '/app/questions'
+      path: '/questions'
+      fullPath: '/app/questions'
+      preLoaderRoute: typeof AppQuestionsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/review': {
+      id: '/app/review'
+      path: '/review'
+      fullPath: '/app/review'
+      preLoaderRoute: typeof AppReviewRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/review-details': {
+      id: '/app/review-details'
+      path: '/review-details'
+      fullPath: '/app/review-details'
+      preLoaderRoute: typeof AppReviewDetailsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/sharing': {
+      id: '/app/sharing'
+      path: '/sharing'
+      fullPath: '/app/sharing'
+      preLoaderRoute: typeof AppSharingRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/story': {
+      id: '/app/story'
+      path: '/story'
+      fullPath: '/app/story'
+      preLoaderRoute: typeof AppStoryRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/timeline': {
+      id: '/app/timeline'
+      path: '/timeline'
+      fullPath: '/app/timeline'
+      preLoaderRoute: typeof AppTimelineRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/community/feed': {
+      id: '/community/feed'
+      path: '/feed'
+      fullPath: '/community/feed'
+      preLoaderRoute: typeof CommunityFeedRouteImport
+      parentRoute: typeof CommunityRoute
+    }
+    '/community/profile': {
+      id: '/community/profile'
+      path: '/profile'
+      fullPath: '/community/profile'
+      preLoaderRoute: typeof CommunityProfileRouteImport
+      parentRoute: typeof CommunityRoute
+    }
+    '/community/rooms': {
+      id: '/community/rooms'
+      path: '/rooms'
+      fullPath: '/community/rooms'
+      preLoaderRoute: typeof CommunityRoomsRouteImport
+      parentRoute: typeof CommunityRoute
+    }
+    '/debug/guardrails': {
+      id: '/debug/guardrails'
+      path: '/debug/guardrails'
+      fullPath: '/debug/guardrails'
+      preLoaderRoute: typeof DebugGuardrailsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pro/calibration': {
+      id: '/pro/calibration'
+      path: '/calibration'
+      fullPath: '/pro/calibration'
+      preLoaderRoute: typeof ProCalibrationRouteImport
+      parentRoute: typeof ProRoute
+    }
+    '/pro/cases': {
+      id: '/pro/cases'
+      path: '/cases'
+      fullPath: '/pro/cases'
+      preLoaderRoute: typeof ProCasesRouteImport
+      parentRoute: typeof ProRoute
+    }
+    '/app/documents/$documentId': {
+      id: '/app/documents/$documentId'
+      path: '/$documentId'
+      fullPath: '/app/documents/$documentId'
+      preLoaderRoute: typeof AppDocumentsDocumentIdRouteImport
+      parentRoute: typeof AppDocumentsRoute
     }
     '/app/story/$section': {
       id: '/app/story/$section'
@@ -579,12 +592,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppStorySectionRouteImport
       parentRoute: typeof AppStoryRoute
     }
-    '/app/documents/$documentId': {
-      id: '/app/documents/$documentId'
-      path: '/$documentId'
-      fullPath: '/app/documents/$documentId'
-      preLoaderRoute: typeof AppDocumentsDocumentIdRouteImport
-      parentRoute: typeof AppDocumentsRoute
+    '/community/rooms/$slug': {
+      id: '/community/rooms/$slug'
+      path: '/$slug'
+      fullPath: '/community/rooms/$slug'
+      preLoaderRoute: typeof CommunityRoomsSlugRouteImport
+      parentRoute: typeof CommunityRoomsRoute
+    }
+    '/pro/cases/$caseId': {
+      id: '/pro/cases/$caseId'
+      path: '/$caseId'
+      fullPath: '/pro/cases/$caseId'
+      preLoaderRoute: typeof ProCasesCaseIdRouteImport
+      parentRoute: typeof ProCasesRoute
     }
     '/app/story/$section/history/$prompt': {
       id: '/app/story/$section/history/$prompt'
@@ -722,6 +742,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProRoute: ProRouteWithChildren,
   RecoveryCodesRoute: RecoveryCodesRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  DebugGuardrailsRoute: DebugGuardrailsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

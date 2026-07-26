@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useTranslation } from "react-i18next";
 import { Loader2, Printer, Sparkles, Plus } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -12,11 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { AIGeneratedBanner } from "@/components/primitives/AIGeneratedBanner";
-import {
-  addQuestion,
-  generateQuestions,
-  updateQuestion,
-} from "@/lib/generate-questions.functions";
+import { addQuestion, generateQuestions, updateQuestion } from "@/lib/generate-questions.functions";
 
 type Q = {
   id: string;
@@ -48,12 +45,15 @@ function useUser() {
   useEffect(() => {
     let alive = true;
     supabase.auth.getUser().then(({ data }) => alive && setId(data.user?.id ?? null));
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, []);
   return id;
 }
 
 function View() {
+  const { t } = useTranslation();
   const userId = useUser();
   const qc = useQueryClient();
   const q = useQuery({
@@ -75,14 +75,16 @@ function View() {
   });
   const add = useServerFn(addQuestion);
   const addM = useMutation({
-    mutationFn: (v: { caseId: string; kind: "self" | "lawyer"; text: string }) =>
-      add({ data: v }),
+    mutationFn: (v: { caseId: string; kind: "self" | "lawyer"; text: string }) => add({ data: v }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["questions", userId] }),
   });
 
   const data = q.data;
   const self = useMemo(() => (data?.items ?? []).filter((i) => i.kind === "self"), [data?.items]);
-  const lawyer = useMemo(() => (data?.items ?? []).filter((i) => i.kind === "lawyer"), [data?.items]);
+  const lawyer = useMemo(
+    () => (data?.items ?? []).filter((i) => i.kind === "lawyer"),
+    [data?.items],
+  );
 
   if (!userId || q.isLoading) {
     return (
@@ -92,15 +94,15 @@ function View() {
       </div>
     );
   }
-  if (!data?.caseId) return <p className="text-muted-foreground">No case yet.</p>;
+  if (!data?.caseId) return <p className="text-muted-foreground">{t("questions.no_case")}</p>;
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <header className="space-y-2 print:space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Questions</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t("questions.title")}</h1>
         <p className="text-sm text-muted-foreground print:hidden">
-          Some questions you can think about on your own. Others you may want to ask a
-          lawyer. Keep the ones that help, dismiss the rest, or write your own.
+          Some questions you can think about on your own. Others you may want to ask a lawyer. Keep
+          the ones that help, dismiss the rest, or write your own.
         </p>
       </header>
 
@@ -111,9 +113,13 @@ function View() {
       <div className="flex flex-wrap items-center gap-2 print:hidden">
         <Button onClick={() => gen.mutate(data.caseId!)} disabled={gen.isPending}>
           {gen.isPending ? (
-            <><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Drafting…</>
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Drafting…
+            </>
           ) : (
-            <><Sparkles className="h-4 w-4" aria-hidden="true" /> Draft questions</>
+            <>
+              <Sparkles className="h-4 w-4" aria-hidden="true" /> Draft questions
+            </>
           )}
         </Button>
         <Button variant="outline" onClick={() => window.print()}>
@@ -154,17 +160,21 @@ function View() {
 
       {/* Print-only page: kept questions for the lawyer. */}
       <section className="hidden print:block">
-        <h2 className="text-lg font-semibold">Questions for my lawyer</h2>
+        <h2 className="text-lg font-semibold">{t("questions.for_lawyer")}</h2>
         <ol className="mt-2 list-decimal space-y-2 ps-5">
-          {lawyer.filter((i) => i.status === "kept").map((i) => (
-            <li key={i.id}>{i.text}</li>
-          ))}
+          {lawyer
+            .filter((i) => i.status === "kept")
+            .map((i) => (
+              <li key={i.id}>{i.text}</li>
+            ))}
         </ol>
-        <h2 className="mt-6 text-lg font-semibold">Questions I can think about</h2>
+        <h2 className="mt-6 text-lg font-semibold">{t("questions.to_think_about")}</h2>
         <ol className="mt-2 list-decimal space-y-2 ps-5">
-          {self.filter((i) => i.status === "kept").map((i) => (
-            <li key={i.id}>{i.text}</li>
-          ))}
+          {self
+            .filter((i) => i.status === "kept")
+            .map((i) => (
+              <li key={i.id}>{i.text}</li>
+            ))}
         </ol>
       </section>
     </div>
@@ -172,36 +182,44 @@ function View() {
 }
 
 function QuestionList({
-  items, pending, onAct,
+  items,
+  pending,
+  onAct,
 }: {
   items: Q[];
   pending: boolean;
   onAct: (id: string, action: "keep" | "dismiss" | "edit", text?: string) => void;
 }) {
+  const { t } = useTranslation();
   if (items.length === 0) {
-    return <p className="text-sm text-muted-foreground">Nothing here yet.</p>;
+    return <p className="text-sm text-muted-foreground">{t("questions.empty")}</p>;
   }
   return (
     <ul className="space-y-3">
-      {items.map((i) => <QuestionCard key={i.id} item={i} pending={pending} onAct={onAct} />)}
+      {items.map((i) => (
+        <QuestionCard key={i.id} item={i} pending={pending} onAct={onAct} />
+      ))}
     </ul>
   );
 }
 
 function QuestionCard({
-  item, pending, onAct,
+  item,
+  pending,
+  onAct,
 }: {
   item: Q;
   pending: boolean;
   onAct: (id: string, action: "keep" | "dismiss" | "edit", text?: string) => void;
 }) {
+  const { t } = useTranslation();
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(item.text);
   return (
     <li className="rounded-lg border bg-surface-raised p-4">
       {editing ? (
         <div className="space-y-2">
-          <Label htmlFor={`edit-${item.id}`}>Edit this question</Label>
+          <Label htmlFor={`edit-${item.id}`}>{t("questions.edit_label")}</Label>
           <Textarea
             id={`edit-${item.id}`}
             value={text}
@@ -209,10 +227,24 @@ function QuestionCard({
             rows={2}
           />
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" disabled={pending} onClick={() => { onAct(item.id, "edit", text); setEditing(false); }}>
+            <Button
+              size="sm"
+              disabled={pending}
+              onClick={() => {
+                onAct(item.id, "edit", text);
+                setEditing(false);
+              }}
+            >
               Save
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => { setText(item.text); setEditing(false); }}>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setText(item.text);
+                setEditing(false);
+              }}
+            >
               Cancel
             </Button>
           </div>
@@ -227,10 +259,19 @@ function QuestionCard({
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {item.status !== "kept" && (
-              <Button size="sm" onClick={() => onAct(item.id, "keep")} disabled={pending}>Keep</Button>
+              <Button size="sm" onClick={() => onAct(item.id, "keep")} disabled={pending}>
+                Keep
+              </Button>
             )}
-            <Button size="sm" variant="outline" onClick={() => setEditing(true)} disabled={pending}>Edit</Button>
-            <Button size="sm" variant="ghost" onClick={() => onAct(item.id, "dismiss")} disabled={pending}>
+            <Button size="sm" variant="outline" onClick={() => setEditing(true)} disabled={pending}>
+              Edit
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => onAct(item.id, "dismiss")}
+              disabled={pending}
+            >
               Dismiss
             </Button>
           </div>
@@ -241,7 +282,9 @@ function QuestionCard({
 }
 
 function AddQuestion({
-  kind, pending, onAdd,
+  kind,
+  pending,
+  onAdd,
 }: {
   kind: "self" | "lawyer";
   pending: boolean;
@@ -251,7 +294,9 @@ function AddQuestion({
   return (
     <div className="rounded-lg border border-dashed p-4">
       <Label htmlFor={`add-${kind}`} className="text-sm">
-        {kind === "lawyer" ? "Add your own question for a lawyer" : "Add your own question to think about"}
+        {kind === "lawyer"
+          ? "Add your own question for a lawyer"
+          : "Add your own question to think about"}
       </Label>
       <div className="mt-2 flex gap-2">
         <Input
@@ -261,7 +306,12 @@ function AddQuestion({
           placeholder="Type your question…"
         />
         <Button
-          onClick={() => { if (text.trim()) { onAdd(text.trim()); setText(""); } }}
+          onClick={() => {
+            if (text.trim()) {
+              onAdd(text.trim());
+              setText("");
+            }
+          }}
           disabled={pending || text.trim().length === 0}
         >
           <Plus className="h-4 w-4" aria-hidden="true" /> Add

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useTranslation } from "react-i18next";
 import { Loader2, Sparkles } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -41,12 +42,17 @@ type GapItem = {
 
 async function load(userId: string) {
   const { data: caseRow } = await supabase
-    .from("cases").select("id").eq("applicant_id", userId).maybeSingle();
+    .from("cases")
+    .select("id")
+    .eq("applicant_id", userId)
+    .maybeSingle();
   if (!caseRow) return { caseId: null, clar: [] as ClarItem[], gaps: [] as GapItem[] } as const;
   const [{ data: clar }, { data: gaps }] = await Promise.all([
     supabase
       .from("clarification_items")
-      .select("id, reference_code, rule_id, category, urgency, observation, neutral_question, probable_cause, detected_by, status")
+      .select(
+        "id, reference_code, rule_id, category, urgency, observation, neutral_question, probable_cause, detected_by, status",
+      )
       .eq("case_id", caseRow.id)
       .eq("status", "open"),
     supabase
@@ -67,7 +73,9 @@ function useUser() {
   useEffect(() => {
     let alive = true;
     supabase.auth.getUser().then(({ data }) => alive && setId(data.user?.id ?? null));
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, []);
   return id;
 }
@@ -90,6 +98,7 @@ function causeLabel(cause: string | null): string | null {
 }
 
 function View() {
+  const { t } = useTranslation();
   const userId = useUser();
   const qc = useQueryClient();
   const q = useQuery({
@@ -102,10 +111,7 @@ function View() {
   const runGaps = useServerFn(analyzeGaps);
   const runAll = useMutation({
     mutationFn: async (caseId: string) => {
-      await Promise.all([
-        runConsistency({ data: { caseId } }),
-        runGaps({ data: { caseId } }),
-      ]);
+      await Promise.all([runConsistency({ data: { caseId } }), runGaps({ data: { caseId } })]);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["clarify", userId] }),
   });
@@ -115,21 +121,24 @@ function View() {
   const clarAct = useMutation({
     mutationFn: (v: {
       itemId: string;
-      action: "confirm_value" | "explain" | "date_approximate" | "professional_review" | "not_important";
+      action:
+        "confirm_value" | "explain" | "date_approximate" | "professional_review" | "not_important";
       response?: string;
     }) => respondClar({ data: v }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["clarify", userId] }),
   });
   const gapAct = useMutation({
-    mutationFn: (v: { itemId: string; action: "explain" | "leave_for_now"; explanation?: string }) =>
-      respondG({ data: v }),
+    mutationFn: (v: {
+      itemId: string;
+      action: "explain" | "leave_for_now";
+      explanation?: string;
+    }) => respondG({ data: v }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["clarify", userId] }),
   });
 
   const data = q.data;
   const sortedClar = useMemo(
-    () =>
-      [...(data?.clar ?? [])].sort((a, b) => urgencyRank(b.urgency) - urgencyRank(a.urgency)),
+    () => [...(data?.clar ?? [])].sort((a, b) => urgencyRank(b.urgency) - urgencyRank(a.urgency)),
     [data?.clar],
   );
   const visibleClar = sortedClar.slice(0, OPEN_LIMIT);
@@ -143,12 +152,12 @@ function View() {
       </div>
     );
   }
-  if (!data?.caseId) return <p className="text-muted-foreground">No case yet.</p>;
+  if (!data?.caseId) return <p className="text-muted-foreground">{t("clarify.no_case")}</p>;
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <header className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">Things to check</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t("clarify.title")}</h1>
         <p className="text-sm text-muted-foreground">
           We noticed a few things that might be worth a second look. You can answer any of these
           now, come back later, or ask a lawyer to check them for you. None of this changes your
@@ -159,23 +168,30 @@ function View() {
       <div className="flex flex-wrap items-center gap-3">
         <Button onClick={() => runAll.mutate(data.caseId!)} disabled={runAll.isPending}>
           {runAll.isPending ? (
-            <><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Checking…</>
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Checking…
+            </>
           ) : (
-            <><Sparkles className="h-4 w-4" aria-hidden="true" /> Check for things to clarify</>
+            <>
+              <Sparkles className="h-4 w-4" aria-hidden="true" /> Check for things to clarify
+            </>
           )}
         </Button>
       </div>
 
       <Tabs defaultValue="clarify">
         <TabsList>
-          <TabsTrigger value="clarify">Things to check ({sortedClar.length})</TabsTrigger>
+          <TabsTrigger value="clarify">
+            {t("clarify.title")} ({sortedClar.length})
+          </TabsTrigger>
           <TabsTrigger value="gaps">Things not yet added ({data.gaps.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="clarify" className="mt-4 space-y-4">
           {sortedClar.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Nothing to check right now. If you add or change anything, come back and run the check again.
+              Nothing to check right now. If you add or change anything, come back and run the check
+              again.
             </p>
           ) : (
             <>
@@ -200,7 +216,7 @@ function View() {
 
         <TabsContent value="gaps" className="mt-4 space-y-4">
           {data.gaps.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nothing on this list right now.</p>
+            <p className="text-sm text-muted-foreground">{t("clarify.empty")}</p>
           ) : (
             data.gaps.map((g) => (
               <GapCard
@@ -227,10 +243,12 @@ function ClarCard({
   item: ClarItem;
   pending: boolean;
   onAct: (
-    action: "confirm_value" | "explain" | "date_approximate" | "professional_review" | "not_important",
+    action:
+      "confirm_value" | "explain" | "date_approximate" | "professional_review" | "not_important",
     response?: string,
   ) => void;
 }) {
+  const { t } = useTranslation();
   const [explaining, setExplaining] = useState(false);
   const [text, setText] = useState("");
   const cause = causeLabel(item.probable_cause);
@@ -245,7 +263,9 @@ function ClarCard({
           {cause ? <p className="text-[13px] text-muted-foreground">{cause}</p> : null}
           <p className="text-[12px] text-muted-foreground">
             Reference {item.reference_code}
-            {item.detected_by ? ` · noticed by ${item.detected_by === "rule" ? "our checks" : "the assistant"}` : null}
+            {item.detected_by
+              ? ` · noticed by ${item.detected_by === "rule" ? "our checks" : "the assistant"}`
+              : null}
           </p>
         </div>
       }
@@ -256,22 +276,42 @@ function ClarCard({
             <Button size="sm" onClick={() => onAct("confirm_value")} disabled={pending}>
               Confirm the correct value
             </Button>
-            <Button size="sm" variant="outline" onClick={() => setExplaining((v) => !v)} disabled={pending}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setExplaining((v) => !v)}
+              disabled={pending}
+            >
               Explain the difference
             </Button>
-            <Button size="sm" variant="outline" onClick={() => onAct("date_approximate")} disabled={pending}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onAct("date_approximate")}
+              disabled={pending}
+            >
               Mark the date as approximate
             </Button>
-            <Button size="sm" variant="outline" onClick={() => onAct("professional_review")} disabled={pending}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onAct("professional_review")}
+              disabled={pending}
+            >
               Ask a professional to review
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => onAct("not_important")} disabled={pending}>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => onAct("not_important")}
+              disabled={pending}
+            >
               Not important
             </Button>
           </div>
           {explaining ? (
             <div className="space-y-2">
-              <Label htmlFor={`explain-${item.id}`}>In your own words</Label>
+              <Label htmlFor={`explain-${item.id}`}>{t("clarify.own_words_label")}</Label>
               <Textarea
                 id={`explain-${item.id}`}
                 value={text}
@@ -303,22 +343,33 @@ function GapCard({
   pending: boolean;
   onAct: (action: "explain" | "leave_for_now", explanation?: string) => void;
 }) {
+  const { t } = useTranslation();
   const [explaining, setExplaining] = useState(false);
   const [text, setText] = useState("");
   return (
     // NO urgency styling on gaps at all — plain card only.
     <article className="rounded-lg border bg-surface-raised p-4 md:p-5">
-      <h3 className="text-sm font-semibold text-foreground">Something not yet added</h3>
+      <h3 className="text-sm font-semibold text-foreground">{t("clarify.not_yet_added")}</h3>
       <p className="mt-1 text-[15px] text-foreground">{item.observation}</p>
       {item.suggested_action ? (
         <p className="mt-2 text-[14px] text-muted-foreground">{item.suggested_action}</p>
       ) : null}
       <p className="mt-2 text-[12px] text-muted-foreground">Reference {item.reference_code}</p>
       <div className="mt-4 flex flex-wrap gap-2">
-        <Button size="sm" variant="outline" onClick={() => setExplaining((v) => !v)} disabled={pending}>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setExplaining((v) => !v)}
+          disabled={pending}
+        >
           Tell us why this isn't available
         </Button>
-        <Button size="sm" variant="outline" onClick={() => onAct("leave_for_now")} disabled={pending}>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => onAct("leave_for_now")}
+          disabled={pending}
+        >
           Leave this for now
         </Button>
       </div>

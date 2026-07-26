@@ -86,7 +86,9 @@ async function loadMap(userId: string) {
       .eq("case_id", caseRow.id),
     supabase
       .from("documents")
-      .select("id, reference_code, original_filename, doc_type, readability, duplicate_of_id, processing_status")
+      .select(
+        "id, reference_code, original_filename, doc_type, readability, duplicate_of_id, processing_status",
+      )
       .eq("case_id", caseRow.id),
     supabase
       .from("evidence_event_links")
@@ -96,11 +98,14 @@ async function loadMap(userId: string) {
       .eq("case_id", caseRow.id),
   ]);
   const ev = (events ?? [])
-    .filter((e: { stale?: boolean; feared_future_event: boolean }) => !e.stale && !e.feared_future_event)
+    .filter(
+      (e: { stale?: boolean; feared_future_event: boolean }) => !e.stale && !e.feared_future_event,
+    )
     .map((e) => e as EventRow);
   const dc = (docs ?? [])
-    .filter((d: { duplicate_of_id: string | null; processing_status: string }) =>
-      !d.duplicate_of_id && d.processing_status === "processed",
+    .filter(
+      (d: { duplicate_of_id: string | null; processing_status: string }) =>
+        !d.duplicate_of_id && d.processing_status === "processed",
     )
     .map((d) => d as DocRow);
   const lk = (links ?? []).filter((l: { stale?: boolean }) => !l.stale).map((l) => l as LinkRow);
@@ -184,7 +189,7 @@ function EvidenceMapView() {
       </div>
     );
   }
-  if (!data?.caseId) return <p className="text-muted-foreground">No case yet.</p>;
+  if (!data?.caseId) return <p className="text-muted-foreground">{t("evidence_map.no_case")}</p>;
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -247,7 +252,9 @@ function EvidenceMapView() {
                 <section key={ev.id} className="rounded-lg border bg-surface-raised p-4">
                   <header className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <h2 className="text-base font-semibold text-foreground">{ev.title || ev.reference_code}</h2>
+                      <h2 className="text-base font-semibold text-foreground">
+                        {ev.title || ev.reference_code}
+                      </h2>
                       <p className="text-xs text-muted-foreground">{ev.reference_code}</p>
                     </div>
                     <Button variant="outline" size="sm" onClick={() => setManualFor(ev)}>
@@ -286,8 +293,8 @@ function EvidenceMapView() {
                                   l.confidence >= 0.75
                                     ? "likely"
                                     : l.confidence >= 0.5
-                                    ? "please_confirm"
-                                    : "needs_your_check"
+                                      ? "please_confirm"
+                                      : "needs_your_check"
                                 }
                               />
                             </button>
@@ -302,13 +309,15 @@ function EvidenceMapView() {
           )}
 
           <section className="rounded-lg border p-4">
-            <h2 className="text-base font-semibold">{t("evidence_map.events_without_documents")}</h2>
+            <h2 className="text-base font-semibold">
+              {t("evidence_map.events_without_documents")}
+            </h2>
             <p className="mt-1 text-sm text-muted-foreground">
               {t("evidence_map.events_without_documents_intro")}
             </p>
             <ul className="mt-2 flex flex-wrap gap-2">
               {data.events
-                .filter((e) => !(linksByEvent.get(e.id)?.length))
+                .filter((e) => !linksByEvent.get(e.id)?.length)
                 .map((e) => (
                   <li
                     key={e.id}
@@ -321,13 +330,15 @@ function EvidenceMapView() {
           </section>
 
           <section className="rounded-lg border p-4">
-            <h2 className="text-base font-semibold">{t("evidence_map.documents_without_events")}</h2>
+            <h2 className="text-base font-semibold">
+              {t("evidence_map.documents_without_events")}
+            </h2>
             <p className="mt-1 text-sm text-muted-foreground">
               {t("evidence_map.documents_without_events_intro")}
             </p>
             <ul className="mt-2 flex flex-wrap gap-2">
               {data.docs
-                .filter((d) => !(linksByDoc.get(d.id)?.length))
+                .filter((d) => !linksByDoc.get(d.id)?.length)
                 .map((d) => (
                   <li key={d.id} className="rounded-md border bg-background px-2 py-1 text-xs">
                     {d.original_filename}
@@ -390,11 +401,14 @@ function EvidenceMapView() {
           {activeLink ? (
             <>
               <DialogHeader>
-                <DialogTitle>{t(`evidence_map.relationship.${activeLink.relationship}`)}</DialogTitle>
+                <DialogTitle>
+                  {t(`evidence_map.relationship.${activeLink.relationship}`)}
+                </DialogTitle>
               </DialogHeader>
               <div className="space-y-3 text-sm">
                 <p className="text-muted-foreground">
-                  {activeEvent?.title || activeEvent?.reference_code} · {activeDoc?.original_filename}
+                  {activeEvent?.title || activeEvent?.reference_code} ·{" "}
+                  {activeDoc?.original_filename}
                 </p>
                 <p className="leading-relaxed text-foreground">{activeLink.explanation}</p>
                 <div>
@@ -420,8 +434,8 @@ function EvidenceMapView() {
                     activeLink.confidence >= 0.75
                       ? "likely"
                       : activeLink.confidence >= 0.5
-                      ? "please_confirm"
-                      : "needs_your_check"
+                        ? "please_confirm"
+                        : "needs_your_check"
                   }
                 />
               </div>
@@ -560,21 +574,32 @@ function ManualLinkDialog({
             <div className="space-y-1">
               <Label>{t("evidence_map.add_manual_doc_label")}</Label>
               <Select value={documentId ?? undefined} onValueChange={setDocumentId}>
-                <SelectTrigger><SelectValue placeholder="…" /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue placeholder="…" />
+                </SelectTrigger>
                 <SelectContent>
                   {docs.map((d) => (
-                    <SelectItem key={d.id} value={d.id}>{d.original_filename}</SelectItem>
+                    <SelectItem key={d.id} value={d.id}>
+                      {d.original_filename}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1">
               <Label>{t("evidence_map.add_manual_relationship_label")}</Label>
-              <Select value={relationship} onValueChange={(v) => setRelationship(v as Relationship)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select
+                value={relationship}
+                onValueChange={(v) => setRelationship(v as Relationship)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {RELATIONSHIP_ENUM.map((r) => (
-                    <SelectItem key={r} value={r}>{t(`evidence_map.relationship.${r}`)}</SelectItem>
+                    <SelectItem key={r} value={r}>
+                      {t(`evidence_map.relationship.${r}`)}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -595,9 +620,7 @@ function ManualLinkDialog({
         ) : null}
         <DialogFooter>
           <Button onClick={() => mut.mutate()} disabled={!canSave}>
-            {mut.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-            ) : null}
+            {mut.isPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
             {t("evidence_map.add_manual_save")}
           </Button>
         </DialogFooter>

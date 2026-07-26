@@ -22,6 +22,13 @@ export type ReviewStatus =
 
 export type ReviewDisposition = "accept" | "edit" | "reject";
 
+/** The UI names the action; the column stores the past-tense outcome. */
+const DISPOSITION_COLUMN_VALUE: Record<ReviewDisposition, string> = {
+  accept: "accepted",
+  edit: "edited",
+  reject: "rejected",
+};
+
 /**
  * The currently-signed-in professional's row. Every /pro/* action needs it.
  * Returns null if the user is not a verified professional.
@@ -54,10 +61,7 @@ export async function listSharedCases(): Promise<CaseListRow[]> {
   if (caseIds.length === 0) return [];
 
   const [cases, flags, activity] = await Promise.all([
-    supabase
-      .from("cases")
-      .select("id, reference_code, preferred_language")
-      .in("id", caseIds),
+    supabase.from("cases").select("id, reference_code, preferred_language").in("id", caseIds),
     supabase
       .from("attention_flags")
       .select("case_id, status")
@@ -120,15 +124,15 @@ export async function recordReview(input: {
     // Enforce the friction the anti-automation-bias rules require.
     throw new Error("A reason is required to reject a rules-based flag.");
   }
-  const { data: userData } = await supabase.auth.getUser();
-  const uid = userData.user?.id;
-  if (!uid) throw new Error("not signed in");
+  // reviewer_id references professionals(id), not auth.users(id).
+  const pro = await getCurrentProfessional();
+  if (!pro) throw new Error("not signed in as a verified professional");
   const { error } = await supabase.from("professional_reviews").insert({
     case_id: input.caseId,
-    reviewer_id: uid,
+    reviewer_id: pro.id,
     target_type: input.targetType,
     target_id: input.targetId,
-    disposition: input.disposition,
+    disposition: DISPOSITION_COLUMN_VALUE[input.disposition],
     reason: input.reason ?? null,
     edited_content:
       input.editedText || input.aiOriginalText
@@ -197,12 +201,10 @@ export async function listOrgNotes(caseId: string) {
 export async function addOrgNote(caseId: string, body: string) {
   const pro = await getCurrentProfessional();
   if (!pro?.organization_id) throw new Error("Your professional profile needs an organization.");
-  const { data: userData } = await supabase.auth.getUser();
-  const uid = userData.user?.id;
-  if (!uid) throw new Error("not signed in");
+  // author_id references professionals(id), not auth.users(id).
   const { error } = await supabase.from("professional_notes").insert({
     case_id: caseId,
-    author_id: uid,
+    author_id: pro.id,
     organization_id: pro.organization_id,
     body,
     privileged: true,
@@ -267,9 +269,7 @@ export async function dismissNotice(key: string) {
   const { data: userData } = await supabase.auth.getUser();
   const uid = userData.user?.id;
   if (!uid) return;
-  await supabase
-    .from("pro_notices_seen")
-    .insert({ professional_user_id: uid, notice_key: key });
+  await supabase.from("pro_notices_seen").insert({ professional_user_id: uid, notice_key: key });
 }
 
 /**
@@ -281,18 +281,17 @@ export async function dismissNotice(key: string) {
  * comparative rankings are out of scope by design.
  */
 export async function getOwnCalibration() {
-  const { data: userData } = await supabase.auth.getUser();
-  const uid = userData.user?.id;
-  if (!uid) return null;
+  const pro = await getCurrentProfessional();
+  if (!pro) return null;
   const { data: reviews, error } = await supabase
     .from("professional_reviews")
     .select("disposition, reviewed_at")
-    .eq("reviewer_id", uid);
+    .eq("reviewer_id", pro.id);
   if (error) throw error;
   const total = reviews?.length ?? 0;
   if (total === 0) return { total: 0, overrideRate: null, avgHours: null };
   const overrides = (reviews ?? []).filter(
-    (r) => r.disposition === "reject" || r.disposition === "edit",
+    (r) => r.disposition === "rejected" || r.disposition === "edited",
   ).length;
   return {
     total,

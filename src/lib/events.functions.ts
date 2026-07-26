@@ -5,14 +5,11 @@
 // bypassed by a bad client, and the guard here gives a clear early error
 // with a message the UI can show to the applicant.
 //
-// Why 0.75? See knowledge base: AI output is a proposal, not a decision.
-// A fact must be either "human-confirmed" OR "the model was reasonably
-// sure and the applicant has at least been shown it" before it can shape
-// the timeline a professional will review. Marking the fact "I'm not sure"
-// counts as NOT confirmed; the fact stays visible but off the timeline.
+// The predicate itself lives in gate1.ts so every call site shares it.
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { checkGate1 } from "./gate1";
 
 const InputSchema = z.object({
   factId: z.string().uuid(),
@@ -39,18 +36,9 @@ export const createEventFromFact = createServerFn({ method: "POST" })
     if (error) throw error;
     if (!fact) throw new Error("fact not found");
 
-    // ---- GATE 1 (client-side layer) -------------------------------------
-    if (fact.stale || fact.superseded_by_id) {
-      throw new Error("gate1: fact is stale or superseded");
-    }
-    if (fact.user_marked_unsure && !fact.user_confirmed) {
-      throw new Error("gate1: applicant marked this detail as unsure");
-    }
-    if (!fact.user_confirmed && Number(fact.extraction_confidence) < 0.75) {
-      throw new Error(
-        "gate1: detail must be confirmed by the applicant before it can become an event",
-      );
-    }
+    // ---- GATE 1 (server-side layer) --------------------------------------
+    const gate = checkGate1(fact);
+    if (!gate.allowed) throw new Error(gate.reason);
     // The database trigger event_sources_gate1 re-checks the same rule on
     // INSERT, so a client that skipped this guard still cannot bypass Gate 1.
     // ---------------------------------------------------------------------

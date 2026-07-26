@@ -226,7 +226,12 @@
       "total_label": "Reviews recorded",
       "override_rate_label": "Your override rate",
       "override_rate_note": "Share of reviews where you edited or rejected the AI proposal."
-    }
+    },
+    "removed_sentences": "{{count}} sentence(s) were removed because they could not be traced to a source.",
+    "export_button": "Create export package",
+    "export_created": "Export package created.",
+    "export_blocked_unreviewed": "This summary needs your review before it can be exported.",
+    "export_blocked_stale": "This summary changed after it was reviewed. It needs to be created again and reviewed before it can be exported."
   },
   "placeholder": {
     "coming_soon": "This screen is being prepared.",
@@ -549,7 +554,9 @@
       "identifier": "Identifier",
       "contact": "Contact",
       "other": "Detail"
-    }
+    },
+    "this_detail": "this detail",
+    "removed_value": "removed"
   },
   "timeline": {
     "title": "Your timeline",
@@ -679,7 +686,8 @@
       "relevance_uncertain": "Connection is uncertain",
       "not_connected": "Not connected",
       "requires_professional_review": "Send to a professional"
-    }
+    },
+    "no_case": "No case yet."
   },
   "sharing": {
     "heading": "Privacy and Sharing",
@@ -775,5 +783,42 @@
       "deletion_cancelled": "{{who}} cancelled the deletion request.",
       "other": "{{who}} — {{action}} {{target}}"
     }
+  },
+  "review": {
+    "intro": "Here you can create a summary of what you have checked so far, and see where it has got to. A legal professional must check a summary before it can be sent anywhere.",
+    "create_heading": "Create a summary",
+    "create_help": "A summary only uses details you have already confirmed. You can create it again at any time.",
+    "generated": "Your summary is ready. A legal professional needs to check it.",
+    "generation_blocked": "We could not create this summary safely, so we stopped. Nothing was saved to your case.",
+    "generation_failed": "We could not create the summary just now. Please try again.",
+    "consent_needed": "To create a summary, please turn on automatic help in your privacy settings first.",
+    "no_material": "There is nothing to summarise yet. Confirm some details first, and they will appear here.",
+    "removed_sentences": "We removed {{count}} sentence(s) that we could not link back to your own material.",
+    "empty": "You have not created a summary yet.",
+    "version": "Version {{version}}",
+    "status_awaiting": "Waiting to be checked by a legal professional.",
+    "status_reviewed": "Checked by a legal professional.",
+    "status_updating": "Updating. Something this summary used has changed, so it needs to be created again.",
+    "mode": {
+      "applicant_summary": "Summary for you",
+      "chronological_summary": "Summary in date order",
+      "document_summary": "Summary of your documents",
+      "professional_summary": "Summary for a legal professional"
+    }
+  },
+  "clarify": {
+    "title": "Things to check",
+    "no_case": "No case yet.",
+    "empty": "Nothing on this list right now.",
+    "own_words_label": "In your own words",
+    "not_yet_added": "Something not yet added"
+  },
+  "questions": {
+    "title": "Questions",
+    "no_case": "No case yet.",
+    "for_lawyer": "Questions for my lawyer",
+    "to_think_about": "Questions I can think about",
+    "empty": "Nothing here yet.",
+    "edit_label": "Edit this question"
   }
 }
