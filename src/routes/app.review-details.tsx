@@ -12,6 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AI_BANNER, REVIEW_QUEUE_BANNER } from "@/lib/ai-prompts";
 import { confirmFact, fixFact, markFactUnsure, removeFact } from "@/lib/extract-facts.functions";
+import { buildCorrectionMessage, parseCascadeCounts } from "@/lib/corrections";
 import { SourceLink, type SourceRef } from "@/components/story/SourceLink";
 
 type FactRow = {
@@ -117,10 +118,11 @@ async function loadQueue(userId: string) {
     } else if (s.source_type === "story_response") {
       const st = storyMap.get(s.reference_id);
       if (st) {
-        const range =
-          ((list.find((f) => f.source_id === s.id)?.value_structured as
-            | { original_char_range?: [number, number] }
-            | null)?.original_char_range) ?? [0, 0];
+        const range = (
+          list.find((f) => f.source_id === s.id)?.value_structured as {
+            original_char_range?: [number, number];
+          } | null
+        )?.original_char_range ?? [0, 0];
         targets.set(s.id, {
           kind: "story",
           sectionKey: st.section_key,
@@ -142,6 +144,7 @@ function ReviewDetailsView() {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const [userId, setUserId] = useState<string | null>(null);
+  const [correctionMessage, setCorrectionMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -176,11 +179,31 @@ function ReviewDetailsView() {
   });
   const removeMut = useMutation({
     mutationFn: (id: string) => remove({ data: { factId: id } }),
-    onSuccess: invalidate,
+    onSuccess: (res) => {
+      invalidate();
+      setCorrectionMessage(
+        buildCorrectionMessage({
+          label: t("review_details.this_detail"),
+          previousValue: res.previousValue,
+          newValue: t("review_details.removed_value"),
+          counts: parseCascadeCounts(res.counts),
+        }),
+      );
+    },
   });
   const fixMut = useMutation({
     mutationFn: (v: { factId: string; correctedValueText: string }) => fix({ data: v }),
-    onSuccess: invalidate,
+    onSuccess: (res) => {
+      invalidate();
+      setCorrectionMessage(
+        buildCorrectionMessage({
+          label: t("review_details.this_detail"),
+          previousValue: res.previousValue,
+          newValue: res.newValue,
+          counts: parseCascadeCounts(res.counts),
+        }),
+      );
+    },
   });
 
   const busy =
@@ -197,6 +220,12 @@ function ReviewDetailsView() {
         </Alert>
         <p className="text-xs text-muted-foreground">{AI_BANNER}</p>
       </header>
+
+      {correctionMessage ? (
+        <Alert role="status" aria-live="polite">
+          <AlertDescription>{correctionMessage}</AlertDescription>
+        </Alert>
+      ) : null}
 
       {query.isLoading ? (
         <div className="space-y-3">
@@ -270,7 +299,13 @@ function FactCard(props: {
           <PencilLine className="me-1 h-4 w-4" aria-hidden="true" />
           {t("review_details.actions.fix")}
         </Button>
-        <Button size="sm" variant="ghost" onClick={props.onUnsure} disabled={busy} className="min-h-11">
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={props.onUnsure}
+          disabled={busy}
+          className="min-h-11"
+        >
           <HelpCircle className="me-1 h-4 w-4" aria-hidden="true" />
           {t("review_details.actions.unsure")}
         </Button>

@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { ApplicantSidebar } from "@/components/shell/ApplicantSidebar";
 import { AppDisclosure } from "@/components/shell/AppDisclosure";
+import { SyntheticDataBanner } from "@/components/shell/SyntheticDataBanner";
 import { PauseButton } from "@/components/shell/PauseButton";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { HelpAskPanel } from "@/components/help/HelpAskPanel";
@@ -34,6 +35,7 @@ function ApplicantLayout() {
               <PauseButton />
             </div>
           </header>
+          <SyntheticDataBanner />
           <AppDisclosure />
           <main className="flex-1 px-4 py-6">
             <Outlet />

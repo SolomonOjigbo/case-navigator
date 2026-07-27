@@ -1,14 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SourceViewerProvider, useSourceViewer } from "@/components/pro/SourceViewer";
 import { CollapsibleAISummary } from "@/components/pro/CollapsibleAISummary";
 import { ReviewActionBar } from "@/components/pro/ReviewActionBar";
@@ -16,14 +12,15 @@ import { StatusControl } from "@/components/pro/StatusControl";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import {
-  addOrgNote,
-  createTask,
-  listOrgNotes,
-  listReviews,
-  listTasks,
-} from "@/lib/pro-service";
+import { addOrgNote, createTask, listOrgNotes, listReviews, listTasks } from "@/lib/pro-service";
 import { toast } from "sonner";
+import { createExportPackage, recordExportDownload } from "@/lib/export.functions";
+import {
+  NOT_ASSESSED_HEADING,
+  NOT_ASSESSED_TEXT,
+  renderSummaryText,
+  type SummaryContent,
+} from "@/lib/summary-text";
 
 /**
  * WORKSPACE LAYOUT RULE (do not reverse):
@@ -125,8 +122,7 @@ function WordsTab({ caseId }: { caseId: string }) {
   const { open } = useSourceViewer();
 
   if (isLoading) return <p className="text-sm text-muted-foreground">{t("pro.loading")}</p>;
-  if (!data?.length)
-    return <p className="text-sm text-muted-foreground">{t("pro.empty_story")}</p>;
+  if (!data?.length) return <p className="text-sm text-muted-foreground">{t("pro.empty_story")}</p>;
 
   return (
     <div className="space-y-3">
@@ -141,9 +137,7 @@ function WordsTab({ caseId }: { caseId: string }) {
               {t("pro.skipped")}: {r.skip_reason ?? t("pro.no_reason")}
             </p>
           ) : (
-            <p className="mt-2 whitespace-pre-wrap text-[15px] text-foreground">
-              {r.body_text}
-            </p>
+            <p className="mt-2 whitespace-pre-wrap text-[15px] text-foreground">{r.body_text}</p>
           )}
           <button
             className="mt-2 text-[13px] text-muted-foreground underline"
@@ -272,7 +266,9 @@ function EvidenceTab({ caseId }: { caseId: string }) {
     queryFn: async () => {
       const { data } = await supabase
         .from("evidence_event_links")
-        .select("id, event_id, document_id, relationship, explanation, excerpt, confidence, created_by")
+        .select(
+          "id, event_id, document_id, relationship, explanation, excerpt, confidence, created_by",
+        )
         .eq("case_id", caseId);
       return data ?? [];
     },
@@ -321,10 +317,7 @@ function ClarifyTab({ caseId }: { caseId: string }) {
   const { data } = useQuery({
     queryKey: ["pro", caseId, "clarify"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("clarification_items")
-        .select("*")
-        .eq("case_id", caseId);
+      const { data } = await supabase.from("clarification_items").select("*").eq("case_id", caseId);
       return data ?? [];
     },
   });
@@ -358,10 +351,7 @@ function MissingTab({ caseId }: { caseId: string }) {
   const { data } = useQuery({
     queryKey: ["pro", caseId, "missing"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("missing_info_items")
-        .select("*")
-        .eq("case_id", caseId);
+      const { data } = await supabase.from("missing_info_items").select("*").eq("case_id", caseId);
       return data ?? [];
     },
   });
@@ -383,10 +373,7 @@ function AttentionTab({ caseId }: { caseId: string }) {
   const { data } = useQuery({
     queryKey: ["pro", caseId, "attention"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("attention_flags")
-        .select("*")
-        .eq("case_id", caseId);
+      const { data } = await supabase.from("attention_flags").select("*").eq("case_id", caseId);
       return data ?? [];
     },
   });
@@ -422,40 +409,144 @@ function AttentionTab({ caseId }: { caseId: string }) {
 
 function SummariesTab({ caseId }: { caseId: string }) {
   const { t } = useTranslation();
-  const { data } = useQuery({
+  const { data, refetch } = useQuery({
     queryKey: ["pro", caseId, "ai_outputs"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("ai_outputs")
-        .select("id, output_type, version, content, created_at")
-        .eq("case_id", caseId)
-        .order("created_at", { ascending: false });
-      return data ?? [];
+      const [outputs, reviews] = await Promise.all([
+        supabase
+          .from("ai_outputs")
+          .select(
+            "id, output_type, version, content, stale, unsupported_sentences_removed, created_at",
+          )
+          .eq("case_id", caseId)
+          .is("superseded_by_id", null)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("professional_reviews")
+          .select("target_id, disposition")
+          .eq("case_id", caseId)
+          .eq("target_type", "ai_output")
+          .in("disposition", ["accepted", "edited"]),
+      ]);
+      const reviewed = new Set((reviews.data ?? []).map((r) => r.target_id as string));
+      return { outputs: outputs.data ?? [], reviewed };
     },
   });
+
+  const outputs = data?.outputs ?? [];
   return (
     <div className="space-y-3">
       <p className="text-[13px] text-muted-foreground">{t("pro.summaries_intro")}</p>
-      {(data ?? []).map((s) => (
+      {outputs.map((s) => (
         <CollapsibleAISummary
           key={s.id}
           title={`${s.output_type} · v${s.version} · ${new Date(s.created_at).toLocaleString()}`}
         >
-          <pre className="overflow-x-auto whitespace-pre-wrap text-[13px]">
-            {JSON.stringify(s.content, null, 2)}
-          </pre>
+          <SummaryBody content={s.content} />
+          {s.unsupported_sentences_removed > 0 ? (
+            <p className="mt-2 text-[12px] text-muted-foreground">
+              {t("pro.removed_sentences", { count: s.unsupported_sentences_removed })}
+            </p>
+          ) : null}
           <div className="mt-3">
             <ReviewActionBar
               caseId={caseId}
               targetType="ai_output"
               targetId={s.id}
-              aiOriginalText={JSON.stringify(s.content)}
+              aiOriginalText={renderSummaryText(s.content as never)}
+              onDone={refetch}
             />
           </div>
+          <ExportControl
+            caseId={caseId}
+            summaryId={s.id}
+            stale={s.stale}
+            reviewed={data?.reviewed.has(s.id) ?? false}
+          />
         </CollapsibleAISummary>
       ))}
-      {(data ?? []).length === 0 ? (
+      {outputs.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("pro.empty_summaries")}</p>
+      ) : null}
+    </div>
+  );
+}
+
+function SummaryBody({ content }: { content: unknown }) {
+  const c = content as SummaryContent | null;
+  if (!c?.sections?.length) {
+    return (
+      <pre className="overflow-x-auto whitespace-pre-wrap text-[13px]">
+        {JSON.stringify(content, null, 2)}
+      </pre>
+    );
+  }
+  return (
+    <div className="space-y-3">
+      {c.sections
+        .filter((s) => s.sentences.length > 0)
+        .map((s) => (
+          <section key={s.key}>
+            <h4 className="text-[14px] font-medium">{s.heading}</h4>
+            <p className="mt-1 text-[14px]">{s.sentences.map((sent) => sent.text).join(" ")}</p>
+          </section>
+        ))}
+      <div className="rounded-md border-2 border-foreground/70 p-3">
+        <h4 className="text-[13px] font-semibold">{NOT_ASSESSED_HEADING}</h4>
+        <p className="mt-1 text-[13px]">{c.not_assessed || NOT_ASSESSED_TEXT}</p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * GATE 2 at the point of use. The button is disabled and the reason stated
+ * whenever the summary has not been reviewed or has gone stale — the server
+ * function and the database trigger refuse the same cases regardless.
+ */
+function ExportControl({
+  caseId,
+  summaryId,
+  stale,
+  reviewed,
+}: {
+  caseId: string;
+  summaryId: string;
+  stale: boolean;
+  reviewed: boolean;
+}) {
+  const { t } = useTranslation();
+  const createExport = useServerFn(createExportPackage);
+  const download = useServerFn(recordExportDownload);
+  const [busy, setBusy] = useState(false);
+
+  const blockedReason = stale
+    ? t("pro.export_blocked_stale")
+    : !reviewed
+      ? t("pro.export_blocked_unreviewed")
+      : null;
+
+  async function run() {
+    try {
+      setBusy(true);
+      const res = await createExport({ data: { caseId, summaryOutputId: summaryId } });
+      const link = await download({ data: { exportId: res.exportId } });
+      window.open(link.url, "_blank", "noopener,noreferrer");
+      toast.success(t("pro.export_created"));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mt-3 border-t pt-3">
+      <Button size="sm" onClick={run} disabled={busy || !!blockedReason}>
+        {t("pro.export_button")}
+      </Button>
+      {blockedReason ? (
+        <p className="mt-2 text-[13px] text-muted-foreground">{blockedReason}</p>
       ) : null}
     </div>
   );
@@ -595,14 +686,14 @@ function AuditTab({ caseId }: { caseId: string }) {
     queryKey: ["pro", caseId, "audit"],
     queryFn: () => listReviews(caseId),
   });
-  if (!data?.length)
-    return <p className="text-sm text-muted-foreground">{t("pro.empty_audit")}</p>;
+  if (!data?.length) return <p className="text-sm text-muted-foreground">{t("pro.empty_audit")}</p>;
   return (
     <ul className="space-y-2">
       {data.map((r) => {
-        const content = (r.edited_content ?? null) as
-          | { edited_text?: string | null; ai_original_text?: string | null }
-          | null;
+        const content = (r.edited_content ?? null) as {
+          edited_text?: string | null;
+          ai_original_text?: string | null;
+        } | null;
         return (
           <li key={r.id} className="rounded-md border bg-surface-raised p-3 text-[14px]">
             <p className="text-[12px] text-muted-foreground">
@@ -613,9 +704,7 @@ function AuditTab({ caseId }: { caseId: string }) {
                 <summary className="cursor-pointer text-[12px] text-muted-foreground">
                   {t("pro.audit_ai_original")}
                 </summary>
-                <p className="mt-1 whitespace-pre-wrap text-[13px]">
-                  {content.ai_original_text}
-                </p>
+                <p className="mt-1 whitespace-pre-wrap text-[13px]">{content.ai_original_text}</p>
               </details>
             ) : null}
             {content?.edited_text ? (
