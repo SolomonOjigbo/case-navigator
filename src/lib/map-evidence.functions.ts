@@ -19,7 +19,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { FORBIDDEN_VOCABULARY, PROBABILITY_PATTERNS } from "./ai-prompts";
 
-const MODEL = "google/gemini-2.5-flash";
+import { AI_MODEL as MODEL } from "./ai-model";
 export const MAP_EVIDENCE_PROMPT_VERSION = "map-evidence@2026-07-25.1";
 
 export const RELATIONSHIP_ENUM = [
@@ -269,25 +269,13 @@ Return JSON:
 }`;
 }
 
-async function callModel(apiKey: string, prompt: string): Promise<unknown> {
-  const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: MODEL,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: SYSTEM },
-        { role: "user", content: prompt },
-      ],
-    }),
-  });
-  if (!resp.ok) throw new Error(`AI gateway ${resp.status}`);
-  const json = (await resp.json()) as { choices?: Array<{ message?: { content?: string } }> };
+async function callModel(prompt: string): Promise<unknown> {
+  const { callModelJSON } = await import("./ai-gateway.server");
   try {
-    return JSON.parse(json.choices?.[0]?.message?.content ?? "{}");
-  } catch {
-    return {};
+    return await callModelJSON({ system: SYSTEM, user: prompt });
+  } catch (err) {
+    if (err instanceof SyntaxError) return {};
+    throw err;
   }
 }
 
@@ -324,8 +312,6 @@ export const mapEvidence = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => InputSchema.parse(i))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) throw new Error("LOVABLE_API_KEY missing");
 
     const { data: caseRow } = await supabase
       .from("cases")
@@ -539,7 +525,7 @@ export const mapEvidence = createServerFn({ method: "POST" })
 
       let raw: unknown;
       try {
-        raw = await callModel(apiKey, prompt);
+        raw = await callModel(prompt);
       } catch (err) {
         incidents.push(`gateway_error:${(err as Error).message}`);
         blocked++;

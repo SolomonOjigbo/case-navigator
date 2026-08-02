@@ -15,7 +15,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { FORBIDDEN_VOCABULARY, PROBABILITY_PATTERNS } from "./ai-prompts";
 import { passesGate1 } from "./gate1";
 
-const MODEL = "google/gemini-2.5-flash";
+import { AI_MODEL as MODEL } from "./ai-model";
 export const BUILD_EVENTS_PROMPT_VERSION = "build-events@2026-07-25.1";
 
 const InputSchema = z.object({ caseId: z.string().uuid() });
@@ -106,29 +106,13 @@ Return JSON of shape:
 { "events": [ { "title": "", "date_start": null, "date_end": null, "date_certainty": "unknown", "location_name": null, "user_description": "", "section_key": null, "feared_future_event": false, "possible_divergence": false, "fact_ids": [] } ], "notes": [] }`;
 }
 
-async function callModel(apiKey: string, facts: Array<Record<string, unknown>>): Promise<unknown> {
-  const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: MODEL,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: SYSTEM },
-        { role: "user", content: buildUserPrompt(facts) },
-      ],
-    }),
-  });
-  if (!resp.ok) {
-    const body = await resp.text().catch(() => "");
-    throw new Error(`AI gateway ${resp.status}: ${body.slice(0, 400)}`);
-  }
-  const json = (await resp.json()) as { choices?: Array<{ message?: { content?: string } }> };
-  const content = json.choices?.[0]?.message?.content ?? "{}";
+async function callModel(facts: Array<Record<string, unknown>>): Promise<unknown> {
+  const { callModelJSON } = await import("./ai-gateway.server");
   try {
-    return JSON.parse(content);
-  } catch {
-    return { events: [], notes: ["parse_error"] };
+    return await callModelJSON({ system: SYSTEM, user: buildUserPrompt(facts) });
+  } catch (err) {
+    if (err instanceof SyntaxError) return { events: [], notes: ["parse_error"] };
+    throw err;
   }
 }
 
@@ -137,8 +121,6 @@ export const buildEvents = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => InputSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) throw new Error("LOVABLE_API_KEY missing");
 
     const { data: caseRow, error: caseErr } = await supabase
       .from("cases")
@@ -210,7 +192,7 @@ export const buildEvents = createServerFn({ method: "POST" })
           : null,
     }));
 
-    const raw = await callModel(apiKey, promptFacts);
+    const raw = await callModel(promptFacts);
     const parsed = ProposalResponse.safeParse(raw);
 
     const incidents: string[] = [];

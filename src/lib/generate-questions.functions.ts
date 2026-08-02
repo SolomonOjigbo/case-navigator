@@ -11,7 +11,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { findForbiddenWord } from "./clarify-language";
 import { PROBABILITY_PATTERNS } from "./ai-prompts";
 
-const MODEL = "google/gemini-2.5-flash";
+import { AI_MODEL as MODEL } from "./ai-model";
 export const QUESTIONS_PROMPT_VERSION = "generate-questions@2026-07-25.1";
 
 const InputSchema = z.object({ caseId: z.string().uuid() });
@@ -72,7 +72,7 @@ export const generateQuestions = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => InputSchema.parse(i))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const apiKey = process.env.LOVABLE_API_KEY;
+    const aiConfigured = !!process.env.ANTHROPIC_API_KEY;
 
     const { data: caseRow } = await supabase
       .from("cases")
@@ -104,7 +104,7 @@ export const generateQuestions = createServerFn({ method: "POST" })
     const gapItems = (gaps ?? []) as OpenGap[];
     const attItems = (atts ?? []) as OpenAtt[];
 
-    if (!apiKey || (clarItems.length === 0 && gapItems.length === 0 && attItems.length === 0)) {
+    if (!aiConfigured || (clarItems.length === 0 && gapItems.length === 0 && attItems.length === 0)) {
       return { ok: true as const, inserted: 0, dropped: 0 };
     }
 
@@ -124,21 +124,8 @@ Return JSON: { "questions": [ { "kind": "self"|"lawyer", "text": "…", "source_
 
     let raw: unknown = {};
     try {
-      const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: MODEL,
-          response_format: { type: "json_object" },
-          messages: [
-            { role: "system", content: SYSTEM },
-            { role: "user", content: prompt },
-          ],
-        }),
-      });
-      if (!resp.ok) throw new Error(`gateway_${resp.status}`);
-      const j = (await resp.json()) as { choices?: Array<{ message?: { content?: string } }> };
-      raw = JSON.parse(j.choices?.[0]?.message?.content ?? "{}");
+      const { callModelJSON } = await import("./ai-gateway.server");
+      raw = await callModelJSON({ system: SYSTEM, user: prompt });
     } catch (err) {
       await supabase.from("ai_outputs").insert({
         case_id: data.caseId,

@@ -25,7 +25,7 @@ import {
   type SummarySection,
 } from "./summary-text";
 
-const MODEL = "google/gemini-2.5-flash";
+import { AI_MODEL as MODEL } from "./ai-model";
 
 const InputSchema = z.object({
   caseId: z.string().uuid(),
@@ -159,29 +159,13 @@ Return JSON of shape:
 { "sections": [ { "key": "", "heading": "", "sentences": [ { "text": "", "source_ids": [] } ] } ], "notes": [] }`;
 }
 
-async function callModel(apiKey: string, mode: SummaryMode, material: Material): Promise<unknown> {
-  const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: MODEL,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: SYSTEM },
-        { role: "user", content: buildUserPrompt(mode, material) },
-      ],
-    }),
-  });
-  if (!resp.ok) {
-    const body = await resp.text().catch(() => "");
-    throw new Error(`AI gateway ${resp.status}: ${body.slice(0, 400)}`);
-  }
-  const json = (await resp.json()) as { choices?: Array<{ message?: { content?: string } }> };
-  const content = json.choices?.[0]?.message?.content ?? "{}";
+async function callModel(mode: SummaryMode, material: Material): Promise<unknown> {
+  const { callModelJSON } = await import("./ai-gateway.server");
   try {
-    return JSON.parse(content);
-  } catch {
-    return { sections: [], notes: ["parse_error"] };
+    return await callModelJSON({ system: SYSTEM, user: buildUserPrompt(mode, material) });
+  } catch (err) {
+    if (err instanceof SyntaxError) return { sections: [], notes: ["parse_error"] };
+    throw err;
   }
 }
 
@@ -191,8 +175,6 @@ export const generateSummary = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { caseId, mode } = data;
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) throw new Error("LOVABLE_API_KEY missing");
 
     const { data: caseRow, error: caseErr } = await supabase
       .from("cases")
@@ -283,7 +265,7 @@ export const generateSummary = createServerFn({ method: "POST" })
     };
 
     // ---- Model call + guardrails ----------------------------------------
-    const raw = await callModel(apiKey, mode, material);
+    const raw = await callModel(mode, material);
     const parsed = ResponseSchema.safeParse(raw);
     if (!parsed.success) {
       await supabase.from("ai_outputs").insert({

@@ -13,7 +13,7 @@ import {
 import { runGuardrails, type GuardrailCounts } from "./guardrails";
 import { parseCascadeCounts, type CascadeCounts } from "./corrections";
 
-const MODEL = "google/gemini-2.5-flash";
+import { AI_MODEL as MODEL } from "./ai-model";
 
 const InputSchema = z.object({
   caseId: z.string().uuid(),
@@ -30,45 +30,22 @@ type SourceContext = {
   provenance: "document_extracted" | "user_stated";
 };
 
-async function callModelOnce(
-  apiKey: string,
-  ctx: SourceContext,
-  sourceId: string,
-): Promise<unknown> {
-  const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: FACT_EXTRACTION_SYSTEM },
-        {
-          role: "user",
-          content: buildFactExtractionUserPrompt({
-            sourceKindLabel: ctx.kindLabel,
-            sourceId,
-            sourceText: ctx.text,
-          }),
-        },
-      ],
-    }),
-  });
-  if (!resp.ok) {
-    const body = await resp.text().catch(() => "");
-    throw new Error(`AI gateway ${resp.status}: ${body.slice(0, 400)}`);
-  }
-  const json = (await resp.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
-  };
-  const content = json.choices?.[0]?.message?.content ?? "{}";
+async function callModelOnce(ctx: SourceContext, sourceId: string): Promise<unknown> {
+  const { callModelJSON } = await import("./ai-gateway.server");
   try {
-    return JSON.parse(content);
-  } catch {
-    return { source_id: sourceId, facts: [], extraction_notes: ["parse_error"] };
+    return await callModelJSON({
+      system: FACT_EXTRACTION_SYSTEM,
+      user: buildFactExtractionUserPrompt({
+        sourceKindLabel: ctx.kindLabel,
+        sourceId,
+        sourceText: ctx.text,
+      }),
+    });
+  } catch (err) {
+    if (err instanceof SyntaxError) {
+      return { source_id: sourceId, facts: [], extraction_notes: ["parse_error"] };
+    }
+    throw err;
   }
 }
 
@@ -78,8 +55,6 @@ export const extractFacts = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { caseId, sourceId } = data;
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) throw new Error("LOVABLE_API_KEY missing");
 
     // Ownership check via RLS
     const { data: caseRow, error: caseErr } = await supabase
@@ -147,9 +122,9 @@ export const extractFacts = createServerFn({ method: "POST" })
     }
 
     // Call model, retry once on schema failure, then bail.
-    let guardrail = runGuardrails(await callModelOnce(apiKey, ctx, sourceId), ctx.text);
+    let guardrail = runGuardrails(await callModelOnce(ctx, sourceId), ctx.text);
     if (!guardrail.ok && guardrail.reason === "schema_invalid") {
-      guardrail = runGuardrails(await callModelOnce(apiKey, ctx, sourceId), ctx.text);
+      guardrail = runGuardrails(await callModelOnce(ctx, sourceId), ctx.text);
     }
 
     // Record the ai_output attempt regardless of outcome — this is our audit trail.

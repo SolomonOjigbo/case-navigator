@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const OCR_MODEL = "google/gemini-2.5-flash";
+import { AI_MODEL as OCR_MODEL } from "./ai-model";
 
 const schema = z.object({
   caseId: z.string().uuid(),
@@ -33,7 +33,6 @@ async function bufferToBase64(buf: ArrayBuffer): Promise<string> {
 }
 
 async function ocrWithGemini(
-  apiKey: string,
   dataUrl: string,
 ): Promise<OcrResult> {
   const prompt = `Transcribe every visible word on this document page verbatim.
@@ -44,39 +43,19 @@ Return JSON only with this exact shape:
 "language" is the BCP-47 primary language of the visible text, or null if unknown.
 If the image is unreadable, return "quality":"unreadable", "confidence":0, and "text":"".`;
 
-  const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: OCR_MODEL,
-      response_format: { type: "json_object" },
-      messages: [
-        {
-          role: "user",
-          content: [
-            { type: "text", text: prompt },
-            { type: "image_url", image_url: { url: dataUrl } },
-          ],
-        },
-      ],
-    }),
-  });
-  if (!resp.ok) {
-    const body = await resp.text().catch(() => "");
-    throw new Error(`OCR failed (${resp.status}): ${body.slice(0, 400)}`);
-  }
-  const json = (await resp.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
-  };
-  const content = json.choices?.[0]?.message?.content ?? "{}";
+  // The OCR prompt is the whole instruction, so it doubles as the system
+  // prompt; the image is the only user content that matters.
+  const { callModelJSON } = await import("./ai-gateway.server");
   let parsed: Partial<OcrResult> = {};
   try {
-    parsed = JSON.parse(content) as Partial<OcrResult>;
-  } catch {
-    parsed = { text: content, quality: "acceptable", confidence: 0.6, language: null };
+    parsed = (await callModelJSON({
+      system: prompt,
+      user: "Transcribe the visible text in this image.",
+      imageDataUrl: dataUrl,
+    })) as Partial<OcrResult>;
+  } catch (err) {
+    if (!(err instanceof SyntaxError)) throw err;
+    parsed = { text: "", quality: "unreadable", confidence: 0, language: null };
   }
   const quality = (["good", "acceptable", "poor", "unreadable"] as const).includes(
     (parsed.quality ?? "acceptable") as OcrResult["quality"],
@@ -180,8 +159,7 @@ export const processDocument = createServerFn({ method: "POST" })
       !sniffedMime.includes("heic") && sniffedMime !== "image/tiff";
     const isPdf = sniffedMime === "application/pdf";
 
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) {
+    if (!process.env.ANTHROPIC_API_KEY) {
       await markStatus({ processing_status: "failed" });
       throw new Error("OCR is not configured");
     }
@@ -192,7 +170,7 @@ export const processDocument = createServerFn({ method: "POST" })
       const dataUrl = `data:${sniffedMime};base64,${b64}`;
       let ocr: OcrResult;
       try {
-        ocr = await ocrWithGemini(apiKey, dataUrl);
+        ocr = await ocrWithGemini(dataUrl);
       } catch (err) {
         await markStatus({ processing_status: "failed" });
         throw err;

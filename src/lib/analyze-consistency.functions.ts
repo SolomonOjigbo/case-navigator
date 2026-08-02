@@ -15,7 +15,7 @@ import {
   type ClarifyUrgency,
 } from "./clarify-language";
 
-const MODEL = "google/gemini-2.5-flash";
+import { AI_MODEL as MODEL } from "./ai-model";
 export const CONSISTENCY_PROMPT_VERSION = "analyze-consistency@2026-07-25.1";
 
 const InputSchema = z.object({ caseId: z.string().uuid() });
@@ -102,7 +102,7 @@ export const analyzeConsistency = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => InputSchema.parse(i))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const apiKey = process.env.LOVABLE_API_KEY;
+    const aiConfigured = !!process.env.ANTHROPIC_API_KEY;
 
     const { data: caseRow } = await supabase
       .from("cases")
@@ -389,9 +389,9 @@ export const analyzeConsistency = createServerFn({ method: "POST" })
 
     const modelIncidents: string[] = [];
     let modelDrafts = 0;
-    if (cands.length > 0 && apiKey) {
+    if (cands.length > 0 && aiConfigured) {
       try {
-        const raw = await callSemanticModel(apiKey, cands);
+        const raw = await callSemanticModel(cands);
         for (const item of raw) {
           const pair = cands.find(
             (c) => c.a.id === item.event_a_id && c.b.id === item.event_b_id,
@@ -492,7 +492,6 @@ const ItemSchema = z.object({
 const RespSchema = z.object({ items: z.array(ItemSchema) });
 
 async function callSemanticModel(
-  apiKey: string,
   cands: { a: { id: string; title: string; user_description: string | null; date_start: string | null }; b: { id: string; title: string; user_description: string | null; date_start: string | null } }[],
 ): Promise<z.infer<typeof ItemSchema>[]> {
   const prompt = `Compare the following pairs. For each pair decide same_event=true or false.
@@ -507,24 +506,12 @@ ${JSON.stringify(
 
 Return JSON: { "items": [ { "event_a_id": "...", "event_b_id": "...", "same_event": true, "explanation": "short neutral sentence" } ] }`;
 
-  const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: MODEL,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: SEMANTIC_SYSTEM },
-        { role: "user", content: prompt },
-      ],
-    }),
-  });
-  if (!resp.ok) throw new Error(`gateway_${resp.status}`);
-  const json = (await resp.json()) as { choices?: Array<{ message?: { content?: string } }> };
+  const { callModelJSON } = await import("./ai-gateway.server");
   let parsedRaw: unknown = {};
   try {
-    parsedRaw = JSON.parse(json.choices?.[0]?.message?.content ?? "{}");
-  } catch {
+    parsedRaw = await callModelJSON({ system: SEMANTIC_SYSTEM, user: prompt });
+  } catch (err) {
+    if (!(err instanceof SyntaxError)) throw err;
     parsedRaw = {};
   }
   const parsed = RespSchema.safeParse(parsedRaw);

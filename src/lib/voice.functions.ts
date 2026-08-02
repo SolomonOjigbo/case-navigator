@@ -2,7 +2,13 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const STT_MODEL = "openai/gpt-4o-mini-transcribe";
+// Speech-to-text is the one AI call that did NOT move to Anthropic: there is
+// no transcription endpoint in the Messages API. This keeps the original
+// OpenAI-shaped multipart call and points it at a configurable host, so any
+// OpenAI-compatible transcription service works (OpenAI itself, Groq, a
+// self-hosted Whisper). Configure STT_API_KEY to switch voice notes back on.
+const STT_BASE_URL = process.env.STT_BASE_URL ?? "https://api.openai.com/v1";
+const STT_MODEL = process.env.STT_MODEL ?? "whisper-1";
 
 const transcribeSchema = z.object({
   documentId: z.string().uuid(),
@@ -34,7 +40,7 @@ export const transcribeVoiceNote = createServerFn({ method: "POST" })
       throw new Error(`Could not read audio: ${dlErr?.message ?? "unknown"}`);
     }
 
-    const apiKey = process.env.LOVABLE_API_KEY;
+    const apiKey = process.env.STT_API_KEY;
     if (!apiKey) throw new Error("Transcription is not configured");
 
     const ext = (data.storagePath.split(".").pop() || "webm").toLowerCase();
@@ -45,10 +51,11 @@ export const transcribeVoiceNote = createServerFn({ method: "POST" })
       form.append("language", data.language);
     }
 
-    const resp = await fetch(
-      "https://ai.gateway.lovable.dev/v1/audio/transcriptions",
-      { method: "POST", headers: { Authorization: `Bearer ${apiKey}` }, body: form },
-    );
+    const resp = await fetch(`${STT_BASE_URL}/audio/transcriptions`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}` },
+      body: form,
+    });
     if (!resp.ok) {
       const detail = await resp.text().catch(() => "");
       // Best-effort: mark the document failed so the UI can offer re-record.
@@ -63,7 +70,7 @@ export const transcribeVoiceNote = createServerFn({ method: "POST" })
       .insert({
         document_version_id: data.documentVersionId,
         page_number: 1,
-        engine: "lovable-stt",
+        engine: "openai-compatible-stt",
         engine_version: STT_MODEL,
         text: transcript,
         had_native_text_layer: false,
