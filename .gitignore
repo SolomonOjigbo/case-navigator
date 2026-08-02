@@ -19,7 +19,11 @@ dist-ssr
 .nitro
 *.local
 
-# Wrangler / Cloudflare
+# Vercel build output (nitro preset: vercel)
+.vercel
+
+# Wrangler / Cloudflare — no longer the deploy target, kept so stray local
+# experiments with the old preset don't get committed
 .wrangler/
 .dev.vars
 
