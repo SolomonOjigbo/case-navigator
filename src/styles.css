@@ -493,3 +493,23 @@
   line-height: 1.2;
   font-weight: 500;
 }
+
+/* ---------------------------------------------------------------------------
+ * Motion. Gentle and slow on purpose — this is a stressful context, so nothing
+ * should demand attention. The global prefers-reduced-motion rule above
+ * flattens all of it to a near-zero duration.
+ * ------------------------------------------------------------------------ */
+
+@keyframes casemap-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-9px); }
+}
+
+@utility float-slow {
+  animation: casemap-float 7s var(--ease-in-out-soft) infinite;
+}
+
+@utility float-slower {
+  animation: casemap-float 9s var(--ease-in-out-soft) infinite;
+  animation-delay: -3s;
+}

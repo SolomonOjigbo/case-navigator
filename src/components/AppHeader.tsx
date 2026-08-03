@@ -10,22 +10,37 @@ export function AppHeader() {
   const { user } = useSession();
 
   return (
-    <header className="border-b bg-surface-raised">
-      <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-4 py-3">
+    <header className="sticky top-0 z-30 border-b border-border/70 bg-surface-raised/85 backdrop-blur-md">
+      <div className="mx-auto flex w-full max-w-[1100px] items-center justify-between gap-3 px-4 py-2.5">
         <Link
           to="/"
-          className="text-lg font-semibold tracking-tight text-foreground no-underline"
+          className="flex shrink-0 items-center gap-2.5 no-underline"
+          aria-label={t("app.name")}
         >
-          {t("app.name")}
+          <span
+            aria-hidden="true"
+            className="elev-1 grid h-8 w-8 place-items-center rounded-lg bg-primary text-[15px] font-bold text-primary-foreground"
+          >
+            C
+          </span>
+          <span className="text-[1.0625rem] font-semibold tracking-tight text-foreground">
+            {t("app.name")}
+          </span>
         </Link>
-        <div className="flex items-center gap-2">
+
+        <div className="flex min-w-0 items-center gap-1.5">
           <LanguageSwitcher />
-          <Button asChild variant="ghost" size="sm">
+
+          {/* The two in-app destinations overflow a 375px viewport alongside
+              the language and account controls, and both are reachable from
+              inside the app, so they step aside on small screens. */}
+          <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
             <Link to="/community/feed">{t("community.nav_feed")}</Link>
           </Button>
-          <Button asChild variant="ghost" size="sm">
+          <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
             <Link to="/app/story">{t("app_shell.brand")}</Link>
           </Button>
+
           {user ? (
             <Button
               variant="outline"

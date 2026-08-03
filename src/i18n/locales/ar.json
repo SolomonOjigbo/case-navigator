@@ -24,7 +24,22 @@
     "already_have_account": "I already have an account",
     "trust_private": "خاص بشكل افتراضي",
     "trust_control": "أنت تختار من يراه",
-    "trust_language": "بلغتك"
+    "trust_language": "بلغتك",
+    "badge": "مجاني · كندا",
+    "how_title": "كيف يعمل",
+    "how_intro": "ثلاث خطوات، بالوتيرة التي تناسبك.",
+    "step1_title": "اكتب ما تتذكره",
+    "step1_body": "بكلماتك الخاصة. لا شيء إلزامي، ولا وقت محدد، ويمكنك التوقف والعودة في أي وقت.",
+    "step2_title": "أضف الأوراق التي لديك",
+    "step2_body": "صوّرها أو ارفعها. لا يتم تغيير ملفك الأصلي أبدًا — تُحفظ الملاحظات والنسخ إلى جانبه.",
+    "step3_title": "شاركها عندما تكون مستعدًا",
+    "step3_body": "يراجعها معك مختص قانوني تختاره بنفسك. لا شيء يغادر هذه الأداة حتى تقرر ذلك.",
+    "cta_title": "ابدأ متى كنت مستعدًا.",
+    "cta_body": "يتم حفظ عملك أولًا بأول. يمكنك التوقف والعودة إليه.",
+    "preview_progress": "4 من 15 قسمًا",
+    "preview_story": "عنك",
+    "preview_docs": "صفحة جواز السفر",
+    "preview_timeline": "غادرت المنزل"
   },
   "auth": {
     "signin_heading": "Sign in",
@@ -180,7 +195,8 @@
     "magic_link_sent": "Check your email for a sign-in link.",
     "magic_link_hint": "We will email you a link. Open it on this device.",
     "recovery_notice_title": "About recovery codes",
-    "recovery_notice_body": "After you create your account, we will show you 8 recovery codes. If you lose access to your email or phone, these codes let you get back in. Save them somewhere safe, away from your phone."
+    "recovery_notice_body": "After you create your account, we will show you 8 recovery codes. If you lose access to your email or phone, these codes let you get back in. Save them somewhere safe, away from your phone.",
+    "google_unavailable": "لم يتم إعداد تسجيل الدخول عبر Google لهذا الموقع بعد. يرجى استخدام بريدك الإلكتروني وكلمة المرور."
   },
   "recovery": {
     "heading": "Save your recovery codes",

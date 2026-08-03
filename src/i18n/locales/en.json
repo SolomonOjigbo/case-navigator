@@ -24,7 +24,22 @@
     "already_have_account": "I already have an account",
     "trust_private": "Private by default",
     "trust_control": "You choose who sees it",
-    "trust_language": "Your language"
+    "trust_language": "Your language",
+    "badge": "Free to use · Canada",
+    "how_title": "How it works",
+    "how_intro": "Three steps, at whatever pace suits you.",
+    "step1_title": "Write down what you remember",
+    "step1_body": "In your own words. Nothing is required, nothing is timed, and you can stop and come back at any point.",
+    "step2_title": "Add the papers you have",
+    "step2_body": "Photograph or upload them. Your original file is never altered — notes and copies are kept alongside it.",
+    "step3_title": "Share it when you are ready",
+    "step3_body": "A legal professional you choose reviews it with you. Nothing leaves this tool until you say so.",
+    "cta_title": "Start whenever you are ready.",
+    "cta_body": "Your work is saved as you go. You can pause and come back to it.",
+    "preview_progress": "4 of 15 sections",
+    "preview_story": "About you",
+    "preview_docs": "Passport page",
+    "preview_timeline": "Left home"
   },
   "auth": {
     "signin_heading": "Sign in",
@@ -373,7 +388,8 @@
     "magic_link_sent": "Check your email for a sign-in link.",
     "magic_link_hint": "We will email you a link. Open it on this device.",
     "recovery_notice_title": "About recovery codes",
-    "recovery_notice_body": "After you create your account, we will show you 8 recovery codes. If you lose access to your email or phone, these codes let you get back in. Save them somewhere safe, away from your phone."
+    "recovery_notice_body": "After you create your account, we will show you 8 recovery codes. If you lose access to your email or phone, these codes let you get back in. Save them somewhere safe, away from your phone.",
+    "google_unavailable": "Google sign-in is not set up for this site yet. Please use your email and password."
   },
   "recovery": {
     "heading": "Save your recovery codes",

@@ -3,7 +3,6 @@ import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -99,16 +98,26 @@ function AuthView() {
 
   async function handleGoogle() {
     setBusy(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+    // Straight to Supabase. This used to go through Lovable's hosted auth
+    // service, which belonged to the account the project was transferred
+    // from — every attempt came back 404.
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}${search.next ?? "/app/story"}`,
+      },
     });
-    if (result.error) {
-      toast.error(result.error.message);
+    if (error) {
+      // Supabase says "Unsupported provider: provider is not enabled" when
+      // Google has not been configured for the project. That is a setup
+      // problem, not something the person signing in can act on, so say so
+      // plainly and leave email sign-in available.
+      const notConfigured = /provider is not enabled|unsupported provider/i.test(error.message);
+      toast.error(notConfigured ? t("auth_extra.google_unavailable") : error.message);
       setBusy(false);
       return;
     }
-    if (result.redirected) return;
-    navigate({ to: search.next ?? "/app/story" });
+    // On success the browser is redirected to Google; nothing follows.
   }
 
   return (
