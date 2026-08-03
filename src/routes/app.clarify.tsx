@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+import { EmptyState } from "@/components/shell/EmptyState";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useTranslation } from "react-i18next";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, CheckCircle2, FileQuestion } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -152,13 +153,19 @@ function View() {
       </div>
     );
   }
-  if (!data?.caseId) return <p className="text-muted-foreground">{t("clarify.no_case")}</p>;
+  if (!data?.caseId) {
+    return (
+      <div className="reading-column py-2 sm:py-4">
+        <EmptyState icon={FileQuestion} title={t("clarify.no_case")} />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <header className="space-y-2">
         <h1 className="text-page-title text-foreground">{t("clarify.title")}</h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-lead">
           We noticed a few things that might be worth a second look. You can answer any of these
           now, come back later, or ask a lawyer to check them for you. None of this changes your
           story unless you say so.
@@ -216,7 +223,7 @@ function View() {
 
         <TabsContent value="gaps" className="mt-4 space-y-4">
           {data.gaps.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t("clarify.empty")}</p>
+            <EmptyState icon={CheckCircle2} title={t("clarify.empty")} />
           ) : (
             data.gaps.map((g) => (
               <GapCard

@@ -24,7 +24,7 @@ export const Route = createFileRoute("/app/story/$section")({
   component: SectionView,
   notFoundComponent: () => {
     return (
-      <div className="reading-column py-10">
+      <div className="reading-column py-2 sm:py-4">
         <p className="text-sm text-muted-foreground">Section not found.</p>
         <Button asChild variant="link" className="mt-2">
           <Link to="/app/story">Back to sections</Link>
@@ -91,12 +91,12 @@ function SectionView() {
   );
 
   if (!user || caseQ.isLoading || responsesQ.isLoading) {
-    return <div className="reading-column py-10 text-sm text-muted-foreground">{t("common.loading")}</div>;
+    return <div className="reading-column py-2 sm:py-4 text-sm text-muted-foreground">{t("common.loading")}</div>;
   }
   if (!caseQ.data) return null;
 
   return (
-    <div className="reading-column py-6">
+    <div className="reading-column py-2 sm:py-4">
       <div className="mb-4 flex items-center justify-between gap-3">
         <Button variant="ghost" size="sm" asChild>
           <Link to="/app/story">

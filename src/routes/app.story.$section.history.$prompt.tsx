@@ -44,7 +44,7 @@ function HistoryView() {
 
   if (!question || !sectionCfg) {
     return (
-      <div className="reading-column py-10 text-sm text-muted-foreground">
+      <div className="reading-column py-2 sm:py-4 text-sm text-muted-foreground">
         Question not found.
       </div>
     );
@@ -56,7 +56,7 @@ function HistoryView() {
   });
 
   return (
-    <div className="reading-column py-6">
+    <div className="reading-column py-2 sm:py-4">
       <Button variant="ghost" size="sm" asChild>
         <Link to="/app/story/$section" params={{ section }}>
           <ChevronLeft aria-hidden className="me-1 h-4 w-4" />

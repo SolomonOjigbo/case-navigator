@@ -7,15 +7,12 @@
 -- the prompt pack: this build is for workflow validation and usability
 -- testing, not for a real person's narrative and passport.
 --
--- Run with: supabase db reset   (local only)
+-- Run with: supabase db reset   (local)
+-- Also safe to run against a disposable hosted dev project, as the postgres
+-- role, e.g. psql "$SUPABASE_DB_URL" -f supabase/seed.sql
 -- Every row is tagged reference_code 'SEED-*' so the app can show the
 -- "Synthetic test data" banner and so this data is trivially identifiable.
 -- =========================================================================
-
--- The story_responses append-only trigger permits service_role only, so set
--- the role explicitly rather than relying on the reset context. SET (not SET
--- LOCAL) because psql runs this file outside an explicit transaction.
-SET ROLE service_role;
 
 -- pgcrypto lives in the extensions schema on Supabase and in public on some
 -- local stacks; include both so crypt()/gen_salt() resolve either way.
@@ -23,14 +20,28 @@ SET search_path = public, extensions;
 
 -- -------------------------------------------------------------------------
 -- Fictional users
+--
+-- Inserted as the connected role, NOT service_role: service_role has no
+-- privileges on auth.users, so seeding under it fails with "permission denied
+-- for table users" on a hosted project.
+--
+-- The empty-string token columns are load-bearing. GoTrue scans them into
+-- non-nullable Go strings, so leaving them NULL makes every subsequent auth
+-- request fail with a 500 "Database error querying schema" — including
+-- password sign-in for accounts that look perfectly fine in the table.
 -- -------------------------------------------------------------------------
-INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data)
+INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, confirmation_token, recovery_token, email_change_token_new, email_change, email_change_token_current, phone_change, phone_change_token, reauthentication_token)
 VALUES
-  ('aaaaaaaa-0000-4000-8000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'seed.amina@example.test',  crypt('seed-password-1', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"Amina Testcase"}'),
-  ('aaaaaaaa-0000-4000-8000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'seed.bilal@example.test',  crypt('seed-password-2', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"Bilal Fictional"}'),
-  ('aaaaaaaa-0000-4000-8000-000000000003', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'seed.chen@example.test',   crypt('seed-password-3', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"Chen Imaginary"}'),
-  ('bbbbbbbb-0000-4000-8000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'seed.lawyer@example.test', crypt('seed-password-4', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"Sam Notreal (fictional lawyer)"}')
+  ('aaaaaaaa-0000-4000-8000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'seed.amina@example.test',  crypt('seed-password-1', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"Amina Testcase"}', '', '', '', '', '', '', '', ''),
+  ('aaaaaaaa-0000-4000-8000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'seed.bilal@example.test',  crypt('seed-password-2', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"Bilal Fictional"}', '', '', '', '', '', '', '', ''),
+  ('aaaaaaaa-0000-4000-8000-000000000003', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'seed.chen@example.test',   crypt('seed-password-3', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"Chen Imaginary"}', '', '', '', '', '', '', '', ''),
+  ('bbbbbbbb-0000-4000-8000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'seed.lawyer@example.test', crypt('seed-password-4', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"Sam Notreal (fictional lawyer)"}', '', '', '', '', '', '', '', '')
 ON CONFLICT (id) DO NOTHING;
+
+-- Everything below is public schema. The story_responses append-only trigger
+-- only guards UPDATE and DELETE (and this seed only INSERTs), so no role
+-- switch is needed here either — running the whole file as one role keeps it
+-- working on both a local reset and a hosted dev project.
 
 -- -------------------------------------------------------------------------
 -- Fictional organisation and professional
@@ -182,4 +193,3 @@ VALUES
 ON CONFLICT (id) DO NOTHING;
 
 RESET search_path;
-RESET ROLE;

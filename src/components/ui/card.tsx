@@ -2,11 +2,14 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+// elev-1 rather than Tailwind's grey `shadow`: the elevation tokens are tinted
+// with the ink hue, so cards sit on the canvas instead of looking smudged.
+// See the elevation scale in styles.css.
 const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn("rounded-xl border bg-card text-card-foreground shadow", className)}
+      className={cn("elev-1 rounded-xl border bg-card text-card-foreground", className)}
       {...props}
     />
   ),

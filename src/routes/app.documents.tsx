@@ -2,11 +2,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Upload, Camera, FileText, ArrowRight } from "lucide-react";
+import { Upload, Camera, FileText, ArrowRight, ShieldCheck, FolderOpen } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { AIGeneratedBanner } from "@/components/primitives/AIGeneratedBanner";
+import { PageHeader } from "@/components/shell/PageHeader";
+import { EmptyState } from "@/components/shell/EmptyState";
 import { useSession } from "@/hooks/use-session";
 import { getOrCreateOwnCase } from "@/lib/case-service";
 import {
@@ -18,7 +20,14 @@ import {
 } from "@/lib/documents-service";
 import { processDocument } from "@/lib/documents.functions";
 
-type Progress = { id: string; name: string; loaded: number; total: number; state: "uploading" | "processing" | "done" | "error"; message?: string };
+type Progress = {
+  id: string;
+  name: string;
+  loaded: number;
+  total: number;
+  state: "uploading" | "processing" | "done" | "error";
+  message?: string;
+};
 
 function View() {
   const { t } = useTranslation();
@@ -96,16 +105,11 @@ function View() {
 
   return (
     <div className="reading-column py-2 sm:py-4">
-      <h1 className="text-page-title text-foreground">
-        {t("documents.title")}
-      </h1>
-      <p className="mt-2 text-[15px] text-muted-foreground">{t("documents.intro")}</p>
+      <PageHeader title={t("documents.title")} intro={t("documents.intro")} />
 
-      <div
-        role="note"
-        className="mt-4 rounded-md border-l-4 border-l-primary bg-surface-raised p-3 text-sm text-foreground"
-      >
-        {t("documents.immutability_notice")}
+      <div role="note" className="note-reassure mb-6 flex items-start gap-2.5 text-sm">
+        <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+        <p className="m-0">{t("documents.immutability_notice")}</p>
       </div>
 
       <div
@@ -115,14 +119,23 @@ function View() {
         }}
         onDragLeave={() => setDragOver(false)}
         onDrop={onDrop}
-        className={`mt-6 rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
-          dragOver ? "border-primary bg-primary/5" : "border-border bg-surface-raised"
+        className={`rounded-2xl border-2 border-dashed p-7 text-center transition-colors duration-200 sm:p-9 ${
+          dragOver
+            ? "border-primary bg-accent"
+            : "border-border-strong bg-surface-raised hover:border-primary/50"
         }`}
       >
-        <Upload aria-hidden className="mx-auto h-8 w-8 text-muted-foreground" />
-        <p className="mt-3 text-base text-foreground">{t("documents.dropzone.title")}</p>
-        <p className="mt-1 text-sm text-muted-foreground">{t("documents.dropzone.hint")}</p>
-        <div className="mt-4 flex flex-wrap justify-center gap-2">
+        <span
+          aria-hidden="true"
+          className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-accent text-primary"
+        >
+          <Upload className="h-5 w-5" />
+        </span>
+        <p className="m-0 text-[0.9375rem] font-semibold text-foreground">
+          {t("documents.dropzone.title")}
+        </p>
+        <p className="m-0 mt-1 text-sm text-muted-foreground">{t("documents.dropzone.hint")}</p>
+        <div className="mt-5 flex flex-wrap justify-center gap-2">
           <Button
             type="button"
             size="lg"
@@ -182,19 +195,15 @@ function View() {
                   </span>
                 </div>
                 <Progress value={p.state === "done" ? 100 : pct} className="mt-2 h-2" />
-                {p.message && (
-                  <p className="mt-1 text-xs text-attention-foreground">{p.message}</p>
-                )}
+                {p.message && <p className="mt-1 text-xs text-attention-foreground">{p.message}</p>}
               </Card>
             );
           })}
         </div>
       )}
 
-      <h2 className="mt-10 text-xl font-semibold text-foreground">
-        {t("documents.inventory.title")}
-      </h2>
-      <div className="mt-2">
+      <h2 className="text-section-title mt-10 text-foreground">{t("documents.inventory.title")}</h2>
+      <div className="mt-3">
         <AIGeneratedBanner />
       </div>
 
@@ -203,25 +212,31 @@ function View() {
       )}
 
       {docsQ.data && docsQ.data.length === 0 && (
-        <p className="mt-4 text-sm text-muted-foreground">{t("documents.inventory.empty")}</p>
+        <div className="mt-4">
+          <EmptyState
+            icon={FolderOpen}
+            title={t("documents.inventory.empty")}
+            body={t("documents.dropzone.hint")}
+          />
+        </div>
       )}
 
       {docsQ.data && docsQ.data.length > 0 && (
         <>
-          <div className="mt-4 hidden overflow-x-auto md:block">
+          <div className="surface-card mt-4 hidden overflow-x-auto md:block">
             <table className="w-full text-sm">
-              <thead className="text-left text-xs uppercase tracking-wide text-muted-foreground">
+              <thead className="border-b border-border bg-surface-sunken/60 text-left text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-muted-foreground">
                 <tr>
-                  <th className="py-2 pe-3">{t("documents.cols.ref")}</th>
-                  <th className="py-2 pe-3">{t("documents.cols.name")}</th>
-                  <th className="py-2 pe-3">{t("documents.cols.appears_to_be")}</th>
-                  <th className="py-2 pe-3">{t("documents.cols.date")}</th>
-                  <th className="py-2 pe-3">{t("documents.cols.language")}</th>
-                  <th className="py-2 pe-3">{t("documents.cols.readability")}</th>
-                  <th className="py-2 pe-3">{t("documents.cols.translation")}</th>
-                  <th className="py-2 pe-3">{t("documents.cols.events")}</th>
-                  <th className="py-2 pe-3">{t("documents.cols.status")}</th>
-                  <th className="py-2" />
+                  <th className="px-3 py-2.5 pe-3">{t("documents.cols.ref")}</th>
+                  <th className="px-3 py-2.5 pe-3">{t("documents.cols.name")}</th>
+                  <th className="px-3 py-2.5 pe-3">{t("documents.cols.appears_to_be")}</th>
+                  <th className="px-3 py-2.5 pe-3">{t("documents.cols.date")}</th>
+                  <th className="px-3 py-2.5 pe-3">{t("documents.cols.language")}</th>
+                  <th className="px-3 py-2.5 pe-3">{t("documents.cols.readability")}</th>
+                  <th className="px-3 py-2.5 pe-3">{t("documents.cols.translation")}</th>
+                  <th className="px-3 py-2.5 pe-3">{t("documents.cols.events")}</th>
+                  <th className="px-3 py-2.5 pe-3">{t("documents.cols.status")}</th>
+                  <th className="px-3 py-2.5" />
                 </tr>
               </thead>
               <tbody>
@@ -253,15 +268,15 @@ function DocRowLine({ d }: { d: DocRow & { connected_events: number } }) {
   const { t } = useTranslation();
   return (
     <tr className="border-t border-border">
-      <td className="py-2 pe-3 font-mono text-xs">{d.reference_code}</td>
-      <td className="py-2 pe-3">{d.original_filename}</td>
-      <td className="py-2 pe-3">{d.doc_type ?? t("documents.unknown")}</td>
-      <td className="py-2 pe-3">{d.document_date ?? "—"}</td>
-      <td className="py-2 pe-3">{d.primary_language ?? "—"}</td>
-      <td className="py-2 pe-3">{t(readabilityKey(d.readability))}</td>
-      <td className="py-2 pe-3">{t(`documents.translation.${d.translation_status}`)}</td>
-      <td className="py-2 pe-3">{d.connected_events}</td>
-      <td className="py-2 pe-3">{t(statusKey(d.processing_status))}</td>
+      <td className="px-3 py-2.5 pe-3 font-mono text-xs">{d.reference_code}</td>
+      <td className="px-3 py-2.5 pe-3">{d.original_filename}</td>
+      <td className="px-3 py-2.5 pe-3">{d.doc_type ?? t("documents.unknown")}</td>
+      <td className="px-3 py-2.5 pe-3">{d.document_date ?? "—"}</td>
+      <td className="px-3 py-2.5 pe-3">{d.primary_language ?? "—"}</td>
+      <td className="px-3 py-2.5 pe-3">{t(readabilityKey(d.readability))}</td>
+      <td className="px-3 py-2.5 pe-3">{t(`documents.translation.${d.translation_status}`)}</td>
+      <td className="px-3 py-2.5 pe-3">{d.connected_events}</td>
+      <td className="px-3 py-2.5 pe-3">{t(statusKey(d.processing_status))}</td>
       <td className="py-2">
         <Link
           to="/app/documents/$documentId"
@@ -283,9 +298,7 @@ function DocCard({ d }: { d: DocRow & { connected_events: number } }) {
         <FileText aria-hidden className="mt-0.5 h-5 w-5 text-muted-foreground" />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">{d.original_filename}</p>
-          <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">
-            {d.reference_code}
-          </p>
+          <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">{d.reference_code}</p>
           <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-foreground/90">
             <dt className="text-muted-foreground">{t("documents.cols.appears_to_be")}</dt>
             <dd>{d.doc_type ?? t("documents.unknown")}</dd>
@@ -328,12 +341,10 @@ export const Route = createFileRoute("/app/documents")({
       { property: "og:title", content: "Your documents · CaseMap" },
       {
         property: "og:description",
-        content:
-          "Upload and organize the documents for your case. Originals are kept unchanged.",
+        content: "Upload and organize the documents for your case. Originals are kept unchanged.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
   }),
 });
-

@@ -22,9 +22,15 @@ export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Sign in — CaseMap" },
-      { name: "description", content: "Sign in or create an account to join the CaseMap community." },
+      {
+        name: "description",
+        content: "Sign in or create an account to join the CaseMap community.",
+      },
       { property: "og:title", content: "Sign in — CaseMap" },
-      { property: "og:description", content: "Sign in or create an account to join the CaseMap community." },
+      {
+        property: "og:description",
+        content: "Sign in or create an account to join the CaseMap community.",
+      },
     ],
   }),
 });
@@ -108,8 +114,8 @@ function AuthView() {
   return (
     <div className="min-h-dvh bg-background text-foreground">
       <AppHeader />
-      <main className="mx-auto w-full max-w-md px-4 py-12">
-        <h1 className="text-2xl font-semibold tracking-tight">
+      <main className="mx-auto w-full max-w-md px-4 py-10 sm:py-16">
+        <h1 className="text-page-title text-foreground">
           {mode === "signin" ? t("auth_page.heading_signin") : t("auth_page.heading_signup")}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
@@ -172,9 +178,7 @@ function AuthView() {
         >
           {t("auth_extra.magic_link")}
         </Button>
-        <p className="mt-2 text-xs text-muted-foreground">
-          {t("auth_extra.magic_link_hint")}
-        </p>
+        <p className="mt-2 text-xs text-muted-foreground">{t("auth_extra.magic_link_hint")}</p>
 
         {mode === "signup" && (
           <div

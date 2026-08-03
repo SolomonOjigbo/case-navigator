@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+import { EmptyState } from "@/components/shell/EmptyState";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useTranslation } from "react-i18next";
-import { Check, HelpCircle, Loader2, Plus, Sparkles, X } from "lucide-react";
+import { Check, HelpCircle, Loader2, Plus, Sparkles, X, Network, FileQuestion } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -189,13 +190,19 @@ function EvidenceMapView() {
       </div>
     );
   }
-  if (!data?.caseId) return <p className="text-muted-foreground">{t("evidence_map.no_case")}</p>;
+  if (!data?.caseId) {
+    return (
+      <div className="reading-column py-2 sm:py-4">
+        <EmptyState icon={FileQuestion} title={t("evidence_map.no_case")} />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <header className="space-y-2">
         <h1 className="text-page-title text-foreground">{t("evidence_map.title")}</h1>
-        <p className="text-sm text-muted-foreground">{t("evidence_map.intro")}</p>
+        <p className="text-lead">{t("evidence_map.intro")}</p>
       </header>
       <AIGeneratedBanner />
 
@@ -244,7 +251,7 @@ function EvidenceMapView() {
 
         <TabsContent value="by-event" className="space-y-4">
           {data.events.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t("evidence_map.empty")}</p>
+            <EmptyState icon={Network} title={t("evidence_map.empty")} />
           ) : (
             data.events.map((ev) => {
               const links = linksByEvent.get(ev.id) ?? [];

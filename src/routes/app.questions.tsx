@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+import { EmptyState } from "@/components/shell/EmptyState";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useTranslation } from "react-i18next";
-import { Loader2, Printer, Sparkles, Plus } from "lucide-react";
+import { Loader2, Printer, Sparkles, Plus, MessageSquare, FileQuestion } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -94,13 +95,19 @@ function View() {
       </div>
     );
   }
-  if (!data?.caseId) return <p className="text-muted-foreground">{t("questions.no_case")}</p>;
+  if (!data?.caseId) {
+    return (
+      <div className="reading-column py-2 sm:py-4">
+        <EmptyState icon={FileQuestion} title={t("questions.no_case")} />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <header className="space-y-2 print:space-y-1">
         <h1 className="text-page-title text-foreground">{t("questions.title")}</h1>
-        <p className="text-sm text-muted-foreground print:hidden">
+        <p className="text-lead print:hidden">
           Some questions you can think about on your own. Others you may want to ask a lawyer. Keep
           the ones that help, dismiss the rest, or write your own.
         </p>
@@ -192,7 +199,7 @@ function QuestionList({
 }) {
   const { t } = useTranslation();
   if (items.length === 0) {
-    return <p className="text-sm text-muted-foreground">{t("questions.empty")}</p>;
+    return <EmptyState icon={MessageSquare} title={t("questions.empty")} />;
   }
   return (
     <ul className="space-y-3">

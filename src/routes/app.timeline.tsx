@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { EmptyState } from "@/components/shell/EmptyState";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -13,6 +14,7 @@ import {
   Plus,
   Sparkles,
   Trash2,
+  CalendarDays,
 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -58,11 +60,7 @@ type EventRow = {
   location_name: string | null;
   user_description: string | null;
   provenance:
-    | "user_stated"
-    | "user_confirmed"
-    | "ai_extracted"
-    | "ai_inferred"
-    | "professional_edited";
+    "user_stated" | "user_confirmed" | "ai_extracted" | "ai_inferred" | "professional_edited";
   unsupported: boolean;
   possible_divergence: boolean;
   feared_future_event: boolean;
@@ -191,7 +189,9 @@ function TimelineView() {
   const filtered = useMemo(() => {
     return events.filter((e) => {
       if (filters.section !== "all") {
-        if (filters.section === "__none" ? e.section_key !== null : e.section_key !== filters.section)
+        if (
+          filters.section === "__none" ? e.section_key !== null : e.section_key !== filters.section
+        )
           return false;
       }
       if (filters.certainty !== "all" && e.date_certainty !== filters.certainty) return false;
@@ -220,7 +220,7 @@ function TimelineView() {
     <div className="mx-auto flex max-w-3xl flex-col gap-5">
       <header className="space-y-2">
         <h1 className="text-page-title text-foreground">{t("timeline.title")}</h1>
-        <p className="text-sm text-muted-foreground">{t("timeline.intro")}</p>
+        <p className="text-lead">{t("timeline.intro")}</p>
       </header>
 
       <AIGeneratedBanner />
@@ -259,9 +259,7 @@ function TimelineView() {
           <Skeleton className="h-32 w-full" />
         </div>
       ) : events.length === 0 ? (
-        <p className="rounded-lg border bg-surface-raised p-4 text-sm text-muted-foreground">
-          {t("timeline.empty")}
-        </p>
+        <EmptyState icon={CalendarDays} title={t("timeline.empty")} />
       ) : (
         <>
           {past.length > 0 ? (
@@ -313,7 +311,9 @@ function TimelineView() {
             <section className="mt-4 space-y-3">
               <div>
                 <h2 className="text-lg font-semibold">{t("timeline.feared_section.title")}</h2>
-                <p className="text-sm text-muted-foreground">{t("timeline.feared_section.intro")}</p>
+                <p className="text-sm text-muted-foreground">
+                  {t("timeline.feared_section.intro")}
+                </p>
               </div>
               <ul className="flex flex-col gap-4">
                 {feared.map((ev) => (
@@ -360,25 +360,23 @@ function TimelineView() {
   );
 }
 
-function Filters({
-  filters,
-  onChange,
-}: {
-  filters: Filters;
-  onChange: (f: Filters) => void;
-}) {
+function Filters({ filters, onChange }: { filters: Filters; onChange: (f: Filters) => void }) {
   const { t } = useTranslation();
   return (
     <div className="grid grid-cols-1 gap-2 rounded-lg border bg-surface-raised p-3 sm:grid-cols-4">
       <div>
         <Label className="text-xs">{t("timeline.filters.section")}</Label>
         <Select value={filters.section} onValueChange={(v) => onChange({ ...filters, section: v })}>
-          <SelectTrigger className="min-h-11"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="min-h-11">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t("timeline.filters.all_sections")}</SelectItem>
             <SelectItem value="__none">{t("timeline.filters.no_section")}</SelectItem>
             {STORY_SECTIONS.map((s) => (
-              <SelectItem key={s.key} value={s.key}>{s.title}</SelectItem>
+              <SelectItem key={s.key} value={s.key}>
+                {s.title}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -389,7 +387,9 @@ function Filters({
           value={filters.certainty}
           onValueChange={(v) => onChange({ ...filters, certainty: v })}
         >
-          <SelectTrigger className="min-h-11"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="min-h-11">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t("timeline.filters.all_certainty")}</SelectItem>
             {CERTAINTY_OPTIONS.map((c) => (
@@ -406,10 +406,14 @@ function Filters({
           value={filters.support}
           onValueChange={(v) => onChange({ ...filters, support: v as Filters["support"] })}
         >
-          <SelectTrigger className="min-h-11"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="min-h-11">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="any">{t("timeline.filters.any_support")}</SelectItem>
-            <SelectItem value="only_unsupported">{t("timeline.filters.only_unsupported")}</SelectItem>
+            <SelectItem value="only_unsupported">
+              {t("timeline.filters.only_unsupported")}
+            </SelectItem>
             <SelectItem value="only_supported">{t("timeline.filters.only_supported")}</SelectItem>
           </SelectContent>
         </Select>
@@ -420,7 +424,9 @@ function Filters({
           value={filters.review}
           onValueChange={(v) => onChange({ ...filters, review: v as Filters["review"] })}
         >
-          <SelectTrigger className="min-h-11"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="min-h-11">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="any">{t("timeline.filters.any_review")}</SelectItem>
             <SelectItem value="confirmed">{t("timeline.filters.confirmed")}</SelectItem>
@@ -450,8 +456,9 @@ function EventCard({
   const { t } = useTranslation();
   const isAiInferred = event.provenance === "ai_inferred";
   const isAi = isAiInferred || event.provenance === "ai_extracted";
-  const sectionTitle =
-    event.section_key ? STORY_SECTIONS.find((s) => s.key === event.section_key)?.title ?? null : null;
+  const sectionTitle = event.section_key
+    ? (STORY_SECTIONS.find((s) => s.key === event.section_key)?.title ?? null)
+    : null;
 
   return (
     <li className={flat ? "" : "relative"}>
@@ -468,9 +475,7 @@ function EventCard({
         }
       >
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h3 className="text-base font-semibold">
-            {event.title || t("timeline.card.no_title")}
-          </h3>
+          <h3 className="text-base font-semibold">{event.title || t("timeline.card.no_title")}</h3>
           <span className="text-xs text-muted-foreground">{event.reference_code}</span>
         </div>
 
@@ -512,9 +517,7 @@ function EventCard({
             </span>
           ) : null}
           {event.possible_divergence ? (
-            <span className="chip-attention">
-              {t("timeline.card.possible_divergence")}
-            </span>
+            <span className="chip-attention">{t("timeline.card.possible_divergence")}</span>
           ) : null}
           {event.user_confirmed ? (
             <span className="text-xs text-muted-foreground">
@@ -540,7 +543,13 @@ function EventCard({
         ) : null}
 
         <div className="mt-3 flex flex-wrap gap-2">
-          <Button size="sm" variant="secondary" onClick={onEdit} disabled={busy} className="min-h-11">
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={onEdit}
+            disabled={busy}
+            className="min-h-11"
+          >
             <PencilLine className="me-1 h-4 w-4" aria-hidden="true" />
             {t("timeline.card.edit")}
           </Button>
@@ -639,8 +648,13 @@ function EventDialog({
           </div>
           <div>
             <Label htmlFor="ev-certainty">{t("timeline.form.date_certainty_label")}</Label>
-            <Select value={certainty} onValueChange={(v) => setCertainty(v as EventRow["date_certainty"])}>
-              <SelectTrigger id="ev-certainty" className="min-h-11"><SelectValue /></SelectTrigger>
+            <Select
+              value={certainty}
+              onValueChange={(v) => setCertainty(v as EventRow["date_certainty"])}
+            >
+              <SelectTrigger id="ev-certainty" className="min-h-11">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 {CERTAINTY_OPTIONS.map((c) => (
                   <SelectItem key={c} value={c}>
@@ -697,11 +711,15 @@ function EventDialog({
           <div>
             <Label htmlFor="ev-section">{t("timeline.form.section_label")}</Label>
             <Select value={sectionKey} onValueChange={setSectionKey}>
-              <SelectTrigger id="ev-section" className="min-h-11"><SelectValue /></SelectTrigger>
+              <SelectTrigger id="ev-section" className="min-h-11">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="__none">{t("timeline.filters.no_section")}</SelectItem>
                 {STORY_SECTIONS.map((s) => (
-                  <SelectItem key={s.key} value={s.key}>{s.title}</SelectItem>
+                  <SelectItem key={s.key} value={s.key}>
+                    {s.title}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>

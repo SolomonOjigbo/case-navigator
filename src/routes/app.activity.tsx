@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { History } from "lucide-react";
+import { EmptyState } from "@/components/shell/EmptyState";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "@/hooks/use-session";
@@ -8,7 +10,9 @@ import { listActivity, type ActivityRow } from "@/lib/sharing-service";
 function humanize(t: (k: string, o?: Record<string, unknown>) => string, row: ActivityRow) {
   const meta = (row.metadata ?? {}) as Record<string, unknown>;
   const isSelf = row.actor_role === "applicant";
-  const who = isSelf ? t("activity.you") : (meta.actor_name as string) ?? t("activity.a_professional");
+  const who = isSelf
+    ? t("activity.you")
+    : ((meta.actor_name as string) ?? t("activity.a_professional"));
   const targetLabel = (meta.target_label as string) ?? row.target_id?.slice(0, 8) ?? "";
 
   switch (row.action) {
@@ -54,15 +58,15 @@ function View() {
 
   return (
     <div className="reading-column py-2 sm:py-4">
-      <h1 className="text-page-title text-foreground">
-        {t("activity.heading")}
-      </h1>
+      <h1 className="text-page-title text-foreground">{t("activity.heading")}</h1>
       <p className="mt-2 text-[15px] text-muted-foreground">{t("activity.intro")}</p>
 
       {activityQ.isLoading ? (
         <p className="mt-6 text-sm text-muted-foreground">{t("activity.loading")}</p>
       ) : (activityQ.data ?? []).length === 0 ? (
-        <p className="mt-6 text-sm text-muted-foreground">{t("activity.empty")}</p>
+        <div className="mt-6">
+          <EmptyState icon={History} title={t("activity.empty")} />
+        </div>
       ) : (
         <ol className="mt-6 space-y-3">
           {(activityQ.data ?? []).map((row) => {
@@ -70,9 +74,7 @@ function View() {
             return (
               <li key={row.id} className="rounded-md border bg-surface-raised p-3">
                 <div className="text-[15px] text-foreground">{humanize(t, row)}</div>
-                <div className="mt-1 text-xs text-muted-foreground">
-                  {when.toLocaleString()}
-                </div>
+                <div className="mt-1 text-xs text-muted-foreground">{when.toLocaleString()}</div>
               </li>
             );
           })}

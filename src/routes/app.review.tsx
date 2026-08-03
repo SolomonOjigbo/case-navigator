@@ -2,11 +2,12 @@
 // it has got to. The applicant can create and read summaries; they cannot
 // approve one. Approval is Gate 2 and belongs to a verified professional.
 import { useEffect, useState } from "react";
+import { EmptyState } from "@/components/shell/EmptyState";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useTranslation } from "react-i18next";
-import { Loader2 } from "lucide-react";
+import { Loader2, ShieldCheck } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -117,7 +118,7 @@ function ReviewView() {
     <div className="mx-auto flex max-w-3xl flex-col gap-4">
       <header className="space-y-2">
         <h1 className="text-page-title text-foreground">{t("applicant_nav.review")}</h1>
-        <p className="text-[15px] text-muted-foreground">{t("review.intro")}</p>
+        <p className="text-lead">{t("review.intro")}</p>
       </header>
 
       <AIGeneratedBanner />
@@ -157,7 +158,7 @@ function ReviewView() {
       {query.isLoading ? (
         <Skeleton className="h-40 w-full" />
       ) : (query.data?.outputs.length ?? 0) === 0 ? (
-        <p className="text-sm text-muted-foreground">{t("review.empty")}</p>
+        <EmptyState icon={ShieldCheck} title={t("review.empty")} />
       ) : (
         <ul className="space-y-4">
           {query.data!.outputs.map((o) => (
