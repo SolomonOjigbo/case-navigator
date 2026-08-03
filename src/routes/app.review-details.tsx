@@ -212,7 +212,7 @@ function ReviewDetailsView() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4">
       <header className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">{t("review_details.title")}</h1>
+        <h1 className="text-page-title text-foreground">{t("review_details.title")}</h1>
         <Alert>
           <AlertCircle className="h-4 w-4" aria-hidden="true" />
           <AlertTitle>{t("review_details.banner_title")}</AlertTitle>

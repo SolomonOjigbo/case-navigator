@@ -194,7 +194,7 @@ function EvidenceMapView() {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <header className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">{t("evidence_map.title")}</h1>
+        <h1 className="text-page-title text-foreground">{t("evidence_map.title")}</h1>
         <p className="text-sm text-muted-foreground">{t("evidence_map.intro")}</p>
       </header>
       <AIGeneratedBanner />

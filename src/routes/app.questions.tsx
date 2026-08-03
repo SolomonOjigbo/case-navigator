@@ -99,7 +99,7 @@ function View() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <header className="space-y-2 print:space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">{t("questions.title")}</h1>
+        <h1 className="text-page-title text-foreground">{t("questions.title")}</h1>
         <p className="text-sm text-muted-foreground print:hidden">
           Some questions you can think about on your own. Others you may want to ask a lawyer. Keep
           the ones that help, dismiss the rest, or write your own.

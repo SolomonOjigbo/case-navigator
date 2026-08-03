@@ -95,8 +95,8 @@ function View() {
   };
 
   return (
-    <div className="reading-column py-8">
-      <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+    <div className="reading-column py-2 sm:py-4">
+      <h1 className="text-page-title text-foreground">
         {t("documents.title")}
       </h1>
       <p className="mt-2 text-[15px] text-muted-foreground">{t("documents.intro")}</p>

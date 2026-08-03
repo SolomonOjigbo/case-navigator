@@ -58,13 +58,16 @@ export function HelpAskPanel() {
 
   return (
     <>
+      {/* Sits above the mobile tab bar, and shrinks to a circle on small
+          screens so it stops covering the card behind it. */}
       <Button
         onClick={() => setOpen(true)}
-        className="fixed bottom-4 end-4 z-40 shadow-lg print:hidden"
+        size="icon"
+        className="elev-3 fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] end-4 z-40 h-12 w-12 rounded-full print:hidden md:bottom-5 md:h-auto md:w-auto md:rounded-md md:px-4"
         aria-label="Open help and ask panel"
       >
-        <LifeBuoy className="h-4 w-4" aria-hidden="true" />
-        Help / Ask
+        <LifeBuoy className="h-5 w-5 md:h-4 md:w-4" aria-hidden="true" />
+        <span className="sr-only md:not-sr-only">Help / Ask</span>
       </Button>
 
       {open && (

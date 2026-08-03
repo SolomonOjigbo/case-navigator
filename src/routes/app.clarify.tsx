@@ -157,7 +157,7 @@ function View() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <header className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">{t("clarify.title")}</h1>
+        <h1 className="text-page-title text-foreground">{t("clarify.title")}</h1>
         <p className="text-sm text-muted-foreground">
           We noticed a few things that might be worth a second look. You can answer any of these
           now, come back later, or ask a lawyer to check them for you. None of this changes your

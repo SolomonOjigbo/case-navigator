@@ -64,7 +64,7 @@ function HistoryView() {
         </Link>
       </Button>
 
-      <h1 className="mt-4 text-2xl font-semibold tracking-tight text-foreground">
+      <h1 className="mt-4 text-page-title text-foreground">
         {t("story.history.title")}
       </h1>
       <p className="mt-1 text-sm text-muted-foreground">{question.label}</p>

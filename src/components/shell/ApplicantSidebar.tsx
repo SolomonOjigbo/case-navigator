@@ -1,68 +1,95 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import {
-  BookOpen,
-  CalendarDays,
-  FolderOpen,
-  Network,
-  HelpCircle,
-  MessageSquare,
-  ShieldCheck,
-  CheckSquare,
-  Lock,
-  History,
-} from "lucide-react";
+
+import { dirFor } from "@/i18n";
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
+  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
-
-const ITEMS = [
-  { to: "/app/story", key: "story", icon: BookOpen },
-  { to: "/app/timeline", key: "timeline", icon: CalendarDays },
-  { to: "/app/documents", key: "documents", icon: FolderOpen },
-  { to: "/app/evidence-map", key: "evidence", icon: Network },
-  { to: "/app/clarify", key: "clarify", icon: HelpCircle },
-  { to: "/app/questions", key: "questions", icon: MessageSquare },
-  { to: "/app/review-details", key: "review_details", icon: CheckSquare },
-  { to: "/app/review", key: "review", icon: ShieldCheck },
-  { to: "/app/sharing", key: "privacy", icon: Lock },
-  { to: "/app/activity", key: "activity", icon: History },
-] as const;
+import { NAV_GROUPS, isActivePath } from "./nav-items";
 
 export function ApplicantSidebar() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { setOpenMobile, isMobile } = useSidebar();
+
+  // The primitive positions itself physically, so it has to be told which edge
+  // to sit on. Without this the nav stays on the left in Arabic while the rest
+  // of the layout mirrors around it.
+  const side = dirFor(i18n.language) === "rtl" ? "right" : "left";
+
+  // On mobile the sidebar is a sheet; tapping a destination should close it.
+  const dismissIfMobile = () => {
+    if (isMobile) setOpenMobile(false);
+  };
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>{t("app_shell.section_label")}</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {ITEMS.map(({ to, key, icon: Icon }) => {
-                const active = pathname === to || pathname.startsWith(to + "/");
-                return (
-                  <SidebarMenuItem key={key}>
-                    <SidebarMenuButton asChild isActive={active}>
-                      <Link to={to} className="flex items-center gap-2">
-                        <Icon className="h-4 w-4" aria-hidden="true" />
-                        <span>{t(`applicant_nav.${key}`)}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+    <Sidebar collapsible="icon" side={side} className="border-e">
+      <SidebarHeader className="px-3 pt-4 pb-2 group-data-[collapsible=icon]:hidden">
+        <Link
+          to="/app/story"
+          onClick={dismissIfMobile}
+          className="flex items-center gap-2.5 rounded-lg px-1 py-1 no-underline"
+        >
+          <span
+            aria-hidden="true"
+            className="elev-1 grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary text-[15px] font-bold text-primary-foreground"
+          >
+            C
+          </span>
+          <span className="text-[15px] font-semibold tracking-tight text-foreground">
+            {t("app_shell.brand")}
+          </span>
+        </Link>
+      </SidebarHeader>
+
+      <SidebarContent className="gap-0.5">
+        {NAV_GROUPS.map((group) => (
+          <SidebarGroup key={group.key}>
+            <SidebarGroupLabel className="text-[0.6875rem] font-semibold uppercase tracking-[0.09em] text-muted-foreground/80">
+              {t(`applicant_nav_groups.${group.key}`)}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {group.items.map(({ to, key, icon: Icon }) => {
+                  const active = isActivePath(pathname, to);
+                  return (
+                    <SidebarMenuItem key={key}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={active}
+                        tooltip={t(`applicant_nav.${key}`)}
+                        className="h-10 gap-3 rounded-lg font-medium data-[active=true]:font-semibold"
+                      >
+                        <Link to={to} onClick={dismissIfMobile}>
+                          {/* Active rail: a second cue beside colour and weight. */}
+                          <span
+                            aria-hidden="true"
+                            className={
+                              active
+                                ? "absolute inset-y-1.5 start-0 inline-block w-[3px] rounded-full bg-primary"
+                                : "hidden"
+                            }
+                          />
+                          <Icon className="h-[1.125rem] w-[1.125rem] shrink-0" aria-hidden="true" />
+                          <span className="truncate">{t(`applicant_nav.${key}`)}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
     </Sidebar>
   );

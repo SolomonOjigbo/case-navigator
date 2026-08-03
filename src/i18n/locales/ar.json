@@ -21,7 +21,10 @@
     "not_3": "It does not submit anything to the government.",
     "not_4": "It does not change or delete the papers you upload.",
     "get_started": "Get started",
-    "already_have_account": "I already have an account"
+    "already_have_account": "I already have an account",
+    "trust_private": "خاص بشكل افتراضي",
+    "trust_control": "أنت تختار من يراه",
+    "trust_language": "بلغتك"
   },
   "auth": {
     "signin_heading": "Sign in",
@@ -44,18 +47,20 @@
     "pause_button": "Pause",
     "pause_heading": "Your work is saved. Take your time.",
     "pause_body": "You can come back whenever you are ready. Nothing here is shared with anyone until you say so.",
-    "pause_return": "Return to your case"
+    "pause_return": "Return to your case",
+    "primary_nav": "الأقسام الرئيسية",
+    "more_nav": "المزيد"
   },
   "applicant_nav": {
-    "story": "My Story",
-    "timeline": "My Timeline",
-    "documents": "My Documents",
-    "evidence": "My Evidence Map",
-    "clarify": "Information to Clarify",
-    "questions": "Questions for My Lawyer",
-    "review": "Professional Review",
-    "privacy": "Privacy and Sharing",
-    "activity": "Activity History",
+    "story": "قصتي",
+    "timeline": "الجدول الزمني",
+    "documents": "مستنداتي",
+    "evidence": "خريطة الأدلة",
+    "clarify": "معلومات بحاجة إلى توضيح",
+    "questions": "أسئلة لمحاميي",
+    "review": "المراجعة المهنية",
+    "privacy": "الخصوصية والمشاركة",
+    "activity": "سجل النشاط",
     "review_details": "تحقّق من التفاصيل"
   },
   "community": {
@@ -166,7 +171,9 @@
     "next": "Next",
     "back_step": "Back",
     "done": "Done",
-    "copy": "Copy"
+    "copy": "Copy",
+    "show_more": "عرض المزيد",
+    "show_less": "عرض أقل"
   },
   "auth_extra": {
     "magic_link": "Email me a sign-in link",
@@ -304,5 +311,28 @@
   },
   "evidence_map": {
     "no_case": "لا يوجد ملف بعد."
+  },
+  "applicant_nav_groups": {
+    "build": "قصتك",
+    "check": "التحقق والتوضيح",
+    "share": "المراجعة والمشاركة",
+    "history": "السجل"
+  },
+  "applicant_nav_short": {
+    "story": "قصتي",
+    "timeline": "التسلسل",
+    "documents": "المستندات",
+    "evidence": "الأدلة",
+    "clarify": "التوضيح",
+    "questions": "الأسئلة",
+    "review_details": "التفاصيل",
+    "review": "المراجعة",
+    "privacy": "الخصوصية",
+    "activity": "السجل"
+  },
+  "story": {
+    "overview": {
+      "progress_label": "بدأت {{done}} من {{total}} أقسام"
+    }
   }
 }

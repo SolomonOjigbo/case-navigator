@@ -55,7 +55,7 @@ function View() {
   if (!doc) return <p className="p-6 text-sm">{t("documents.detail.not_found")}</p>;
 
   return (
-    <div className="reading-column py-8">
+    <div className="reading-column py-2 sm:py-4">
       <Link
         to="/app/documents"
         className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
@@ -64,7 +64,7 @@ function View() {
         {t("documents.detail.back")}
       </Link>
 
-      <h1 className="mt-3 text-2xl font-semibold tracking-tight text-foreground">
+      <h1 className="mt-3 text-page-title text-foreground">
         {doc.original_filename}
       </h1>
       <p className="mt-1 font-mono text-xs text-muted-foreground">{doc.reference_code}</p>

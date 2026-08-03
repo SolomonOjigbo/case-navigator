@@ -21,7 +21,10 @@
     "not_3": "It does not submit anything to the government.",
     "not_4": "It does not change or delete the papers you upload.",
     "get_started": "Get started",
-    "already_have_account": "I already have an account"
+    "already_have_account": "I already have an account",
+    "trust_private": "Private by default",
+    "trust_control": "You choose who sees it",
+    "trust_language": "Your language"
   },
   "auth": {
     "signin_heading": "Sign in",
@@ -44,7 +47,9 @@
     "pause_button": "Pause",
     "pause_heading": "Your work is saved. Take your time.",
     "pause_body": "You can come back whenever you are ready. Nothing here is shared with anyone until you say so.",
-    "pause_return": "Return to your case"
+    "pause_return": "Return to your case",
+    "primary_nav": "Main sections",
+    "more_nav": "More"
   },
   "applicant_nav": {
     "story": "My Story",
@@ -276,7 +281,9 @@
     "back_step": "Back",
     "done": "Done",
     "copy": "Copy",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "show_more": "Show more",
+    "show_less": "Show less"
   },
   "documents": {
     "title": "Your documents",
@@ -429,7 +436,8 @@
       "intro": "Tell your story in your own words. Take as much time as you need. Every question is optional. You can save and come back at any time.",
       "control_notice": "You control what you share. Nothing here is sent to anyone until you decide to share it with a lawyer.",
       "visited": "You have written something here.",
-      "not_visited": "Not started yet."
+      "not_visited": "Not started yet.",
+      "progress_label": "{{done}} of {{total}} sections started"
     },
     "section": {
       "back": "All sections",
@@ -820,5 +828,23 @@
     "to_think_about": "Questions I can think about",
     "empty": "Nothing here yet.",
     "edit_label": "Edit this question"
+  },
+  "applicant_nav_groups": {
+    "build": "Your story",
+    "check": "Check and clarify",
+    "share": "Review and sharing",
+    "history": "History"
+  },
+  "applicant_nav_short": {
+    "story": "Story",
+    "timeline": "Timeline",
+    "documents": "Documents",
+    "evidence": "Evidence",
+    "clarify": "Clarify",
+    "questions": "Questions",
+    "review_details": "Details",
+    "review": "Review",
+    "privacy": "Privacy",
+    "activity": "History"
   }
 }

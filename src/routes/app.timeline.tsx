@@ -219,7 +219,7 @@ function TimelineView() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-5">
       <header className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">{t("timeline.title")}</h1>
+        <h1 className="text-page-title text-foreground">{t("timeline.title")}</h1>
         <p className="text-sm text-muted-foreground">{t("timeline.intro")}</p>
       </header>
 

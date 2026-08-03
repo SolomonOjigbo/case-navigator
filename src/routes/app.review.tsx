@@ -116,7 +116,7 @@ function ReviewView() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4">
       <header className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">{t("applicant_nav.review")}</h1>
+        <h1 className="text-page-title text-foreground">{t("applicant_nav.review")}</h1>
         <p className="text-[15px] text-muted-foreground">{t("review.intro")}</p>
       </header>
 
