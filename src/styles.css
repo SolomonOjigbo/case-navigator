@@ -8,8 +8,8 @@
  * CaseMap design system.
  *
  * Confident and calm. The canvas is a crisp near-white, cards sit on it with
- * real (soft) elevation rather than hairlines, and a single deep teal carries
- * every action. Amber still means "needs your attention" and red is still
+ * real (soft) elevation rather than hairlines, and a single blue — sampled
+ * from the CaseMap mark — carries every action. Amber still means "needs your attention" and red is still
  * reserved for destructive actions — those two carry meaning, so they are
  * never used decoratively.
  *
@@ -90,10 +90,10 @@
     "Noto Sans Arabic", "Noto Naskh Arabic", sans-serif;
 
   /* Soft, layered elevation. Tinted with the ink hue so shadows never look grey. */
-  --shadow-e1: 0 1px 2px -1px oklch(0.21 0.03 250 / 0.08), 0 1px 3px oklch(0.21 0.03 250 / 0.06);
-  --shadow-e2: 0 2px 4px -2px oklch(0.21 0.03 250 / 0.08), 0 6px 12px -4px oklch(0.21 0.03 250 / 0.08);
-  --shadow-e3: 0 4px 8px -4px oklch(0.21 0.03 250 / 0.1), 0 16px 28px -10px oklch(0.21 0.03 250 / 0.12);
-  --shadow-e4: 0 8px 16px -8px oklch(0.21 0.03 250 / 0.12), 0 28px 48px -16px oklch(0.21 0.03 250 / 0.16);
+  --shadow-e1: 0 1px 2px -1px oklch(0.21 0.04 258 / 0.08), 0 1px 3px oklch(0.21 0.04 258 / 0.06);
+  --shadow-e2: 0 2px 4px -2px oklch(0.21 0.04 258 / 0.08), 0 6px 12px -4px oklch(0.21 0.04 258 / 0.08);
+  --shadow-e3: 0 4px 8px -4px oklch(0.21 0.04 258 / 0.1), 0 16px 28px -10px oklch(0.21 0.04 258 / 0.12);
+  --shadow-e4: 0 8px 16px -8px oklch(0.21 0.04 258 / 0.12), 0 28px 48px -16px oklch(0.21 0.04 258 / 0.16);
 
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-out-soft: cubic-bezier(0.65, 0, 0.35, 1);
@@ -102,36 +102,39 @@
 :root {
   --radius: 0.75rem;
 
-  /* Brand — deep teal, richer than a grey-blue but still institutional */
-  --brand-50: oklch(0.972 0.018 195);
-  --brand-100: oklch(0.94 0.036 195);
-  --brand-200: oklch(0.885 0.062 194);
-  --brand-300: oklch(0.805 0.088 193);
-  --brand-400: oklch(0.69 0.108 192);
-  --brand-500: oklch(0.585 0.122 191);
-  --brand-600: oklch(0.5 0.115 191);
-  --brand-700: oklch(0.42 0.098 191);
-  --brand-800: oklch(0.34 0.078 192);
-  --brand-900: oklch(0.265 0.055 195);
+  /* Brand — taken from the logo. brand-600 is the mark's bright blue
+     (#1160c8 vs the artwork's #0060cc) and brand-900 its deep navy. Every
+     step is clamped to 94% of the sRGB gamut edge at hue 258 so nothing
+     clips on a wide-gamut display. */
+  --brand-50: oklch(0.972 0.013 258);
+  --brand-100: oklch(0.94 0.027 258);
+  --brand-200: oklch(0.885 0.053 258);
+  --brand-300: oklch(0.8 0.096 258);
+  --brand-400: oklch(0.68 0.16 258);
+  --brand-500: oklch(0.575 0.19 258);
+  --brand-600: oklch(0.509 0.177 258);
+  --brand-700: oklch(0.43 0.15 258);
+  --brand-800: oklch(0.34 0.119 258);
+  --brand-900: oklch(0.281 0.098 258);
 
   /* Crisp canvas, white cards — elevation does the separating, not hairlines */
-  --background: oklch(0.984 0.003 230);
-  --surface: oklch(0.984 0.003 230);
+  --background: oklch(0.984 0.003 255);
+  --surface: oklch(0.984 0.003 255);
   --surface-raised: oklch(1 0 0);
-  --surface-sunken: oklch(0.962 0.005 230);
+  --surface-sunken: oklch(0.962 0.005 255);
 
-  --foreground: oklch(0.21 0.025 250);
+  --foreground: oklch(0.21 0.025 258);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.21 0.025 250);
+  --card-foreground: oklch(0.21 0.025 258);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.21 0.025 250);
+  --popover-foreground: oklch(0.21 0.025 258);
 
   --primary: var(--brand-600);
   --primary-foreground: oklch(0.995 0 0);
-  --secondary: oklch(0.955 0.006 230);
-  --secondary-foreground: oklch(0.26 0.025 250);
-  --muted: oklch(0.958 0.005 230);
-  --muted-foreground: oklch(0.475 0.02 248);
+  --secondary: oklch(0.955 0.006 255);
+  --secondary-foreground: oklch(0.26 0.025 258);
+  --muted: oklch(0.958 0.005 255);
+  --muted-foreground: oklch(0.475 0.02 256);
   --accent: var(--brand-50);
   --accent-foreground: var(--brand-900);
 
@@ -149,58 +152,58 @@
   --destructive: oklch(0.55 0.19 27);
   --destructive-foreground: oklch(0.995 0 0);
 
-  --border: oklch(0.915 0.006 235);
-  --border-strong: oklch(0.855 0.01 235);
-  --input: oklch(0.9 0.008 235);
+  --border: oklch(0.915 0.008 255);
+  --border-strong: oklch(0.855 0.012 255);
+  --input: oklch(0.9 0.01 255);
   --ring: var(--brand-500);
 
   --chart-1: var(--brand-500);
-  --chart-2: oklch(0.66 0.13 245);
+  --chart-2: oklch(0.62 0.11 192);
   --chart-3: oklch(0.72 0.13 72);
   --chart-4: oklch(0.62 0.12 300);
   --chart-5: oklch(0.64 0.12 155);
 
   --sidebar: oklch(1 0 0);
-  --sidebar-foreground: oklch(0.21 0.025 250);
+  --sidebar-foreground: oklch(0.21 0.025 258);
   --sidebar-primary: var(--brand-600);
   --sidebar-primary-foreground: oklch(0.995 0 0);
   --sidebar-accent: var(--brand-50);
   --sidebar-accent-foreground: var(--brand-900);
-  --sidebar-border: oklch(0.92 0.006 235);
+  --sidebar-border: oklch(0.92 0.008 255);
   --sidebar-ring: var(--brand-500);
 }
 
 .dark {
-  --brand-50: oklch(0.28 0.045 195);
-  --brand-100: oklch(0.33 0.06 195);
-  --brand-200: oklch(0.4 0.08 194);
-  --brand-300: oklch(0.5 0.1 193);
-  --brand-400: oklch(0.62 0.11 192);
-  --brand-500: oklch(0.72 0.1 192);
-  --brand-600: oklch(0.78 0.09 192);
-  --brand-700: oklch(0.84 0.07 193);
-  --brand-800: oklch(0.9 0.05 194);
-  --brand-900: oklch(0.95 0.03 195);
+  --brand-50: oklch(0.285 0.055 258);
+  --brand-100: oklch(0.335 0.075 258);
+  --brand-200: oklch(0.4 0.1 258);
+  --brand-300: oklch(0.5 0.14 258);
+  --brand-400: oklch(0.62 0.165 258);
+  --brand-500: oklch(0.7 0.149 258);
+  --brand-600: oklch(0.76 0.117 258);
+  --brand-700: oklch(0.84 0.075 258);
+  --brand-800: oklch(0.9 0.046 258);
+  --brand-900: oklch(0.95 0.023 258);
 
-  --background: oklch(0.17 0.016 250);
-  --surface: oklch(0.17 0.016 250);
-  --surface-raised: oklch(0.215 0.02 250);
-  --surface-sunken: oklch(0.145 0.014 250);
+  --background: oklch(0.17 0.016 258);
+  --surface: oklch(0.17 0.016 258);
+  --surface-raised: oklch(0.215 0.02 258);
+  --surface-sunken: oklch(0.145 0.014 258);
 
-  --foreground: oklch(0.96 0.004 230);
-  --card: oklch(0.215 0.02 250);
-  --card-foreground: oklch(0.96 0.004 230);
-  --popover: oklch(0.225 0.02 250);
-  --popover-foreground: oklch(0.96 0.004 230);
+  --foreground: oklch(0.96 0.004 255);
+  --card: oklch(0.215 0.02 258);
+  --card-foreground: oklch(0.96 0.004 255);
+  --popover: oklch(0.225 0.02 258);
+  --popover-foreground: oklch(0.96 0.004 255);
 
   --primary: var(--brand-500);
-  --primary-foreground: oklch(0.15 0.015 250);
-  --secondary: oklch(0.26 0.02 250);
-  --secondary-foreground: oklch(0.96 0.004 230);
-  --muted: oklch(0.26 0.02 250);
-  --muted-foreground: oklch(0.72 0.018 245);
-  --accent: oklch(0.29 0.045 195);
-  --accent-foreground: oklch(0.95 0.03 195);
+  --primary-foreground: oklch(0.15 0.015 258);
+  --secondary: oklch(0.26 0.02 258);
+  --secondary-foreground: oklch(0.96 0.004 255);
+  --muted: oklch(0.26 0.02 258);
+  --muted-foreground: oklch(0.72 0.018 256);
+  --accent: var(--brand-50);
+  --accent-foreground: var(--brand-900);
 
   --attention: oklch(0.78 0.12 74);
   --attention-foreground: oklch(0.9 0.06 78);
@@ -219,17 +222,17 @@
   --ring: var(--brand-500);
 
   --chart-1: var(--brand-500);
-  --chart-2: oklch(0.7 0.12 245);
+  --chart-2: oklch(0.7 0.1 192);
   --chart-3: oklch(0.78 0.12 74);
   --chart-4: oklch(0.68 0.12 300);
   --chart-5: oklch(0.7 0.11 155);
 
-  --sidebar: oklch(0.195 0.018 250);
-  --sidebar-foreground: oklch(0.96 0.004 230);
+  --sidebar: oklch(0.195 0.018 258);
+  --sidebar-foreground: oklch(0.96 0.004 255);
   --sidebar-primary: var(--brand-500);
-  --sidebar-primary-foreground: oklch(0.15 0.015 250);
-  --sidebar-accent: oklch(0.28 0.04 195);
-  --sidebar-accent-foreground: oklch(0.95 0.03 195);
+  --sidebar-primary-foreground: oklch(0.15 0.015 258);
+  --sidebar-accent: var(--brand-50);
+  --sidebar-accent-foreground: var(--brand-900);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: var(--brand-500);
 

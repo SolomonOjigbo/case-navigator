@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
+import { BrandMark } from "@/components/BrandMark";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useSession } from "@/hooks/use-session";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,12 +18,7 @@ export function AppHeader() {
           className="flex shrink-0 items-center gap-2.5 no-underline"
           aria-label={t("app.name")}
         >
-          <span
-            aria-hidden="true"
-            className="elev-1 grid h-8 w-8 place-items-center rounded-lg bg-primary text-[15px] font-bold text-primary-foreground"
-          >
-            C
-          </span>
+          <BrandMark />
           <span className="text-[1.0625rem] font-semibold tracking-tight text-foreground">
             {t("app.name")}
           </span>

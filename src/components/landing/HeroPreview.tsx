@@ -1,6 +1,8 @@
 import { useTranslation } from "react-i18next";
 import { BookOpen, FileText, CalendarDays, Check, ShieldCheck } from "lucide-react";
 
+import { BrandMark } from "@/components/BrandMark";
+
 /**
  * Decorative preview of the app for the landing hero.
  *
@@ -32,9 +34,7 @@ export function HeroPreview() {
       {/* Main card: a story screen mid-progress */}
       <div className="surface-card float-slow elev-4 relative p-5">
         <div className="flex items-center gap-2.5">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-[13px] font-bold text-primary-foreground">
-            C
-          </span>
+          <BrandMark />
           <span className="text-sm font-semibold tracking-tight text-foreground">CaseMap</span>
         </div>
 

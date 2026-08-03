@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 
 import { dirFor } from "@/i18n";
+import { BrandMark } from "@/components/BrandMark";
 import {
   Sidebar,
   SidebarContent,
@@ -39,12 +40,7 @@ export function ApplicantSidebar() {
           onClick={dismissIfMobile}
           className="flex items-center gap-2.5 rounded-lg px-1 py-1 no-underline"
         >
-          <span
-            aria-hidden="true"
-            className="elev-1 grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary text-[15px] font-bold text-primary-foreground"
-          >
-            C
-          </span>
+          <BrandMark />
           <span className="text-[15px] font-semibold tracking-tight text-foreground">
             {t("app_shell.brand")}
           </span>

@@ -92,8 +92,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "CaseMap — organize your asylum case" },
       {
         property: "og:description",
-        content:
-          "A private, calm space to organize your asylum or refugee protection claim.",
+        content: "A private, calm space to organize your asylum or refugee protection claim.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -104,6 +103,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: appCss,
       },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" },
     ],
   }),
   shellComponent: RootShell,
@@ -165,8 +165,7 @@ function RootComponent() {
         if (typeof sessionStorage !== "undefined" && !sessionStorage.getItem(key)) {
           sessionStorage.setItem(key, "1");
           const provider =
-            (session.user.app_metadata as { provider?: string } | null)
-              ?.provider ?? "unknown";
+            (session.user.app_metadata as { provider?: string } | null)?.provider ?? "unknown";
           import("@/lib/audit-service").then(({ writeAudit }) =>
             writeAudit({
               userId,
