@@ -123,11 +123,22 @@ function AuthView() {
   return (
     <div className="min-h-dvh bg-background text-foreground">
       <AppHeader />
-      <main className="mx-auto w-full max-w-md px-4 py-10 sm:py-16">
-        <h1 className="text-page-title text-foreground">
+      <main className="mx-auto w-full max-w-md px-4 py-10 sm:py-14">
+        {/* The full lockup, not the bare mark: signing in is where someone
+            checks they are on the right site before typing a password. */}
+        <img
+          src="/logo-lockup.png"
+          alt={t("app.name")}
+          width={420}
+          height={426}
+          className="mx-auto mb-6 h-auto w-[8.5rem] select-none sm:w-[9.5rem]"
+          draggable={false}
+        />
+
+        <h1 className="text-page-title text-center text-foreground">
           {mode === "signin" ? t("auth_page.heading_signin") : t("auth_page.heading_signup")}
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="mt-2 text-center text-sm text-muted-foreground">
           {mode === "signin" ? t("auth_page.sub_signin") : t("auth_page.sub_signup")}
         </p>
 

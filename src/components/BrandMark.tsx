@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
  * The CaseMap mark.
  *
  * One definition so the header, the sidebar and the landing preview cannot
- * drift apart. The asset is the icon cropped out of public/logo.png with its
+ * drift apart. The asset is the icon cropped out of design/logo.png with its
  * dark outer glow removed — left in, that glow composited as grey fringing
  * against the app's white surfaces.
  *
