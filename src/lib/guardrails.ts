@@ -2,11 +2,7 @@
 // If a check fails, the offending fact is dropped (verbatim) or the whole
 // response is blocked (forbidden vocabulary, probability claim, schema).
 import { z } from "zod";
-import {
-  AMBIGUOUS_DATE_PATTERN,
-  FORBIDDEN_VOCABULARY,
-  PROBABILITY_PATTERNS,
-} from "./ai-prompts";
+import { AMBIGUOUS_DATE_PATTERN, FORBIDDEN_VOCABULARY, PROBABILITY_PATTERNS } from "./ai-prompts";
 
 export const FactSchema = z.object({
   fact_type: z.string().min(1),
@@ -20,12 +16,7 @@ export const FactSchema = z.object({
     calendar: z.enum(["gregorian", "hijri", "solar_hijri", "ethiopian", "unknown"]),
     as_stated: z.string(),
   }),
-  provenance: z.enum([
-    "user_stated",
-    "document_extracted",
-    "ai_inferred",
-    "professional_supplied",
-  ]),
+  provenance: z.enum(["user_stated", "document_extracted", "ai_inferred", "professional_supplied"]),
   experiential_provenance: z.enum([
     "happened_to_me",
     "saw_it_happen",
@@ -85,7 +76,10 @@ function walkStrings(value: unknown, visit: (s: string) => void): void {
   }
 }
 
-function hitsForbiddenVocabulary(text: string): string | null {
+/** Exported so other producers of user-visible AI text (e.g. the
+ *  documentation advisor) scan against the same list rather than
+ *  re-implementing it and drifting. */
+export function hitsForbiddenVocabulary(text: string): string | null {
   const lower = text.toLowerCase();
   for (const word of FORBIDDEN_VOCABULARY) {
     if (lower.includes(word.toLowerCase())) return word;
@@ -93,7 +87,7 @@ function hitsForbiddenVocabulary(text: string): string | null {
   return null;
 }
 
-function hitsProbabilityClaim(text: string): string | null {
+export function hitsProbabilityClaim(text: string): string | null {
   for (const pat of PROBABILITY_PATTERNS) {
     const m = pat.exec(text);
     if (m) return m[0];
@@ -101,10 +95,7 @@ function hitsProbabilityClaim(text: string): string | null {
   return null;
 }
 
-export function runGuardrails(
-  raw: unknown,
-  sourceText: string,
-): GuardrailResult {
+export function runGuardrails(raw: unknown, sourceText: string): GuardrailResult {
   const counts = emptyCounts();
 
   const parsed = ExtractionResponseSchema.safeParse(raw);

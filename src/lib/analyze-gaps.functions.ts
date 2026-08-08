@@ -8,6 +8,15 @@ import { isValidMissingInfoObservation, findForbiddenWord } from "./clarify-lang
 
 const InputSchema = z.object({ caseId: z.string().uuid() });
 
+/** Everything this rules-only pass owns. Anything else in missing_info_items
+ *  belongs to another producer and must not be cleared here. */
+export const GAP_RULE_IDS = [
+  "unanswered_section",
+  "event_no_document",
+  "document_no_event",
+  "missing_translation",
+] as const;
+
 const SECTION_LABELS: Record<string, string> = {
   personal_information: "your personal information",
   family_household: "your family and household",
@@ -49,29 +58,24 @@ export const analyzeGaps = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!caseRow || caseRow.applicant_id !== userId) throw new Error("case_not_found");
 
-    const [
-      { data: events },
-      { data: docs },
-      { data: links },
-      { data: responses },
-    ] = await Promise.all([
-      supabase
-        .from("events")
-        .select("id, title, section_key, stale, feared_future_event")
-        .eq("case_id", data.caseId),
-      supabase
-        .from("documents")
-        .select("id, original_filename, primary_language, translation_status, duplicate_of_id, processing_status")
-        .eq("case_id", data.caseId),
-      supabase
-        .from("evidence_event_links")
-        .select("event_id, document_id, stale")
-        .eq("case_id", data.caseId),
-      supabase
-        .from("story_responses_latest")
-        .select("section_key")
-        .eq("case_id", data.caseId),
-    ]);
+    const [{ data: events }, { data: docs }, { data: links }, { data: responses }] =
+      await Promise.all([
+        supabase
+          .from("events")
+          .select("id, title, section_key, stale, feared_future_event")
+          .eq("case_id", data.caseId),
+        supabase
+          .from("documents")
+          .select(
+            "id, original_filename, primary_language, translation_status, duplicate_of_id, processing_status",
+          )
+          .eq("case_id", data.caseId),
+        supabase
+          .from("evidence_event_links")
+          .select("event_id, document_id, stale")
+          .eq("case_id", data.caseId),
+        supabase.from("story_responses_latest").select("section_key").eq("case_id", data.caseId),
+      ]);
 
     const evs = (events ?? []).filter(
       (e: { stale?: boolean; feared_future_event: boolean }) => !e.stale && !e.feared_future_event,
@@ -82,7 +86,9 @@ export const analyzeGaps = createServerFn({ method: "POST" })
     );
     const lks = (links ?? []).filter((l: { stale?: boolean }) => !l.stale);
     const answeredSections = new Set(
-      (responses ?? []).map((r: { section_key: string | null }) => r.section_key).filter(Boolean) as string[],
+      (responses ?? [])
+        .map((r: { section_key: string | null }) => r.section_key)
+        .filter(Boolean) as string[],
     );
 
     const eventsWithDocs = new Set(lks.map((l) => l.event_id));
@@ -117,7 +123,12 @@ export const analyzeGaps = createServerFn({ method: "POST" })
     }
 
     // Documents not connected to the timeline.
-    for (const d of dcs as Array<{ id: string; original_filename: string; primary_language: string | null; translation_status: string }>) {
+    for (const d of dcs as Array<{
+      id: string;
+      original_filename: string;
+      primary_language: string | null;
+      translation_status: string;
+    }>) {
       if (docsWithEvents.has(d.id)) continue;
       drafts.push({
         rule_id: "document_no_event",
@@ -130,9 +141,15 @@ export const analyzeGaps = createServerFn({ method: "POST" })
     }
 
     // Documents needing translation.
-    for (const d of dcs as Array<{ id: string; original_filename: string; primary_language: string | null; translation_status: string }>) {
+    for (const d of dcs as Array<{
+      id: string;
+      original_filename: string;
+      primary_language: string | null;
+      translation_status: string;
+    }>) {
       if (d.translation_status === "translated") continue;
-      if (!d.primary_language || d.primary_language === "en" || d.primary_language === "fr") continue;
+      if (!d.primary_language || d.primary_language === "en" || d.primary_language === "fr")
+        continue;
       drafts.push({
         rule_id: "missing_translation",
         observation: `No translation is currently available for "${d.original_filename}".`,
@@ -143,12 +160,17 @@ export const analyzeGaps = createServerFn({ method: "POST" })
       });
     }
 
-    // Persist — clear open gap items first.
+    // Persist — clear this function's own open items first.
+    //
+    // Scoped by rule_id on purpose. This used to delete every open row for the
+    // case, which would also wipe the documentation advisor's suggestions
+    // (rule_id 'document_suggestion') every time the rules re-ran.
     await supabase
       .from("missing_info_items")
       .delete()
       .eq("case_id", data.caseId)
-      .eq("status", "open");
+      .eq("status", "open")
+      .in("rule_id", GAP_RULE_IDS);
 
     let inserted = 0;
     let dropped = 0;
@@ -159,7 +181,10 @@ export const analyzeGaps = createServerFn({ method: "POST" })
         dropped++;
         continue;
       }
-      if (findForbiddenWord(d.observation) || (d.suggested_action && findForbiddenWord(d.suggested_action))) {
+      if (
+        findForbiddenWord(d.observation) ||
+        (d.suggested_action && findForbiddenWord(d.suggested_action))
+      ) {
         dropped++;
         continue;
       }

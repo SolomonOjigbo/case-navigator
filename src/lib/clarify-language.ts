@@ -30,11 +30,33 @@ export const MISSING_INFO_OPENERS = [
   "No document has currently been connected to",
   "No translation is currently available for",
   "The timeline does not currently include",
+  // Documentation advisor. Phrased as "one kind of document that can relate
+  // to X" rather than "you need X": it describes a category, it does not
+  // assert the person should have it or that having it would help.
+  "One kind of document that can relate to",
 ] as const;
 
 export function isValidMissingInfoObservation(text: string): boolean {
   return MISSING_INFO_OPENERS.some((o) => text.startsWith(o));
 }
+
+/**
+ * The single place the advisor's user-visible sentence is built.
+ *
+ * The model never writes this text — it only chooses which document type goes
+ * with which event, and the sentence is assembled here. Keeping it in one
+ * function means the opener cannot drift away from the whitelist above.
+ */
+export function buildDocumentSuggestionObservation(
+  eventTitle: string,
+  documentPhrase: string,
+): string {
+  return `One kind of document that can relate to "${eventTitle}" is ${documentPhrase}.`;
+}
+
+/** Fixed follow-up. Deliberately gives equal weight to not having one. */
+export const DOCUMENT_SUGGESTION_ACTION =
+  "If you have one, you can add it. If you do not, that is fine — you can leave this.";
 
 // Urgency scale used across clarification items.
 // Rules can emit at most 'needs_your_attention'. Anything auto-suppressed by
@@ -59,7 +81,8 @@ export function isDayMonthSwap(a: string | null, b: string | null): boolean {
 // Very small Levenshtein — used only for short person/place names.
 export function levenshtein(a: string, b: string): number {
   if (a === b) return 0;
-  const m = a.length, n = b.length;
+  const m = a.length,
+    n = b.length;
   if (!m) return n;
   if (!n) return m;
   const prev = new Array<number>(n + 1);

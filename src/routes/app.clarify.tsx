@@ -4,7 +4,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useTranslation } from "react-i18next";
-import { Loader2, Sparkles, CheckCircle2, FileQuestion } from "lucide-react";
+import { Loader2, Sparkles, CheckCircle2, FileQuestion, FolderSearch } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { AlertCard } from "@/components/primitives/AlertCard";
 import { analyzeConsistency, respondClarification } from "@/lib/analyze-consistency.functions";
-import { analyzeGaps, respondGap } from "@/lib/analyze-gaps.functions";
+import { analyzeGaps, respondGap, GAP_RULE_IDS } from "@/lib/analyze-gaps.functions";
+import { adviseDocuments, DOCUMENT_SUGGESTION_RULE_ID } from "@/lib/document-advisor.functions";
+import { documentTypeById } from "@/config/document-types";
+import { AIGeneratedBanner } from "@/components/primitives/AIGeneratedBanner";
 
 // Never show more than this many open items at once — buries the user.
 const OPEN_LIMIT = 7;
@@ -33,6 +36,7 @@ type ClarItem = {
 };
 type GapItem = {
   id: string;
+  related_event_id: string | null;
   reference_code: string;
   rule_id: string;
   observation: string | null;
@@ -47,7 +51,14 @@ async function load(userId: string) {
     .select("id")
     .eq("applicant_id", userId)
     .maybeSingle();
-  if (!caseRow) return { caseId: null, clar: [] as ClarItem[], gaps: [] as GapItem[] } as const;
+  if (!caseRow)
+    return {
+      caseId: null,
+      clar: [] as ClarItem[],
+      gaps: [] as GapItem[],
+      suggestions: [] as GapItem[],
+      eventTitles: new Map<string, string>(),
+    } as const;
   const [{ data: clar }, { data: gaps }] = await Promise.all([
     supabase
       .from("clarification_items")
@@ -58,14 +69,26 @@ async function load(userId: string) {
       .eq("status", "open"),
     supabase
       .from("missing_info_items")
-      .select("id, reference_code, rule_id, observation, suggested_action, category, status")
+      .select(
+        "id, reference_code, rule_id, observation, suggested_action, category, status, related_event_id",
+      )
       .eq("case_id", caseRow.id)
       .eq("status", "open"),
   ]);
+
+  // Event titles for grouping the advisor's suggestions. Cheap: the advisor
+  // caps total suggestions, so this is a handful of rows.
+  const { data: evs } = await supabase.from("events").select("id, title").eq("case_id", caseRow.id);
+
+  const all = (gaps ?? []) as GapItem[];
   return {
     caseId: caseRow.id,
     clar: (clar ?? []) as ClarItem[],
-    gaps: (gaps ?? []) as GapItem[],
+    // The rules pass and the advisor both write to missing_info_items; split
+    // them by rule_id so each gets the presentation it needs.
+    gaps: all.filter((g) => (GAP_RULE_IDS as readonly string[]).includes(g.rule_id)),
+    suggestions: all.filter((g) => g.rule_id === DOCUMENT_SUGGESTION_RULE_ID),
+    eventTitles: new Map((evs ?? []).map((e: { id: string; title: string }) => [e.id, e.title])),
   } as const;
 }
 
@@ -110,9 +133,22 @@ function View() {
 
   const runConsistency = useServerFn(analyzeConsistency);
   const runGaps = useServerFn(analyzeGaps);
+  const runAdvisor = useServerFn(adviseDocuments);
   const runAll = useMutation({
     mutationFn: async (caseId: string) => {
-      await Promise.all([runConsistency({ data: { caseId } }), runGaps({ data: { caseId } })]);
+      await Promise.all([
+        runConsistency({ data: { caseId } }),
+        runGaps({ data: { caseId } }),
+        // The advisor needs ai_processing consent and the rules passes do
+        // not, so a refusal must not sink them. Only that case is swallowed —
+        // a blanket catch here hid a real failure during development and left
+        // the tab silently empty with no way to tell why.
+        runAdvisor({ data: { caseId } }).catch((err: unknown) => {
+          const msg = err instanceof Error ? err.message : String(err);
+          if (msg.includes("consent_required")) return undefined;
+          throw err;
+        }),
+      ]);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["clarify", userId] }),
   });
@@ -192,6 +228,9 @@ function View() {
             {t("clarify.title")} ({sortedClar.length})
           </TabsTrigger>
           <TabsTrigger value="gaps">Things not yet added ({data.gaps.length})</TabsTrigger>
+          <TabsTrigger value="documents">
+            {t("clarify.documents_tab")} ({data.suggestions.length})
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="clarify" className="mt-4 space-y-4">
@@ -237,8 +276,119 @@ function View() {
             ))
           )}
         </TabsContent>
+
+        <TabsContent value="documents" className="mt-4 space-y-4">
+          <AIGeneratedBanner />
+          <p className="text-sm text-muted-foreground">{t("clarify.documents_intro")}</p>
+          {data.suggestions.length === 0 ? (
+            <EmptyState icon={FolderSearch} title={t("clarify.documents_empty")} />
+          ) : (
+            groupByEvent(data.suggestions, data.eventTitles).map((group) => (
+              <section key={group.key} className="surface-card p-4 md:p-5">
+                <h3 className="text-section-title m-0 text-foreground">{group.title}</h3>
+                <ul className="m-0 mt-3 grid list-none gap-2.5 p-0">
+                  {group.items.map((item) => (
+                    <SuggestionRow
+                      key={item.id}
+                      item={item}
+                      pending={gapAct.isPending}
+                      onAct={(action, explanation) =>
+                        gapAct.mutate({ itemId: item.id, action, explanation })
+                      }
+                    />
+                  ))}
+                </ul>
+              </section>
+            ))
+          )}
+        </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+/** Group advisor suggestions under the event that prompted them. */
+function groupByEvent(
+  items: GapItem[],
+  titles: Map<string, string>,
+): Array<{ key: string; title: string; items: GapItem[] }> {
+  const by = new Map<string, GapItem[]>();
+  for (const i of items) {
+    const k = i.related_event_id ?? "__none";
+    by.set(k, [...(by.get(k) ?? []), i]);
+  }
+  return [...by.entries()].map(([key, groupItems]) => ({
+    key,
+    title: titles.get(key) ?? "Your case",
+    items: groupItems,
+  }));
+}
+
+/**
+ * One suggested document type. Deliberately lighter than GapCard: this is not
+ * something the person has failed to do, so it gets no card chrome of its own
+ * and both actions are equally weighted.
+ */
+function SuggestionRow({
+  item,
+  pending,
+  onAct,
+}: {
+  item: GapItem;
+  pending: boolean;
+  onAct: (action: "explain" | "leave_for_now", explanation?: string) => void;
+}) {
+  const { t } = useTranslation();
+  const [explaining, setExplaining] = useState(false);
+  const [text, setText] = useState("");
+  const def = item.category ? documentTypeById(item.category) : undefined;
+
+  return (
+    <li className="rounded-lg border border-border bg-surface-sunken/40 p-3.5">
+      <p className="m-0 text-[0.9375rem] font-medium text-foreground">
+        {def?.label ?? t("clarify.documents_tab")}
+      </p>
+      {def ? (
+        <p className="m-0 mt-1 text-sm leading-relaxed text-muted-foreground">{def.description}</p>
+      ) : null}
+      {item.suggested_action ? (
+        <p className="m-0 mt-2 text-sm text-muted-foreground">{item.suggested_action}</p>
+      ) : null}
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => onAct("leave_for_now")}
+          disabled={pending}
+        >
+          {t("clarify.documents_dismiss")}
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => setExplaining((v) => !v)}
+          disabled={pending}
+        >
+          {t("clarify.documents_note")}
+        </Button>
+      </div>
+
+      {explaining ? (
+        <div className="mt-3 space-y-2">
+          <Label htmlFor={`sug-${item.id}`}>{t("clarify.documents_note_label")}</Label>
+          <Textarea
+            id={`sug-${item.id}`}
+            rows={2}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+          />
+          <Button size="sm" onClick={() => onAct("explain", text)} disabled={pending}>
+            {t("common.done")}
+          </Button>
+        </div>
+      ) : null}
+    </li>
   );
 }
 

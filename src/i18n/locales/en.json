@@ -835,7 +835,13 @@
     "no_case": "No case yet.",
     "empty": "Nothing on this list right now.",
     "own_words_label": "In your own words",
-    "not_yet_added": "Something not yet added"
+    "not_yet_added": "Something not yet added",
+    "documents_tab": "Documents to look for",
+    "documents_intro": "Kinds of documents that can relate to what you have described. You may have none of them, and that is completely normal.",
+    "documents_empty": "Nothing to suggest yet. Add some events to your timeline and run the check again.",
+    "documents_dismiss": "Not applicable to me",
+    "documents_note": "Add a note",
+    "documents_note_label": "Anything you want to record about this (optional)"
   },
   "questions": {
     "title": "Questions",
@@ -862,5 +868,27 @@
     "review": "Review",
     "privacy": "Privacy",
     "activity": "History"
+  },
+  "import": {
+    "title": "Bring in a story you have written",
+    "intro": "If you have already written your story somewhere, paste it here or upload the file. You choose what to keep, and nothing is saved until you do.",
+    "back": "Back to My Story",
+    "paste_label": "Your story",
+    "paste_placeholder": "Paste your story here, in whatever language you wrote it.",
+    "char_count": "{{count}} characters",
+    "choose_file": "Choose a file",
+    "file_hint": ".txt, .md or .docx",
+    "file_loaded": "File loaded. Check it below before continuing.",
+    "file_failed": "That file could not be read.",
+    "analyse": "See where this would go",
+    "review_intro": "Here is where each part of your story would go. Your words are shown exactly as you wrote them. Untick anything you would rather not add.",
+    "none_found": "Nothing was matched to a section. You can still write your story section by section.",
+    "start_over": "Start over",
+    "confirm": "Add {{count}} to my story",
+    "saved": "Added {{count}} answers to your story.",
+    "save_failed": "Those answers could not be saved.",
+    "failed": "Your story could not be read just now.",
+    "consent_needed": "This needs your permission for AI processing first.",
+    "open_import": "Bring in a story you have written"
   }
 }

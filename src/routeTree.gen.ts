@@ -35,7 +35,9 @@ import { Route as DebugGuardrailsRouteImport } from './routes/debug.guardrails'
 import { Route as ProCalibrationRouteImport } from './routes/pro.calibration'
 import { Route as ProCasesRouteImport } from './routes/pro.cases'
 import { Route as AppDocumentsDocumentIdRouteImport } from './routes/app.documents.$documentId'
+import { Route as AppStoryIndexRouteImport } from './routes/app.story.index'
 import { Route as AppStorySectionRouteImport } from './routes/app.story.$section'
+import { Route as AppStoryImportRouteImport } from './routes/app.story.import'
 import { Route as CommunityRoomsSlugRouteImport } from './routes/community.rooms.$slug'
 import { Route as ProCasesCaseIdRouteImport } from './routes/pro.cases.$caseId'
 import { Route as AppStorySectionHistoryPromptRouteImport } from './routes/app.story.$section.history.$prompt'
@@ -170,9 +172,19 @@ const AppDocumentsDocumentIdRoute = AppDocumentsDocumentIdRouteImport.update({
   path: '/$documentId',
   getParentRoute: () => AppDocumentsRoute,
 } as any)
+const AppStoryIndexRoute = AppStoryIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppStoryRoute,
+} as any)
 const AppStorySectionRoute = AppStorySectionRouteImport.update({
   id: '/$section',
   path: '/$section',
+  getParentRoute: () => AppStoryRoute,
+} as any)
+const AppStoryImportRoute = AppStoryImportRouteImport.update({
+  id: '/import',
+  path: '/import',
   getParentRoute: () => AppStoryRoute,
 } as any)
 const CommunityRoomsSlugRoute = CommunityRoomsSlugRouteImport.update({
@@ -220,8 +232,10 @@ export interface FileRoutesByFullPath {
   '/pro/cases': typeof ProCasesRouteWithChildren
   '/app/documents/$documentId': typeof AppDocumentsDocumentIdRoute
   '/app/story/$section': typeof AppStorySectionRouteWithChildren
+  '/app/story/import': typeof AppStoryImportRoute
   '/community/rooms/$slug': typeof CommunityRoomsSlugRoute
   '/pro/cases/$caseId': typeof ProCasesCaseIdRoute
+  '/app/story/': typeof AppStoryIndexRoute
   '/app/story/$section/history/$prompt': typeof AppStorySectionHistoryPromptRoute
 }
 export interface FileRoutesByTo {
@@ -242,7 +256,6 @@ export interface FileRoutesByTo {
   '/app/review': typeof AppReviewRoute
   '/app/review-details': typeof AppReviewDetailsRoute
   '/app/sharing': typeof AppSharingRoute
-  '/app/story': typeof AppStoryRouteWithChildren
   '/app/timeline': typeof AppTimelineRoute
   '/community/feed': typeof CommunityFeedRoute
   '/community/profile': typeof CommunityProfileRoute
@@ -252,8 +265,10 @@ export interface FileRoutesByTo {
   '/pro/cases': typeof ProCasesRouteWithChildren
   '/app/documents/$documentId': typeof AppDocumentsDocumentIdRoute
   '/app/story/$section': typeof AppStorySectionRouteWithChildren
+  '/app/story/import': typeof AppStoryImportRoute
   '/community/rooms/$slug': typeof CommunityRoomsSlugRoute
   '/pro/cases/$caseId': typeof ProCasesCaseIdRoute
+  '/app/story': typeof AppStoryIndexRoute
   '/app/story/$section/history/$prompt': typeof AppStorySectionHistoryPromptRoute
 }
 export interface FileRoutesById {
@@ -285,8 +300,10 @@ export interface FileRoutesById {
   '/pro/cases': typeof ProCasesRouteWithChildren
   '/app/documents/$documentId': typeof AppDocumentsDocumentIdRoute
   '/app/story/$section': typeof AppStorySectionRouteWithChildren
+  '/app/story/import': typeof AppStoryImportRoute
   '/community/rooms/$slug': typeof CommunityRoomsSlugRoute
   '/pro/cases/$caseId': typeof ProCasesCaseIdRoute
+  '/app/story/': typeof AppStoryIndexRoute
   '/app/story/$section/history/$prompt': typeof AppStorySectionHistoryPromptRoute
 }
 export interface FileRouteTypes {
@@ -319,8 +336,10 @@ export interface FileRouteTypes {
     | '/pro/cases'
     | '/app/documents/$documentId'
     | '/app/story/$section'
+    | '/app/story/import'
     | '/community/rooms/$slug'
     | '/pro/cases/$caseId'
+    | '/app/story/'
     | '/app/story/$section/history/$prompt'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -341,7 +360,6 @@ export interface FileRouteTypes {
     | '/app/review'
     | '/app/review-details'
     | '/app/sharing'
-    | '/app/story'
     | '/app/timeline'
     | '/community/feed'
     | '/community/profile'
@@ -351,8 +369,10 @@ export interface FileRouteTypes {
     | '/pro/cases'
     | '/app/documents/$documentId'
     | '/app/story/$section'
+    | '/app/story/import'
     | '/community/rooms/$slug'
     | '/pro/cases/$caseId'
+    | '/app/story'
     | '/app/story/$section/history/$prompt'
   id:
     | '__root__'
@@ -383,8 +403,10 @@ export interface FileRouteTypes {
     | '/pro/cases'
     | '/app/documents/$documentId'
     | '/app/story/$section'
+    | '/app/story/import'
     | '/community/rooms/$slug'
     | '/pro/cases/$caseId'
+    | '/app/story/'
     | '/app/story/$section/history/$prompt'
   fileRoutesById: FileRoutesById
 }
@@ -585,11 +607,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDocumentsDocumentIdRouteImport
       parentRoute: typeof AppDocumentsRoute
     }
+    '/app/story/': {
+      id: '/app/story/'
+      path: '/'
+      fullPath: '/app/story/'
+      preLoaderRoute: typeof AppStoryIndexRouteImport
+      parentRoute: typeof AppStoryRoute
+    }
     '/app/story/$section': {
       id: '/app/story/$section'
       path: '/$section'
       fullPath: '/app/story/$section'
       preLoaderRoute: typeof AppStorySectionRouteImport
+      parentRoute: typeof AppStoryRoute
+    }
+    '/app/story/import': {
+      id: '/app/story/import'
+      path: '/import'
+      fullPath: '/app/story/import'
+      preLoaderRoute: typeof AppStoryImportRouteImport
       parentRoute: typeof AppStoryRoute
     }
     '/community/rooms/$slug': {
@@ -642,10 +678,14 @@ const AppStorySectionRouteWithChildren = AppStorySectionRoute._addFileChildren(
 
 interface AppStoryRouteChildren {
   AppStorySectionRoute: typeof AppStorySectionRouteWithChildren
+  AppStoryImportRoute: typeof AppStoryImportRoute
+  AppStoryIndexRoute: typeof AppStoryIndexRoute
 }
 
 const AppStoryRouteChildren: AppStoryRouteChildren = {
   AppStorySectionRoute: AppStorySectionRouteWithChildren,
+  AppStoryImportRoute: AppStoryImportRoute,
+  AppStoryIndexRoute: AppStoryIndexRoute,
 }
 
 const AppStoryRouteWithChildren = AppStoryRoute._addFileChildren(
