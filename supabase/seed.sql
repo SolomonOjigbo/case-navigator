@@ -192,4 +192,48 @@ VALUES
    'The applicant said they do not remember the date.', 'user_confirmed', false, true)
 ON CONFLICT (id) DO NOTHING;
 
+-- -------------------------------------------------------------------------
+-- One active sharing grant: CASE A, shared with the fictional lawyer.
+--
+-- Without this the professional side of the seed has nothing to open, and the
+-- revocation test in rls.integration.test.ts has no grant to revoke. CASE B
+-- and CASE C are deliberately left unshared, so "a professional with no grant
+-- sees nothing" has something real to prove.
+-- -------------------------------------------------------------------------
+INSERT INTO public.sharing_grants (id, case_id, professional_id, scopes, purpose_note, starts_at, expires_at, created_by)
+VALUES (
+  'f0000000-0000-4000-8000-00000000000a',
+  'e0000000-0000-4000-8000-00000000000a',
+  'd0000000-0000-4000-8000-000000000001',
+  ARRAY['story','documents','timeline','evidence_map','questions'],
+  'Seed data. Fictional review of a fictional case.',
+  now(), now() + interval '365 days',
+  'aaaaaaaa-0000-4000-8000-000000000001'
+) ON CONFLICT (id) DO NOTHING;
+
+-- -------------------------------------------------------------------------
+-- Consultation availability, so the booking screens have something to show.
+--
+-- Times are relative to when the seed runs, and far enough ahead to clear the
+-- one-hour lead time in consultation-service.
+-- -------------------------------------------------------------------------
+UPDATE public.professionals
+SET languages = ARRAY['en', 'ar'],
+    consultation_blurb = 'Refugee and asylum matters. First consultations are 30 minutes.'
+WHERE id = 'd0000000-0000-4000-8000-000000000001';
+
+INSERT INTO public.consultation_slots (id, professional_id, starts_at, duration_minutes, mode)
+VALUES
+  ('f1000000-0000-4000-8000-000000000001', 'd0000000-0000-4000-8000-000000000001',
+   date_trunc('hour', now()) + interval '2 days' + interval '9 hours', 30, 'video'),
+  ('f1000000-0000-4000-8000-000000000002', 'd0000000-0000-4000-8000-000000000001',
+   date_trunc('hour', now()) + interval '2 days' + interval '10 hours', 30, 'phone'),
+  ('f1000000-0000-4000-8000-000000000003', 'd0000000-0000-4000-8000-000000000001',
+   date_trunc('hour', now()) + interval '3 days' + interval '9 hours', 45, 'video'),
+  ('f1000000-0000-4000-8000-000000000004', 'd0000000-0000-4000-8000-000000000001',
+   date_trunc('hour', now()) + interval '3 days' + interval '14 hours', 30, 'in_person'),
+  ('f1000000-0000-4000-8000-000000000005', 'd0000000-0000-4000-8000-000000000001',
+   date_trunc('hour', now()) + interval '4 days' + interval '11 hours', 60, 'video')
+ON CONFLICT (id) DO NOTHING;
+
 RESET search_path;

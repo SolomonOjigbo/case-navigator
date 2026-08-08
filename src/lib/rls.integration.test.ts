@@ -15,7 +15,11 @@
 //
 // Seed a local stack with supabase/seed.sql first.
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it, vi } from "vitest";
+
+// Each test signs in two or three accounts against a hosted project, so the
+// 5s default is not enough. Applies to this file only.
+vi.setConfig({ testTimeout: 60_000, hookTimeout: 30_000 });
 
 const env = process.env;
 const enabled =
@@ -191,5 +195,126 @@ d("append-only tables reject UPDATE and DELETE", () => {
       .eq("case_id", caseA)
       .select("id");
     expect(deleted ?? []).toHaveLength(0);
+  });
+});
+
+d("RLS — booking a consultation does not open the case (S3 acceptance)", () => {
+  it("lets the professional see the booking and nothing else about the person", async () => {
+    const pro = await signIn(env.RLS_PRO_EMAIL!, env.RLS_PRO_PASSWORD!);
+    const applicantB = await signIn(env.RLS_APPLICANT_B_EMAIL!, env.RLS_APPLICANT_B_PASSWORD!);
+    const applicantA = await signIn(env.RLS_APPLICANT_A_EMAIL!, env.RLS_APPLICANT_A_PASSWORD!);
+
+    const { data: me } = await pro
+      .from("professionals")
+      .select("id, verified_at, active")
+      .limit(1)
+      .maybeSingle();
+    expect(me?.id, "the test professional has no professionals row").toBeTruthy();
+    expect(me?.verified_at, "fixture professional must be verified to be bookable").toBeTruthy();
+    const proId = me!.id as string;
+
+    // The directory shows a lawyer to someone who has shared nothing with
+    // them, and the underlying table still does not.
+    const { data: listed } = await applicantB
+      .from("bookable_professionals")
+      .select("id, display_name")
+      .eq("id", proId);
+    expect(listed ?? [], "a verified professional is not listed in the directory").toHaveLength(1);
+    const { data: rawRow } = await applicantB.from("professionals").select("id").eq("id", proId);
+    expect(rawRow ?? [], "the professionals table itself leaked to an applicant").toHaveLength(0);
+
+    // A start time far enough ahead to clear MIN_LEAD_MINUTES, and unique so
+    // consultation_slots_unique_start does not collide with a previous run.
+    const startsAt = new Date(Date.now() + 26 * 3600_000 + (Date.now() % 600_000)).toISOString();
+
+    const { data: slot, error: slotErr } = await pro
+      .from("consultation_slots")
+      .insert({ professional_id: proId, starts_at: startsAt, duration_minutes: 30, mode: "video" })
+      .select("id, professional_id, starts_at")
+      .single();
+    expect(slotErr, "the professional could not publish a slot").toBeNull();
+    const slotId = slot!.id as string;
+
+    try {
+      // The slot is visible to a signed-in applicant, because the professional
+      // is verified and active.
+      const { data: visible } = await applicantB
+        .from("consultation_slots")
+        .select("id")
+        .eq("id", slotId);
+      expect(visible ?? [], "a verified professional's open slot was not offered").toHaveLength(1);
+
+      const uidB = (await applicantB.auth.getUser()).data.user!.id;
+      const uidA = (await applicantA.auth.getUser()).data.user!.id;
+
+      // Nobody can book on someone else's behalf: the WITH CHECK pins
+      // applicant_id to the caller.
+      const { error: impostorErr } = await applicantB
+        .from("consultations")
+        .insert({ slot_id: slotId, professional_id: proId, applicant_id: uidA })
+        .select("id");
+      expect(impostorErr, "an applicant booked in another person's name").not.toBeNull();
+
+      const { data: booking, error: bookErr } = await applicantB
+        .from("consultations")
+        .insert({
+          slot_id: slotId,
+          professional_id: proId,
+          applicant_id: uidB,
+          topic: "questions about a hearing date",
+          language: "en",
+        })
+        .select("id")
+        .single();
+      expect(bookErr, "an applicant could not book a verified professional").toBeNull();
+      expect(booking?.id).toBeTruthy();
+
+      // The professional sees the appointment.
+      const { data: proSees } = await pro
+        .from("consultations")
+        .select("id, topic, applicant_id")
+        .eq("slot_id", slotId);
+      expect(proSees ?? [], "the professional cannot see their own booking").toHaveLength(1);
+
+      // ...and still sees nothing of that person's case. This is the whole
+      // point of the design: a booking is not a grant.
+      const ungranted = env.RLS_UNGRANTED_CASE_ID!;
+      for (const table of [
+        "story_responses",
+        "documents",
+        "events",
+        "extracted_facts",
+        "clarification_items",
+      ]) {
+        const { data } = await pro.from(table).select("id").eq("case_id", ungranted);
+        expect(data ?? [], `booking leaked ${table} to the professional`).toHaveLength(0);
+      }
+
+      // There is no column that could carry case material, so no future change
+      // can quietly start using one.
+      const { error: noCaseCol } = await pro
+        .from("consultations")
+        .select("case_id" as never)
+        .limit(1);
+      expect(noCaseCol, "consultations has gained a case reference").not.toBeNull();
+
+      // A third party sees neither the booking nor who made it.
+      const { data: otherSees } = await applicantA
+        .from("consultations")
+        .select("id")
+        .eq("slot_id", slotId);
+      expect(otherSees ?? [], "a booking leaked to an unrelated applicant").toHaveLength(0);
+
+      // And the slot cannot be taken twice.
+      const { error: doubleErr } = await applicantA
+        .from("consultations")
+        .insert({ slot_id: slotId, professional_id: proId, applicant_id: uidA })
+        .select("id");
+      expect(doubleErr, "the same slot was booked twice").not.toBeNull();
+    } finally {
+      // Deleting the slot cascades to the consultation, so the fixture is
+      // clean for the next run.
+      await pro.from("consultation_slots").delete().eq("id", slotId);
+    }
   });
 });

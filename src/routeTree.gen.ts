@@ -20,6 +20,7 @@ import { Route as RecoveryCodesRouteImport } from './routes/recovery-codes'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AppActivityRouteImport } from './routes/app.activity'
 import { Route as AppClarifyRouteImport } from './routes/app.clarify'
+import { Route as AppConsultationsRouteImport } from './routes/app.consultations'
 import { Route as AppDocumentsRouteImport } from './routes/app.documents'
 import { Route as AppEvidenceMapRouteImport } from './routes/app.evidence-map'
 import { Route as AppQuestionsRouteImport } from './routes/app.questions'
@@ -33,6 +34,7 @@ import { Route as CommunityModerationRouteImport } from './routes/community.mode
 import { Route as CommunityProfileRouteImport } from './routes/community.profile'
 import { Route as CommunityRoomsRouteImport } from './routes/community.rooms'
 import { Route as DebugGuardrailsRouteImport } from './routes/debug.guardrails'
+import { Route as ProAvailabilityRouteImport } from './routes/pro.availability'
 import { Route as ProCalibrationRouteImport } from './routes/pro.calibration'
 import { Route as ProCasesRouteImport } from './routes/pro.cases'
 import { Route as AppDocumentsDocumentIdRouteImport } from './routes/app.documents.$documentId'
@@ -96,6 +98,11 @@ const AppActivityRoute = AppActivityRouteImport.update({
 const AppClarifyRoute = AppClarifyRouteImport.update({
   id: '/clarify',
   path: '/clarify',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppConsultationsRoute = AppConsultationsRouteImport.update({
+  id: '/consultations',
+  path: '/consultations',
   getParentRoute: () => AppRoute,
 } as any)
 const AppDocumentsRoute = AppDocumentsRouteImport.update({
@@ -163,6 +170,11 @@ const DebugGuardrailsRoute = DebugGuardrailsRouteImport.update({
   path: '/debug/guardrails',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProAvailabilityRoute = ProAvailabilityRouteImport.update({
+  id: '/availability',
+  path: '/availability',
+  getParentRoute: () => ProRoute,
+} as any)
 const ProCalibrationRoute = ProCalibrationRouteImport.update({
   id: '/calibration',
   path: '/calibration',
@@ -222,6 +234,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/app/activity': typeof AppActivityRoute
   '/app/clarify': typeof AppClarifyRoute
+  '/app/consultations': typeof AppConsultationsRoute
   '/app/documents': typeof AppDocumentsRouteWithChildren
   '/app/evidence-map': typeof AppEvidenceMapRoute
   '/app/questions': typeof AppQuestionsRoute
@@ -235,6 +248,7 @@ export interface FileRoutesByFullPath {
   '/community/profile': typeof CommunityProfileRoute
   '/community/rooms': typeof CommunityRoomsRouteWithChildren
   '/debug/guardrails': typeof DebugGuardrailsRoute
+  '/pro/availability': typeof ProAvailabilityRoute
   '/pro/calibration': typeof ProCalibrationRoute
   '/pro/cases': typeof ProCasesRouteWithChildren
   '/app/documents/$documentId': typeof AppDocumentsDocumentIdRoute
@@ -257,6 +271,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/app/activity': typeof AppActivityRoute
   '/app/clarify': typeof AppClarifyRoute
+  '/app/consultations': typeof AppConsultationsRoute
   '/app/documents': typeof AppDocumentsRouteWithChildren
   '/app/evidence-map': typeof AppEvidenceMapRoute
   '/app/questions': typeof AppQuestionsRoute
@@ -269,6 +284,7 @@ export interface FileRoutesByTo {
   '/community/profile': typeof CommunityProfileRoute
   '/community/rooms': typeof CommunityRoomsRouteWithChildren
   '/debug/guardrails': typeof DebugGuardrailsRoute
+  '/pro/availability': typeof ProAvailabilityRoute
   '/pro/calibration': typeof ProCalibrationRoute
   '/pro/cases': typeof ProCasesRouteWithChildren
   '/app/documents/$documentId': typeof AppDocumentsDocumentIdRoute
@@ -292,6 +308,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/app/activity': typeof AppActivityRoute
   '/app/clarify': typeof AppClarifyRoute
+  '/app/consultations': typeof AppConsultationsRoute
   '/app/documents': typeof AppDocumentsRouteWithChildren
   '/app/evidence-map': typeof AppEvidenceMapRoute
   '/app/questions': typeof AppQuestionsRoute
@@ -305,6 +322,7 @@ export interface FileRoutesById {
   '/community/profile': typeof CommunityProfileRoute
   '/community/rooms': typeof CommunityRoomsRouteWithChildren
   '/debug/guardrails': typeof DebugGuardrailsRoute
+  '/pro/availability': typeof ProAvailabilityRoute
   '/pro/calibration': typeof ProCalibrationRoute
   '/pro/cases': typeof ProCasesRouteWithChildren
   '/app/documents/$documentId': typeof AppDocumentsDocumentIdRoute
@@ -329,6 +347,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/app/activity'
     | '/app/clarify'
+    | '/app/consultations'
     | '/app/documents'
     | '/app/evidence-map'
     | '/app/questions'
@@ -342,6 +361,7 @@ export interface FileRouteTypes {
     | '/community/profile'
     | '/community/rooms'
     | '/debug/guardrails'
+    | '/pro/availability'
     | '/pro/calibration'
     | '/pro/cases'
     | '/app/documents/$documentId'
@@ -364,6 +384,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/app/activity'
     | '/app/clarify'
+    | '/app/consultations'
     | '/app/documents'
     | '/app/evidence-map'
     | '/app/questions'
@@ -376,6 +397,7 @@ export interface FileRouteTypes {
     | '/community/profile'
     | '/community/rooms'
     | '/debug/guardrails'
+    | '/pro/availability'
     | '/pro/calibration'
     | '/pro/cases'
     | '/app/documents/$documentId'
@@ -398,6 +420,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/app/activity'
     | '/app/clarify'
+    | '/app/consultations'
     | '/app/documents'
     | '/app/evidence-map'
     | '/app/questions'
@@ -411,6 +434,7 @@ export interface FileRouteTypes {
     | '/community/profile'
     | '/community/rooms'
     | '/debug/guardrails'
+    | '/pro/availability'
     | '/pro/calibration'
     | '/pro/cases'
     | '/app/documents/$documentId'
@@ -514,6 +538,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppClarifyRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/consultations': {
+      id: '/app/consultations'
+      path: '/consultations'
+      fullPath: '/app/consultations'
+      preLoaderRoute: typeof AppConsultationsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/documents': {
       id: '/app/documents'
       path: '/documents'
@@ -604,6 +635,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/debug/guardrails'
       preLoaderRoute: typeof DebugGuardrailsRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/pro/availability': {
+      id: '/pro/availability'
+      path: '/availability'
+      fullPath: '/pro/availability'
+      preLoaderRoute: typeof ProAvailabilityRouteImport
+      parentRoute: typeof ProRoute
     }
     '/pro/calibration': {
       id: '/pro/calibration'
@@ -714,6 +752,7 @@ const AppStoryRouteWithChildren = AppStoryRoute._addFileChildren(
 interface AppRouteChildren {
   AppActivityRoute: typeof AppActivityRoute
   AppClarifyRoute: typeof AppClarifyRoute
+  AppConsultationsRoute: typeof AppConsultationsRoute
   AppDocumentsRoute: typeof AppDocumentsRouteWithChildren
   AppEvidenceMapRoute: typeof AppEvidenceMapRoute
   AppQuestionsRoute: typeof AppQuestionsRoute
@@ -727,6 +766,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppActivityRoute: AppActivityRoute,
   AppClarifyRoute: AppClarifyRoute,
+  AppConsultationsRoute: AppConsultationsRoute,
   AppDocumentsRoute: AppDocumentsRouteWithChildren,
   AppEvidenceMapRoute: AppEvidenceMapRoute,
   AppQuestionsRoute: AppQuestionsRoute,
@@ -782,11 +822,13 @@ const ProCasesRouteWithChildren = ProCasesRoute._addFileChildren(
 )
 
 interface ProRouteChildren {
+  ProAvailabilityRoute: typeof ProAvailabilityRoute
   ProCalibrationRoute: typeof ProCalibrationRoute
   ProCasesRoute: typeof ProCasesRouteWithChildren
 }
 
 const ProRouteChildren: ProRouteChildren = {
+  ProAvailabilityRoute: ProAvailabilityRoute,
   ProCalibrationRoute: ProCalibrationRoute,
   ProCasesRoute: ProCasesRouteWithChildren,
 }

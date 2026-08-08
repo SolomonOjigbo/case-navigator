@@ -723,6 +723,118 @@ export type Database = {
           },
         ]
       }
+      consultation_slots: {
+        Row: {
+          created_at: string
+          duration_minutes: number
+          id: string
+          mode: string
+          professional_id: string
+          starts_at: string
+          withdrawn_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          duration_minutes?: number
+          id?: string
+          mode?: string
+          professional_id: string
+          starts_at: string
+          withdrawn_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          duration_minutes?: number
+          id?: string
+          mode?: string
+          professional_id?: string
+          starts_at?: string
+          withdrawn_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consultation_slots_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "bookable_professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consultation_slots_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      consultations: {
+        Row: {
+          applicant_display_name: string | null
+          applicant_id: string
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          created_at: string
+          id: string
+          language: string | null
+          professional_id: string
+          slot_id: string
+          status: string
+          topic: string | null
+        }
+        Insert: {
+          applicant_display_name?: string | null
+          applicant_id: string
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          id?: string
+          language?: string | null
+          professional_id: string
+          slot_id: string
+          status?: string
+          topic?: string | null
+        }
+        Update: {
+          applicant_display_name?: string | null
+          applicant_id?: string
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          id?: string
+          language?: string | null
+          professional_id?: string
+          slot_id?: string
+          status?: string
+          topic?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consultations_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "bookable_professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consultations_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consultations_slot_id_fkey"
+            columns: ["slot_id"]
+            isOneToOne: false
+            referencedRelation: "consultation_slots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deletion_requests: {
         Row: {
           applicant_id: string
@@ -1232,6 +1344,13 @@ export type Database = {
             foreignKeyName: "export_packages_professional_approved_by_fkey"
             columns: ["professional_approved_by"]
             isOneToOne: false
+            referencedRelation: "bookable_professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "export_packages_professional_approved_by_fkey"
+            columns: ["professional_approved_by"]
+            isOneToOne: false
             referencedRelation: "professionals"
             referencedColumns: ["id"]
           },
@@ -1578,6 +1697,13 @@ export type Database = {
             foreignKeyName: "professional_notes_author_id_fkey"
             columns: ["author_id"]
             isOneToOne: false
+            referencedRelation: "bookable_professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "professional_notes_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
             referencedRelation: "professionals"
             referencedColumns: ["id"]
           },
@@ -1643,6 +1769,13 @@ export type Database = {
             foreignKeyName: "professional_reviews_reviewer_id_fkey"
             columns: ["reviewer_id"]
             isOneToOne: false
+            referencedRelation: "bookable_professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "professional_reviews_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
             referencedRelation: "professionals"
             referencedColumns: ["id"]
           },
@@ -1651,9 +1784,11 @@ export type Database = {
       professionals: {
         Row: {
           active: boolean
+          consultation_blurb: string | null
           created_at: string
           display_name: string | null
           id: string
+          languages: string[]
           license_jurisdiction: string | null
           license_number: string | null
           organization_id: string | null
@@ -1664,9 +1799,11 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          consultation_blurb?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
+          languages?: string[]
           license_jurisdiction?: string | null
           license_number?: string | null
           organization_id?: string | null
@@ -1677,9 +1814,11 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          consultation_blurb?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
+          languages?: string[]
           license_jurisdiction?: string | null
           license_number?: string | null
           organization_id?: string | null
@@ -1847,6 +1986,13 @@ export type Database = {
             foreignKeyName: "review_notices_reviewer_id_fkey"
             columns: ["reviewer_id"]
             isOneToOne: false
+            referencedRelation: "bookable_professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_notices_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
             referencedRelation: "professionals"
             referencedColumns: ["id"]
           },
@@ -1939,6 +2085,13 @@ export type Database = {
             columns: ["case_id"]
             isOneToOne: false
             referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sharing_grants_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "bookable_professionals"
             referencedColumns: ["id"]
           },
           {
@@ -2246,6 +2399,38 @@ export type Database = {
       }
     }
     Views: {
+      bookable_professionals: {
+        Row: {
+          consultation_blurb: string | null
+          display_name: string | null
+          id: string | null
+          languages: string[] | null
+          license_jurisdiction: string | null
+        }
+        Insert: {
+          consultation_blurb?: string | null
+          display_name?: string | null
+          id?: string | null
+          languages?: string[] | null
+          license_jurisdiction?: string | null
+        }
+        Update: {
+          consultation_blurb?: string | null
+          display_name?: string | null
+          id?: string | null
+          languages?: string[] | null
+          license_jurisdiction?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "professionals_license_jurisdiction_fkey"
+            columns: ["license_jurisdiction"]
+            isOneToOne: false
+            referencedRelation: "jurisdictions"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       story_responses_latest: {
         Row: {
           body_text: string | null
@@ -2344,6 +2529,10 @@ export type Database = {
       }
     }
     Functions: {
+      applicant_has_grant_to_professional: {
+        Args: { p_professional_id: string }
+        Returns: boolean
+      }
       cascade_stale_from_fact: {
         Args: { _correction_id?: string; _fact_id: string }
         Returns: Json
@@ -2364,6 +2553,14 @@ export type Database = {
         Returns: boolean
       }
       is_blocked_pair: { Args: { _a: string; _b: string }; Returns: boolean }
+      is_bookable_professional: {
+        Args: { p_professional_id: string }
+        Returns: boolean
+      }
+      is_own_professional: {
+        Args: { p_professional_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "applicant" | "professional" | "platform_admin"

@@ -197,6 +197,59 @@ their jurisdiction; the professional sees it; no case data is visible to that
 professional unless a `sharing_grant` exists — verified by an RLS integration
 test alongside the existing ones.
 
+#### Delivered
+
+S3-1 to S3-4 are built and verified end to end against the live project, both
+sides, with a real booking and a real cancellation.
+
+- `consultation_slots` and `consultations` (`20260808180000`). A consultation
+  has no `case_id` and no column large enough to carry case material; `topic`
+  is capped at 300 characters. Only verified, active professionals can be
+  listed or booked, enforced by RLS rather than by the client.
+- `/app/consultations` — browse by place and language, pick a slot, confirm
+  behind the four disclosures (no case access, advice happens in the
+  appointment, the lawyer bills directly, cancel any time), carry the
+  "Questions for My Lawyer" list into the appointment.
+- `/pro/availability` — publish and withdraw times, see bookings, edit the
+  languages and blurb the directory shows. A time someone has taken cannot be
+  withdrawn; the booking must be cancelled first.
+- Acceptance test in `rls.integration.test.ts`: books a real slot, proves the
+  professional sees the booking and still reads zero rows from every
+  case-scoped table, that `consultations` has no `case_id` to select, that a
+  third applicant sees nothing, and that the slot cannot be taken twice.
+
+Two things had to be fixed to get there, both pre-existing:
+
+- **`professionals` was unreadable by everyone** (`42P17`, infinite recursion:
+  its SELECT policy read `sharing_grants`, whose SELECT policy read
+  `professionals`). Every `/pro/*` screen begins by reading that table, so this
+  was breaking more than booking. Fixed in `20260808200000` with SECURITY
+  DEFINER helpers, the same pattern `has_role` already used.
+- **The directory had nowhere to read from.** An applicant browsing for the
+  first time can see no `professionals` row by design. Added the
+  `bookable_professionals` view: five fields, verified and active only, so
+  browsing does not expose licence numbers or organisation membership.
+
+A booking now also carries `applicant_display_name` (`20260808220000`) — the
+name the applicant types at the point of booking. `profiles` is own-row only,
+so before this a professional saw an appointment with no idea who was coming,
+while both screens promised them a name.
+
+#### Not delivered
+
+**S3-5 (email).** Cancellation works, in-app, from either side. Confirmations
+and reminders **by email do not exist** — there is no transactional email
+infrastructure in this project at all: no provider, no credentials, no
+templates, no send path. Someone who books and closes the tab has nothing to
+remind them. This needs a provider decision (Resend, Postmark, SES) before it
+can be built, and is roughly 3d once that is made.
+
+**Still the real exposure: S4-1.** `professionals.verified_at` is still set by
+hand in SQL. Everything above enforces "only verified professionals can be
+booked" precisely and provably — but nothing yet checks that a verified
+professional holds the licence they claim. In a booking product that is the
+liability, and it is a Sprint 4 ticket.
+
 ---
 
 ### Sprint 4 — Ask a Lawyer (trust) + Community DMs
