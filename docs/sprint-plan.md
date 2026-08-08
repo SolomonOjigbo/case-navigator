@@ -18,7 +18,7 @@ One does not exist at all.
 | 1 | Community Chat | **Mostly built** | Feed, posts, likes, comments, topic rooms with live messages, handles/profiles |
 | 2 | Story & Document Checker | **Partly built** | Inconsistency detection works; advising *which documents to obtain* does not exist |
 | 3 | Document upload + correspondence | **Built, under-surfaced** | Upload, OCR and doc↔story adjudication all work, but the verdict is buried |
-| 4 | Ask a Lawyer | **Not built** | No channel of any kind between an applicant and a lawyer |
+| 4 | Ask a Lawyer | **Not built** | Booking a consultation. No availability, booking or appointment concept exists |
 
 ### 1. Community Chat — mostly built
 
@@ -89,29 +89,40 @@ who uploads a passport page is never told what the system made of it.
 
 ### 4. Ask a Lawyer — does not exist
 
+**Scope clarified 2026-08-08:** this is **booking a consultation** with a
+lawyer, not a live advice channel inside the platform. That changes the shape
+of the work and most of the risk. What follows is written against the booking
+interpretation.
+
 What exists is adjacent but is not this feature:
 
 - `app.questions` generates *questions to ask a lawyer*. It produces a list to
   take to an appointment. It does not send anything to anyone.
 - `sharing-service.ts` lets an applicant grant a verified professional scoped,
-  time-limited access to the case.
+  time-limited access to the case, and `listVerifiedProfessionals()` already
+  returns a directory of them with jurisdiction.
 - Professionals review summaries (Gate 2) and write `professional_notes` —
-  but the RLS policy on that table is `prof_notes_select_same_org`, so **the
-  applicant cannot read them**. Notes are internal to the firm.
-- `HelpAskPanel` classifies incoming questions and *refuses* legal ones by
-  design.
+  the RLS policy is `prof_notes_select_same_org`, so those stay internal to
+  the firm.
 
-So a case can be shared with a lawyer and reviewed by one, but there is no
-mechanism for an applicant to ask a question and receive an answer. Every
-communication path is one-way or org-internal.
+Missing: any notion of availability, a booking, or an appointment. There is no
+`consultations` table, no scheduling, no confirmation, no reminders.
 
-> **This one needs a decision before it needs code.** Connecting people to
-> named lawyers giving jurisdiction-specific advice raises questions the
-> engineering plan cannot settle: who is liable for advice given through the
-> platform, whether a solicitor-client relationship forms and when, what is
-> disclosed before it does, licence verification per jurisdiction, and whether
-> stored exchanges are privileged. Sprint 3 below assumes those answers exist.
-> Confirm them first — the data model depends on the answers.
+Because advice happens in the consultation rather than through CaseMap, the
+liability question that previously blocked this is largely settled — the
+platform is an introducer, not the source of advice. Three narrower questions
+remain, none of which blocks design work:
+
+1. **Does CaseMap take payment for the consultation?** If yes, that brings
+   refunds, cancellations and consumer-protection obligations, and a payment
+   processor. If the lawyer bills directly, the booking is just a calendar.
+2. **What case data travels with a booking?** The safe default is nothing
+   beyond what the applicant explicitly grants through the existing
+   `sharing_grants` flow — booking should not become a side channel that
+   bypasses it.
+3. **Listing a professional is a representation.** `professionals.verified` is
+   currently set by hand with nothing checking a licence, which is thin if the
+   product is putting names in front of asylum claimants.
 
 ---
 
@@ -168,20 +179,23 @@ copy before building.
 
 ---
 
-### Sprint 3 — Ask a Lawyer (core)
-**Blocked on the legal decisions above.**
+### Sprint 3 — Ask a Lawyer (booking)
+Unblocked: advice happens in the consultation, not through the platform.
+Confirm the payment question (1 above) before S3-4 — it is the only ticket
+that depends on it.
 
 | Ticket | Description | Est. |
 |---|---|---|
-| S3-1 | Schema: `consultation_requests`, `consultation_messages`, with RLS letting exactly two parties read a thread. | 3d |
-| S3-2 | Applicant side: ask a question, optionally attaching case scope; carry over items from "Questions for My Lawyer". | 4d |
-| S3-3 | Professional side: queue, claim, reply. | 4d |
-| S3-4 | Disclosure gate: what is shown before a question is sent, and an explicit record of what the applicant agreed to. | 3d |
-| S3-5 | Notifications (email at minimum) for both sides. | 2d |
+| S3-1 | Schema: `consultation_slots` (professional availability) and `consultations` (booking, status, jurisdiction, language), RLS scoped to the two parties. | 3d |
+| S3-2 | Professional side: publish availability, see and manage bookings. | 4d |
+| S3-3 | Applicant side: browse professionals by jurisdiction and language, pick a slot, book. Offer to carry the "Questions for My Lawyer" list into the appointment. | 4d |
+| S3-4 | Booking confirmation and what it does and does not include — explicitly not legal advice, and not case access unless separately granted. Payment only if (1) says so. | 3d |
+| S3-5 | Confirmations, reminders and cancellation, by email at minimum. | 3d |
 
-**Acceptance:** an applicant asks a question, a verified professional in the
-right jurisdiction answers, both see the thread, nobody else can read it —
-verified by an RLS integration test alongside the existing ones.
+**Acceptance:** an applicant books a slot with a verified professional in
+their jurisdiction; the professional sees it; no case data is visible to that
+professional unless a `sharing_grant` exists — verified by an RLS integration
+test alongside the existing ones.
 
 ---
 
@@ -209,11 +223,17 @@ Sprint 2 next because it is cheap: the correspondence engine already exists
 and mostly needs presenting, and report/block is a safety gap that should not
 outlive another release.
 
-Ask a Lawyer is last of the four because it is the largest, the only one
-gated on a legal decision, and the only one that materially changes the
-platform's liability posture. It also depends on professional verification
-being real, which is currently manual.
+Ask a Lawyer is last of the four because it is the largest and depends on
+professional verification being real, which is currently manual. With the
+booking scope clarified it is no longer the riskiest — it introduces people to
+lawyers rather than carrying advice.
 
 If Ask a Lawyer is the commercial priority, Sprints 1 and 2 can be deferred —
-but S4-1 (verification) then has to move ahead of S3, not after it. Do not
-ship a consultation channel staffed by self-asserted lawyers.
+but S4-1 (verification) then has to move ahead of S3, not after it. Putting an
+unverified name in front of an asylum claimant is the real exposure in the
+booking model, and it is cheap to prevent.
+
+**Status: Sprint 1 shipped 2026-08-08** (commit `39334ea`) — documentation
+advisor, narrative intake, guardrail tests, plus two bugs found on the way (a
+missing `<Outlet />` that made the story sections unreachable, and a delete in
+analyzeGaps that would have wiped the advisor's output).
