@@ -80,11 +80,33 @@ function walkStrings(value: unknown, visit: (s: string) => void): void {
  *  documentation advisor) scan against the same list rather than
  *  re-implementing it and drifting. */
 export function hitsForbiddenVocabulary(text: string): string | null {
-  const lower = text.toLowerCase();
   for (const word of FORBIDDEN_VOCABULARY) {
-    if (lower.includes(word.toLowerCase())) return word;
+    if (forbiddenPattern(word).test(text)) return word;
   }
   return null;
+}
+
+/**
+ * Word-boundary match, not substring.
+ *
+ * This used to be `lower.includes(word)`, which meant the entry "lie" fired on
+ * "client", "believe", "relief" and "earlier" — four words that appear
+ * constantly in asylum material. A forbidden-vocabulary hit blocks the entire
+ * model response, so the effect was that ordinary extractions were being
+ * thrown away for containing the word "client". Found when the word "Earlier"
+ * in a UI string tripped the scanner in a test.
+ *
+ * Multi-word entries ("true story", "strong case") work the same way: the
+ * boundaries land on the outside of the phrase.
+ */
+const FORBIDDEN_PATTERNS = new Map<string, RegExp>();
+function forbiddenPattern(word: string): RegExp {
+  let re = FORBIDDEN_PATTERNS.get(word);
+  if (!re) {
+    re = new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
+    FORBIDDEN_PATTERNS.set(word, re);
+  }
+  return re;
 }
 
 export function hitsProbabilityClaim(text: string): string | null {

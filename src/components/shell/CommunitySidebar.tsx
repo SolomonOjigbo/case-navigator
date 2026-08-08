@@ -1,6 +1,14 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { MessageSquare, Hash, User, BookOpen, ShieldAlert } from "lucide-react";
+import {
+  MessageSquare,
+  MessagesSquare,
+  Hash,
+  User,
+  BookOpen,
+  ShieldAlert,
+  BadgeCheck,
+} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 import { useSession } from "@/hooks/use-session";
@@ -32,9 +40,13 @@ export function CommunitySidebar() {
   const items = [
     { to: "/community/feed", key: "nav_feed", icon: MessageSquare },
     { to: "/community/rooms", key: "nav_rooms", icon: Hash },
+    { to: "/community/messages", key: "nav_messages", icon: MessagesSquare },
     { to: "/community/profile", key: "nav_profile", icon: User },
     ...(adminQ.data === true
-      ? ([{ to: "/community/moderation", key: "nav_moderation", icon: ShieldAlert }] as const)
+      ? ([
+          { to: "/community/moderation", key: "nav_moderation", icon: ShieldAlert },
+          { to: "/admin/professionals", key: "nav_admin_professionals", icon: BadgeCheck },
+        ] as const)
       : []),
   ] as const;
 

@@ -6,10 +6,10 @@
 // not open the applicant's case — that arrives separately, through a sharing
 // grant the applicant controls, and appears on the Cases screen.
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarPlus, Loader2, Trash2, Users, Lock } from "lucide-react";
+import { CalendarPlus, CheckCircle2, Loader2, Trash2, Users, Lock } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ import {
   updateConsultationProfile,
   withdrawSlot,
   cancelConsultation,
+  completeConsultation,
   type ConsultationMode,
 } from "@/lib/consultation-service";
 import { useSession } from "@/hooks/use-session";
@@ -52,10 +53,23 @@ function AvailabilityView() {
   const [mode, setMode] = useState<ConsultationMode>("video");
   const [languages, setLanguages] = useState("");
   const [blurb, setBlurb] = useState("");
+  const [responseDays, setResponseDays] = useState("");
   const [profileDirty, setProfileDirty] = useState(false);
 
   const meQ = useQuery({ queryKey: ["current-professional"], queryFn: getCurrentProfessional });
   const proId = meQ.data?.id ?? null;
+
+  // Prefill "How you appear" from the stored row. Without this the fields open
+  // empty and saving would quietly erase what is already there.
+  useEffect(() => {
+    if (!meQ.data) return;
+    setLanguages((meQ.data.languages ?? []).join(", "));
+    setBlurb(meQ.data.consultation_blurb ?? "");
+    setResponseDays(
+      meQ.data.response_within_days == null ? "" : String(meQ.data.response_within_days),
+    );
+    setProfileDirty(false);
+  }, [meQ.data]);
 
   const slotsQ = useQuery({
     queryKey: ["my-slots", proId],
@@ -98,6 +112,15 @@ function AvailabilityView() {
     },
   });
 
+  const completeMut = useMutation({
+    mutationFn: (id: string) => completeConsultation(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["pro-consultations"] });
+      toast.success(t("pro_avail.marked_done"));
+    },
+    onError: () => toast.error(t("pro_avail.mark_done_failed")),
+  });
+
   const cancelMut = useMutation({
     mutationFn: (id: string) =>
       cancelConsultation({ consultationId: id, byUserId: user!.id, reason: "" }),
@@ -117,9 +140,12 @@ function AvailabilityView() {
           .map((s) => s.trim().toLowerCase())
           .filter(Boolean),
         blurb,
+        responseWithinDays: responseDays === "" ? null : Number(responseDays),
       }),
     onSuccess: () => {
       setProfileDirty(false);
+      qc.invalidateQueries({ queryKey: ["current-professional"] });
+      qc.invalidateQueries({ queryKey: ["bookable-pros"] });
       toast.success(t("pro_avail.profile_saved"));
     },
     onError: () => toast.error(t("pro_avail.profile_failed")),
@@ -138,7 +164,12 @@ function AvailabilityView() {
     );
   }
 
-  const booked = (bookingsQ.data ?? []).filter((c) => c.status === "booked");
+  const allBooked = (bookingsQ.data ?? []).filter((c) => c.status === "booked");
+  // An appointment whose end time has passed is not something to act on any
+  // more, but it should not vanish either — it stays, marked, until someone
+  // closes it out.
+  const booked = allBooked.filter((c) => !c.is_past);
+  const past = allBooked.filter((c) => c.is_past);
 
   return (
     <div className="content-column py-2 sm:py-4">
@@ -191,6 +222,36 @@ function AvailabilityView() {
               </article>
             ))
           )}
+
+          {past.length > 0 ? (
+            <section className="pt-2">
+              <h3 className="text-eyebrow mb-2">{t("pro_avail.past_heading")}</h3>
+              <ul className="m-0 grid list-none gap-2 p-0">
+                {past.map((c) => (
+                  <li key={c.id} className="surface-card p-4 opacity-80">
+                    <p className="m-0 text-[0.9375rem] font-medium text-foreground">
+                      {c.applicant_display_name?.trim() || t("pro_avail.no_name_given")}
+                    </p>
+                    <p className="m-0 mt-1 text-sm text-muted-foreground">
+                      {c.starts_at ? formatSlotTime(c.starts_at) : "—"} ·{" "}
+                      {t("pro_avail.past_label")}
+                    </p>
+                    <div className="mt-3">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={completeMut.isPending}
+                        onClick={() => completeMut.mutate(c.id)}
+                      >
+                        <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+                        {t("pro_avail.mark_done")}
+                      </Button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
         </TabsContent>
 
         <TabsContent value="slots" className="mt-4 space-y-4">
@@ -288,6 +349,24 @@ function AvailabilityView() {
               />
               <p className="m-0 text-[0.8125rem] text-muted-foreground">
                 {t("pro_avail.languages_help")}
+              </p>
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="pro-response">{t("pro_avail.response_days")}</Label>
+              <Input
+                id="pro-response"
+                type="number"
+                min={1}
+                max={30}
+                className="w-28"
+                value={responseDays}
+                onChange={(e) => {
+                  setResponseDays(e.target.value);
+                  setProfileDirty(true);
+                }}
+              />
+              <p className="m-0 text-[0.8125rem] text-muted-foreground">
+                {t("pro_avail.response_days_help")}
               </p>
             </div>
             <div className="grid gap-1.5">

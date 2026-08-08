@@ -264,6 +264,85 @@ liability, and it is a Sprint 4 ticket.
 **Acceptance:** an unverified professional cannot appear in the directory or
 answer a consultation.
 
+#### Delivered
+
+All four tickets, verified end to end against the live project.
+
+**S4-1 — verification.** The hole this sprint existed to close was worse than
+the plan assumed. `professionals` had `GRANT UPDATE ... TO authenticated` and a
+policy of `auth.uid() = user_id` with no column restriction, so a professional
+could set their own `license_number`, `license_jurisdiction` and `verified_at`.
+Confirmed by doing it: signing in as the seed professional and rewriting the
+licence number succeeded. Row-level security cannot restrict *which columns* an
+update touches, so the fix is a trigger
+(`professionals_guard_privileged_columns`). A professional may now edit how they
+appear — display name, languages, blurb, reply time — and nothing else.
+
+Around that: `professional_verifications` (submission, evidence, decision, who
+decided and when), a private `professional-evidence` bucket with no UPDATE or
+DELETE policy so a submission stays as submitted, `/pro/verification` for
+sending details, and `/admin/professionals` for reviewing them. Approval and
+revocation go through two SECURITY DEFINER functions that refuse anyone without
+`platform_admin`. Revoking also withdraws the professional's future slots, and
+deliberately leaves existing bookings visible to both parties so they can be
+cancelled rather than silently vanishing.
+
+**S4-2 — directory.** Browsing by jurisdiction and language shipped in Sprint 3.
+Added what someone actually needs in order to choose: when the licence was
+checked (the platform's claim, not the professional's) and the reply time they
+state.
+
+**S4-3 — direct messages.** `community_dm_threads` and the DM half of
+`community_messages` were written in the first migration and had sat unused
+ever since. Now `/community/messages`, with realtime, and blocking enforced by
+the existing insert policies — which re-check the pair on every message, so a
+block stops the next message, not just the next conversation.
+
+**S4-4 — response expectations and staleness.** Professionals state a usual
+reply time. A booking's end is derived from its slot (`consultations_with_slot`,
+`is_past`) rather than written by a scheduled job, so an appointment that has
+happened stops looking like one that is coming; either party can close it out
+with `complete_consultation()`, which refuses to run before the end time.
+
+Three pre-existing faults surfaced and are fixed here:
+
+- **`hitsForbiddenVocabulary` matched substrings, not words.** The entry `"lie"`
+  fired on "client", "believe", "relief" and "earlier". A vocabulary hit
+  discards the entire model response, so ordinary extractions were being thrown
+  away for containing the word "client". Found when the string "Earlier
+  submissions" tripped the scanner in a new test. Now word-boundary matched,
+  with a regression test.
+- **`/community/rooms` was a layout route with no `<Outlet />`,** so opening a
+  room rendered the room list instead and topic rooms were unreachable — the
+  same fault found in `app.story` last sprint. Split into a layout and an index
+  route.
+- **A platform admin could not read `professionals` at all,** so "Currently
+  listed" was always empty and revocation could not be reached from the screen.
+  The decision functions run as SECURITY DEFINER and were never blocked, which
+  is why this only showed up by using the page.
+
+**Verification:** the RLS suite gains six tests — an unverified professional is
+absent from the directory, their slots are invisible, they cannot be booked,
+they cannot set their own `verified_at`/`active`/licence/jurisdiction, neither
+they nor an applicant can approve a submission, and the queue does not leak.
+Plus two for DMs: a third party (including a platform admin) reads neither the
+thread nor its messages, and a block refuses sends in both directions. 14 RLS
+tests pass live; 143 unit tests pass.
+
+#### Known limits
+
+- **A moderator cannot see a reported DM.** Reporting from a conversation files
+  against the profile, and the reporter's own words are the only context, because
+  RLS does not show private messages to anyone but the two participants. The
+  alternative — letting moderators read private conversations — is worse. If
+  reported DMs need to be reviewable, the right shape is the reporter attaching
+  the specific messages they are reporting, which is a separate ticket.
+- **Nothing stops an unsolicited first message.** Blocking is after the fact.
+  A per-account "who may message me" setting is not built.
+- **Verification is a person reading a document.** There is no integration with
+  a law-society register, so an admin approving a submission is asserting they
+  checked it themselves. The screen says so.
+
 ---
 
 ## 4. Sequencing rationale

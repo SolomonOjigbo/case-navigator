@@ -39,7 +39,9 @@ export async function getCurrentProfessional() {
   if (!user) return null;
   const { data, error } = await supabase
     .from("professionals")
-    .select("id, user_id, display_name, organization_id, active, verified_at")
+    .select(
+      "id, user_id, display_name, organization_id, active, verified_at, languages, consultation_blurb, response_within_days",
+    )
     .eq("user_id", user.id)
     .maybeSingle();
   if (error) throw error;

@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CommunityRouteImport } from './routes/community'
@@ -18,6 +19,7 @@ import { Route as OrientationRouteImport } from './routes/orientation'
 import { Route as ProRouteImport } from './routes/pro'
 import { Route as RecoveryCodesRouteImport } from './routes/recovery-codes'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as AdminProfessionalsRouteImport } from './routes/admin.professionals'
 import { Route as AppActivityRouteImport } from './routes/app.activity'
 import { Route as AppClarifyRouteImport } from './routes/app.clarify'
 import { Route as AppConsultationsRouteImport } from './routes/app.consultations'
@@ -30,6 +32,7 @@ import { Route as AppSharingRouteImport } from './routes/app.sharing'
 import { Route as AppStoryRouteImport } from './routes/app.story'
 import { Route as AppTimelineRouteImport } from './routes/app.timeline'
 import { Route as CommunityFeedRouteImport } from './routes/community.feed'
+import { Route as CommunityMessagesRouteImport } from './routes/community.messages'
 import { Route as CommunityModerationRouteImport } from './routes/community.moderation'
 import { Route as CommunityProfileRouteImport } from './routes/community.profile'
 import { Route as CommunityRoomsRouteImport } from './routes/community.rooms'
@@ -37,10 +40,14 @@ import { Route as DebugGuardrailsRouteImport } from './routes/debug.guardrails'
 import { Route as ProAvailabilityRouteImport } from './routes/pro.availability'
 import { Route as ProCalibrationRouteImport } from './routes/pro.calibration'
 import { Route as ProCasesRouteImport } from './routes/pro.cases'
+import { Route as ProVerificationRouteImport } from './routes/pro.verification'
 import { Route as AppDocumentsDocumentIdRouteImport } from './routes/app.documents.$documentId'
 import { Route as AppStoryIndexRouteImport } from './routes/app.story.index'
 import { Route as AppStorySectionRouteImport } from './routes/app.story.$section'
 import { Route as AppStoryImportRouteImport } from './routes/app.story.import'
+import { Route as CommunityMessagesIndexRouteImport } from './routes/community.messages.index'
+import { Route as CommunityMessagesThreadIdRouteImport } from './routes/community.messages.$threadId'
+import { Route as CommunityRoomsIndexRouteImport } from './routes/community.rooms.index'
 import { Route as CommunityRoomsSlugRouteImport } from './routes/community.rooms.$slug'
 import { Route as ProCasesCaseIdRouteImport } from './routes/pro.cases.$caseId'
 import { Route as AppStorySectionHistoryPromptRouteImport } from './routes/app.story.$section.history.$prompt'
@@ -48,6 +55,11 @@ import { Route as AppStorySectionHistoryPromptRouteImport } from './routes/app.s
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRoute = AppRouteImport.update({
@@ -89,6 +101,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminProfessionalsRoute = AdminProfessionalsRouteImport.update({
+  id: '/professionals',
+  path: '/professionals',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AppActivityRoute = AppActivityRouteImport.update({
   id: '/activity',
@@ -150,6 +167,11 @@ const CommunityFeedRoute = CommunityFeedRouteImport.update({
   path: '/feed',
   getParentRoute: () => CommunityRoute,
 } as any)
+const CommunityMessagesRoute = CommunityMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
+  getParentRoute: () => CommunityRoute,
+} as any)
 const CommunityModerationRoute = CommunityModerationRouteImport.update({
   id: '/moderation',
   path: '/moderation',
@@ -185,6 +207,11 @@ const ProCasesRoute = ProCasesRouteImport.update({
   path: '/cases',
   getParentRoute: () => ProRoute,
 } as any)
+const ProVerificationRoute = ProVerificationRouteImport.update({
+  id: '/verification',
+  path: '/verification',
+  getParentRoute: () => ProRoute,
+} as any)
 const AppDocumentsDocumentIdRoute = AppDocumentsDocumentIdRouteImport.update({
   id: '/$documentId',
   path: '/$documentId',
@@ -205,6 +232,22 @@ const AppStoryImportRoute = AppStoryImportRouteImport.update({
   path: '/import',
   getParentRoute: () => AppStoryRoute,
 } as any)
+const CommunityMessagesIndexRoute = CommunityMessagesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CommunityMessagesRoute,
+} as any)
+const CommunityMessagesThreadIdRoute =
+  CommunityMessagesThreadIdRouteImport.update({
+    id: '/$threadId',
+    path: '/$threadId',
+    getParentRoute: () => CommunityMessagesRoute,
+  } as any)
+const CommunityRoomsIndexRoute = CommunityRoomsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CommunityRoomsRoute,
+} as any)
 const CommunityRoomsSlugRoute = CommunityRoomsSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
@@ -224,6 +267,7 @@ const AppStorySectionHistoryPromptRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/community': typeof CommunityRouteWithChildren
@@ -232,6 +276,7 @@ export interface FileRoutesByFullPath {
   '/pro': typeof ProRouteWithChildren
   '/recovery-codes': typeof RecoveryCodesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin/professionals': typeof AdminProfessionalsRoute
   '/app/activity': typeof AppActivityRoute
   '/app/clarify': typeof AppClarifyRoute
   '/app/consultations': typeof AppConsultationsRoute
@@ -244,6 +289,7 @@ export interface FileRoutesByFullPath {
   '/app/story': typeof AppStoryRouteWithChildren
   '/app/timeline': typeof AppTimelineRoute
   '/community/feed': typeof CommunityFeedRoute
+  '/community/messages': typeof CommunityMessagesRouteWithChildren
   '/community/moderation': typeof CommunityModerationRoute
   '/community/profile': typeof CommunityProfileRoute
   '/community/rooms': typeof CommunityRoomsRouteWithChildren
@@ -251,16 +297,21 @@ export interface FileRoutesByFullPath {
   '/pro/availability': typeof ProAvailabilityRoute
   '/pro/calibration': typeof ProCalibrationRoute
   '/pro/cases': typeof ProCasesRouteWithChildren
+  '/pro/verification': typeof ProVerificationRoute
   '/app/documents/$documentId': typeof AppDocumentsDocumentIdRoute
   '/app/story/$section': typeof AppStorySectionRouteWithChildren
   '/app/story/import': typeof AppStoryImportRoute
+  '/community/messages/$threadId': typeof CommunityMessagesThreadIdRoute
   '/community/rooms/$slug': typeof CommunityRoomsSlugRoute
   '/pro/cases/$caseId': typeof ProCasesCaseIdRoute
   '/app/story/': typeof AppStoryIndexRoute
+  '/community/messages/': typeof CommunityMessagesIndexRoute
+  '/community/rooms/': typeof CommunityRoomsIndexRoute
   '/app/story/$section/history/$prompt': typeof AppStorySectionHistoryPromptRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/community': typeof CommunityRouteWithChildren
@@ -269,6 +320,7 @@ export interface FileRoutesByTo {
   '/pro': typeof ProRouteWithChildren
   '/recovery-codes': typeof RecoveryCodesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin/professionals': typeof AdminProfessionalsRoute
   '/app/activity': typeof AppActivityRoute
   '/app/clarify': typeof AppClarifyRoute
   '/app/consultations': typeof AppConsultationsRoute
@@ -282,22 +334,26 @@ export interface FileRoutesByTo {
   '/community/feed': typeof CommunityFeedRoute
   '/community/moderation': typeof CommunityModerationRoute
   '/community/profile': typeof CommunityProfileRoute
-  '/community/rooms': typeof CommunityRoomsRouteWithChildren
   '/debug/guardrails': typeof DebugGuardrailsRoute
   '/pro/availability': typeof ProAvailabilityRoute
   '/pro/calibration': typeof ProCalibrationRoute
   '/pro/cases': typeof ProCasesRouteWithChildren
+  '/pro/verification': typeof ProVerificationRoute
   '/app/documents/$documentId': typeof AppDocumentsDocumentIdRoute
   '/app/story/$section': typeof AppStorySectionRouteWithChildren
   '/app/story/import': typeof AppStoryImportRoute
+  '/community/messages/$threadId': typeof CommunityMessagesThreadIdRoute
   '/community/rooms/$slug': typeof CommunityRoomsSlugRoute
   '/pro/cases/$caseId': typeof ProCasesCaseIdRoute
   '/app/story': typeof AppStoryIndexRoute
+  '/community/messages': typeof CommunityMessagesIndexRoute
+  '/community/rooms': typeof CommunityRoomsIndexRoute
   '/app/story/$section/history/$prompt': typeof AppStorySectionHistoryPromptRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/community': typeof CommunityRouteWithChildren
@@ -306,6 +362,7 @@ export interface FileRoutesById {
   '/pro': typeof ProRouteWithChildren
   '/recovery-codes': typeof RecoveryCodesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin/professionals': typeof AdminProfessionalsRoute
   '/app/activity': typeof AppActivityRoute
   '/app/clarify': typeof AppClarifyRoute
   '/app/consultations': typeof AppConsultationsRoute
@@ -318,6 +375,7 @@ export interface FileRoutesById {
   '/app/story': typeof AppStoryRouteWithChildren
   '/app/timeline': typeof AppTimelineRoute
   '/community/feed': typeof CommunityFeedRoute
+  '/community/messages': typeof CommunityMessagesRouteWithChildren
   '/community/moderation': typeof CommunityModerationRoute
   '/community/profile': typeof CommunityProfileRoute
   '/community/rooms': typeof CommunityRoomsRouteWithChildren
@@ -325,18 +383,23 @@ export interface FileRoutesById {
   '/pro/availability': typeof ProAvailabilityRoute
   '/pro/calibration': typeof ProCalibrationRoute
   '/pro/cases': typeof ProCasesRouteWithChildren
+  '/pro/verification': typeof ProVerificationRoute
   '/app/documents/$documentId': typeof AppDocumentsDocumentIdRoute
   '/app/story/$section': typeof AppStorySectionRouteWithChildren
   '/app/story/import': typeof AppStoryImportRoute
+  '/community/messages/$threadId': typeof CommunityMessagesThreadIdRoute
   '/community/rooms/$slug': typeof CommunityRoomsSlugRoute
   '/pro/cases/$caseId': typeof ProCasesCaseIdRoute
   '/app/story/': typeof AppStoryIndexRoute
+  '/community/messages/': typeof CommunityMessagesIndexRoute
+  '/community/rooms/': typeof CommunityRoomsIndexRoute
   '/app/story/$section/history/$prompt': typeof AppStorySectionHistoryPromptRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/app'
     | '/auth'
     | '/community'
@@ -345,6 +408,7 @@ export interface FileRouteTypes {
     | '/pro'
     | '/recovery-codes'
     | '/sitemap.xml'
+    | '/admin/professionals'
     | '/app/activity'
     | '/app/clarify'
     | '/app/consultations'
@@ -357,6 +421,7 @@ export interface FileRouteTypes {
     | '/app/story'
     | '/app/timeline'
     | '/community/feed'
+    | '/community/messages'
     | '/community/moderation'
     | '/community/profile'
     | '/community/rooms'
@@ -364,16 +429,21 @@ export interface FileRouteTypes {
     | '/pro/availability'
     | '/pro/calibration'
     | '/pro/cases'
+    | '/pro/verification'
     | '/app/documents/$documentId'
     | '/app/story/$section'
     | '/app/story/import'
+    | '/community/messages/$threadId'
     | '/community/rooms/$slug'
     | '/pro/cases/$caseId'
     | '/app/story/'
+    | '/community/messages/'
+    | '/community/rooms/'
     | '/app/story/$section/history/$prompt'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/app'
     | '/auth'
     | '/community'
@@ -382,6 +452,7 @@ export interface FileRouteTypes {
     | '/pro'
     | '/recovery-codes'
     | '/sitemap.xml'
+    | '/admin/professionals'
     | '/app/activity'
     | '/app/clarify'
     | '/app/consultations'
@@ -395,21 +466,25 @@ export interface FileRouteTypes {
     | '/community/feed'
     | '/community/moderation'
     | '/community/profile'
-    | '/community/rooms'
     | '/debug/guardrails'
     | '/pro/availability'
     | '/pro/calibration'
     | '/pro/cases'
+    | '/pro/verification'
     | '/app/documents/$documentId'
     | '/app/story/$section'
     | '/app/story/import'
+    | '/community/messages/$threadId'
     | '/community/rooms/$slug'
     | '/pro/cases/$caseId'
     | '/app/story'
+    | '/community/messages'
+    | '/community/rooms'
     | '/app/story/$section/history/$prompt'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/app'
     | '/auth'
     | '/community'
@@ -418,6 +493,7 @@ export interface FileRouteTypes {
     | '/pro'
     | '/recovery-codes'
     | '/sitemap.xml'
+    | '/admin/professionals'
     | '/app/activity'
     | '/app/clarify'
     | '/app/consultations'
@@ -430,6 +506,7 @@ export interface FileRouteTypes {
     | '/app/story'
     | '/app/timeline'
     | '/community/feed'
+    | '/community/messages'
     | '/community/moderation'
     | '/community/profile'
     | '/community/rooms'
@@ -437,17 +514,22 @@ export interface FileRouteTypes {
     | '/pro/availability'
     | '/pro/calibration'
     | '/pro/cases'
+    | '/pro/verification'
     | '/app/documents/$documentId'
     | '/app/story/$section'
     | '/app/story/import'
+    | '/community/messages/$threadId'
     | '/community/rooms/$slug'
     | '/pro/cases/$caseId'
     | '/app/story/'
+    | '/community/messages/'
+    | '/community/rooms/'
     | '/app/story/$section/history/$prompt'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRoute
   CommunityRoute: typeof CommunityRouteWithChildren
@@ -466,6 +548,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app': {
@@ -523,6 +612,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/professionals': {
+      id: '/admin/professionals'
+      path: '/professionals'
+      fullPath: '/admin/professionals'
+      preLoaderRoute: typeof AdminProfessionalsRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/app/activity': {
       id: '/app/activity'
@@ -608,6 +704,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CommunityFeedRouteImport
       parentRoute: typeof CommunityRoute
     }
+    '/community/messages': {
+      id: '/community/messages'
+      path: '/messages'
+      fullPath: '/community/messages'
+      preLoaderRoute: typeof CommunityMessagesRouteImport
+      parentRoute: typeof CommunityRoute
+    }
     '/community/moderation': {
       id: '/community/moderation'
       path: '/moderation'
@@ -657,6 +760,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProCasesRouteImport
       parentRoute: typeof ProRoute
     }
+    '/pro/verification': {
+      id: '/pro/verification'
+      path: '/verification'
+      fullPath: '/pro/verification'
+      preLoaderRoute: typeof ProVerificationRouteImport
+      parentRoute: typeof ProRoute
+    }
     '/app/documents/$documentId': {
       id: '/app/documents/$documentId'
       path: '/$documentId'
@@ -685,6 +795,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppStoryImportRouteImport
       parentRoute: typeof AppStoryRoute
     }
+    '/community/messages/': {
+      id: '/community/messages/'
+      path: '/'
+      fullPath: '/community/messages/'
+      preLoaderRoute: typeof CommunityMessagesIndexRouteImport
+      parentRoute: typeof CommunityMessagesRoute
+    }
+    '/community/messages/$threadId': {
+      id: '/community/messages/$threadId'
+      path: '/$threadId'
+      fullPath: '/community/messages/$threadId'
+      preLoaderRoute: typeof CommunityMessagesThreadIdRouteImport
+      parentRoute: typeof CommunityMessagesRoute
+    }
+    '/community/rooms/': {
+      id: '/community/rooms/'
+      path: '/'
+      fullPath: '/community/rooms/'
+      preLoaderRoute: typeof CommunityRoomsIndexRouteImport
+      parentRoute: typeof CommunityRoomsRoute
+    }
     '/community/rooms/$slug': {
       id: '/community/rooms/$slug'
       path: '/$slug'
@@ -708,6 +839,16 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface AdminRouteChildren {
+  AdminProfessionalsRoute: typeof AdminProfessionalsRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminProfessionalsRoute: AdminProfessionalsRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface AppDocumentsRouteChildren {
   AppDocumentsDocumentIdRoute: typeof AppDocumentsDocumentIdRoute
@@ -779,12 +920,27 @@ const AppRouteChildren: AppRouteChildren = {
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
+interface CommunityMessagesRouteChildren {
+  CommunityMessagesThreadIdRoute: typeof CommunityMessagesThreadIdRoute
+  CommunityMessagesIndexRoute: typeof CommunityMessagesIndexRoute
+}
+
+const CommunityMessagesRouteChildren: CommunityMessagesRouteChildren = {
+  CommunityMessagesThreadIdRoute: CommunityMessagesThreadIdRoute,
+  CommunityMessagesIndexRoute: CommunityMessagesIndexRoute,
+}
+
+const CommunityMessagesRouteWithChildren =
+  CommunityMessagesRoute._addFileChildren(CommunityMessagesRouteChildren)
+
 interface CommunityRoomsRouteChildren {
   CommunityRoomsSlugRoute: typeof CommunityRoomsSlugRoute
+  CommunityRoomsIndexRoute: typeof CommunityRoomsIndexRoute
 }
 
 const CommunityRoomsRouteChildren: CommunityRoomsRouteChildren = {
   CommunityRoomsSlugRoute: CommunityRoomsSlugRoute,
+  CommunityRoomsIndexRoute: CommunityRoomsIndexRoute,
 }
 
 const CommunityRoomsRouteWithChildren = CommunityRoomsRoute._addFileChildren(
@@ -793,6 +949,7 @@ const CommunityRoomsRouteWithChildren = CommunityRoomsRoute._addFileChildren(
 
 interface CommunityRouteChildren {
   CommunityFeedRoute: typeof CommunityFeedRoute
+  CommunityMessagesRoute: typeof CommunityMessagesRouteWithChildren
   CommunityModerationRoute: typeof CommunityModerationRoute
   CommunityProfileRoute: typeof CommunityProfileRoute
   CommunityRoomsRoute: typeof CommunityRoomsRouteWithChildren
@@ -800,6 +957,7 @@ interface CommunityRouteChildren {
 
 const CommunityRouteChildren: CommunityRouteChildren = {
   CommunityFeedRoute: CommunityFeedRoute,
+  CommunityMessagesRoute: CommunityMessagesRouteWithChildren,
   CommunityModerationRoute: CommunityModerationRoute,
   CommunityProfileRoute: CommunityProfileRoute,
   CommunityRoomsRoute: CommunityRoomsRouteWithChildren,
@@ -825,18 +983,21 @@ interface ProRouteChildren {
   ProAvailabilityRoute: typeof ProAvailabilityRoute
   ProCalibrationRoute: typeof ProCalibrationRoute
   ProCasesRoute: typeof ProCasesRouteWithChildren
+  ProVerificationRoute: typeof ProVerificationRoute
 }
 
 const ProRouteChildren: ProRouteChildren = {
   ProAvailabilityRoute: ProAvailabilityRoute,
   ProCalibrationRoute: ProCalibrationRoute,
   ProCasesRoute: ProCasesRouteWithChildren,
+  ProVerificationRoute: ProVerificationRoute,
 }
 
 const ProRouteWithChildren = ProRoute._addFileChildren(ProRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRoute,
   CommunityRoute: CommunityRouteWithChildren,

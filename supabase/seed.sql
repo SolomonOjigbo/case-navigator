@@ -35,8 +35,24 @@ VALUES
   ('aaaaaaaa-0000-4000-8000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'seed.amina@example.test',  crypt('seed-password-1', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"Amina Testcase"}', '', '', '', '', '', '', '', ''),
   ('aaaaaaaa-0000-4000-8000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'seed.bilal@example.test',  crypt('seed-password-2', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"Bilal Fictional"}', '', '', '', '', '', '', '', ''),
   ('aaaaaaaa-0000-4000-8000-000000000003', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'seed.chen@example.test',   crypt('seed-password-3', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"Chen Imaginary"}', '', '', '', '', '', '', '', ''),
-  ('bbbbbbbb-0000-4000-8000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'seed.lawyer@example.test', crypt('seed-password-4', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"Sam Notreal (fictional lawyer)"}', '', '', '', '', '', '', '', '')
+  ('bbbbbbbb-0000-4000-8000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'seed.lawyer@example.test', crypt('seed-password-4', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"Sam Notreal (fictional lawyer)"}', '', '', '', '', '', '', '', ''),
+  -- A second professional who has NOT been checked. The point of the fixture:
+  -- an unverified professional must be invisible in the directory and
+  -- unbookable, and that is only provable if one exists.
+  ('bbbbbbbb-0000-4000-8000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'seed.unchecked@example.test', crypt('seed-password-5', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"Pat Unchecked (fictional, unverified)"}', '', '', '', '', '', '', '', ''),
+  -- A platform admin, so moderation and verification have an owner that is
+  -- not also an applicant.
+  ('cccccccc-0000-4000-8000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'seed.admin@example.test', crypt('seed-password-6', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"Sam Admin (synthetic)"}', '', '', '', '', '', '', '', '')
 ON CONFLICT (id) DO NOTHING;
+
+-- Roles. The handle_new_user trigger gives every account 'applicant'; these
+-- two need more.
+INSERT INTO public.user_roles (user_id, role)
+VALUES
+  ('bbbbbbbb-0000-4000-8000-000000000001', 'professional'),
+  ('bbbbbbbb-0000-4000-8000-000000000002', 'professional'),
+  ('cccccccc-0000-4000-8000-000000000001', 'platform_admin')
+ON CONFLICT DO NOTHING;
 
 -- Everything below is public schema. The story_responses append-only trigger
 -- only guards UPDATE and DELETE (and this seed only INSERTs), so no role
@@ -56,6 +72,28 @@ VALUES (
   'bbbbbbbb-0000-4000-8000-000000000001',
   'c0000000-0000-4000-8000-000000000001',
   'SEED-LIC-0001', 'CA', 'Sam Notreal (fictional lawyer)', now(), NULL, true
+) ON CONFLICT (id) DO NOTHING;
+
+-- Unverified: verified_at IS NULL and active = false. Nothing lists them.
+INSERT INTO public.professionals (id, user_id, organization_id, license_number, license_jurisdiction, display_name, verified_at, verified_by, active)
+VALUES (
+  'd0000000-0000-4000-8000-000000000002',
+  'bbbbbbbb-0000-4000-8000-000000000002',
+  NULL,
+  NULL, NULL, 'Pat Unchecked (fictional, unverified)', NULL, NULL, false
+) ON CONFLICT (id) DO NOTHING;
+
+-- ...and their submission, sitting in the admin queue.
+INSERT INTO public.professional_verifications
+  (id, professional_id, submitted_by, license_number, license_jurisdiction, display_name, organization_name, note, status)
+VALUES (
+  'd1000000-0000-4000-8000-000000000001',
+  'd0000000-0000-4000-8000-000000000002',
+  'bbbbbbbb-0000-4000-8000-000000000002',
+  'SEED-LIC-0002', 'CA', 'Pat Unchecked (fictional, unverified)',
+  'Example Legal Clinic (synthetic)',
+  'Synthetic seed submission. Approving this in a real project would list a person who does not exist.',
+  'pending'
 ) ON CONFLICT (id) DO NOTHING;
 
 -- -------------------------------------------------------------------------

@@ -277,3 +277,193 @@ export function displayNameOf(author: PostAuthor | null | undefined): string {
   if (!author) return "someone";
   return author.display_name?.trim() || `@${author.handle}`;
 }
+
+// -------------------------------------------------------------------------
+// Direct messages (S4-3)
+//
+// The tables and their policies were written in the first migration and have
+// sat unused since. Two things they already get right, and this code must not
+// undo: a thread is keyed by an ordered pair so the same two people can never
+// end up with two threads, and the insert policies refuse a blocked pair
+// outright. Blocking here is not a display preference — it stops the message
+// reaching the database.
+// -------------------------------------------------------------------------
+
+export type DmThread = {
+  id: string;
+  other_user_id: string;
+  other: PostAuthor | null;
+  last_body: string | null;
+  last_at: string | null;
+  last_author_id: string | null;
+};
+
+export type DmMessage = {
+  id: string;
+  dm_thread_id: string;
+  author_id: string;
+  body: string;
+  created_at: string;
+};
+
+/** The pair is stored low-then-high so one conversation has one row. */
+function orderedPair(a: string, b: string): { user_low: string; user_high: string } {
+  return a < b ? { user_low: a, user_high: b } : { user_low: b, user_high: a };
+}
+
+export async function listDmThreads(currentUserId: string): Promise<DmThread[]> {
+  const [{ data: threads, error }, blocked] = await Promise.all([
+    supabase
+      .from("community_dm_threads")
+      .select("id,user_low,user_high,created_at")
+      .order("created_at", { ascending: false })
+      .limit(200),
+    listBlockedIds(currentUserId).catch(() => new Set<string>()),
+  ]);
+  if (error) throw error;
+
+  const rows = (threads ?? []) as Array<{ id: string; user_low: string; user_high: string }>;
+  const mine = rows
+    .map((t) => ({
+      id: t.id,
+      other_user_id: t.user_low === currentUserId ? t.user_high : t.user_low,
+    }))
+    // A blocked person's thread disappears from the list. The history is not
+    // deleted — unblocking brings the conversation back rather than losing it.
+    .filter((t) => !blocked.has(t.other_user_id));
+  if (mine.length === 0) return [];
+
+  const [{ data: recent }, authors] = await Promise.all([
+    supabase
+      .from("community_messages")
+      .select("id,dm_thread_id,author_id,body,created_at")
+      .in(
+        "dm_thread_id",
+        mine.map((t) => t.id),
+      )
+      .is("hidden_at", null)
+      .order("created_at", { ascending: false })
+      .limit(400),
+    fetchAuthorsByUserIds(mine.map((t) => t.other_user_id)),
+  ]);
+
+  const lastByThread = new Map<string, { body: string; created_at: string; author_id: string }>();
+  for (const m of (recent ?? []) as DmMessage[]) {
+    if (!lastByThread.has(m.dm_thread_id)) {
+      lastByThread.set(m.dm_thread_id, {
+        body: m.body,
+        created_at: m.created_at,
+        author_id: m.author_id,
+      });
+    }
+  }
+
+  return mine
+    .map((t) => {
+      const last = lastByThread.get(t.id) ?? null;
+      return {
+        id: t.id,
+        other_user_id: t.other_user_id,
+        other: authors.get(t.other_user_id) ?? null,
+        last_body: last?.body ?? null,
+        last_at: last?.created_at ?? null,
+        last_author_id: last?.author_id ?? null,
+      };
+    })
+    .sort((a, b) => (b.last_at ?? "").localeCompare(a.last_at ?? ""));
+}
+
+/**
+ * Find or create the thread with someone. Two people pressing "message" at the
+ * same moment both succeed: the unique constraint on the ordered pair decides,
+ * and the loser re-reads the winner's row.
+ */
+export async function openDmThread(input: {
+  currentUserId: string;
+  otherUserId: string;
+}): Promise<string> {
+  if (input.currentUserId === input.otherUserId) throw new Error("dm_self");
+  const pair = orderedPair(input.currentUserId, input.otherUserId);
+
+  const { data: existing } = await supabase
+    .from("community_dm_threads")
+    .select("id")
+    .eq("user_low", pair.user_low)
+    .eq("user_high", pair.user_high)
+    .maybeSingle();
+  if (existing?.id) return existing.id;
+
+  const { data, error } = await supabase
+    .from("community_dm_threads")
+    .insert(pair)
+    .select("id")
+    .single();
+
+  if (error) {
+    if (/duplicate key|unique/i.test(error.message)) {
+      const { data: raced } = await supabase
+        .from("community_dm_threads")
+        .select("id")
+        .eq("user_low", pair.user_low)
+        .eq("user_high", pair.user_high)
+        .maybeSingle();
+      if (raced?.id) return raced.id;
+    }
+    // The INSERT policy refuses a blocked pair, so this is the ordinary way a
+    // blocked conversation fails to start.
+    throw new Error("dm_blocked");
+  }
+  return data!.id;
+}
+
+export async function getDmThread(
+  threadId: string,
+  currentUserId: string,
+): Promise<{ id: string; other_user_id: string; other: PostAuthor | null } | null> {
+  const { data, error } = await supabase
+    .from("community_dm_threads")
+    .select("id,user_low,user_high")
+    .eq("id", threadId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  const other = data.user_low === currentUserId ? data.user_high : data.user_low;
+  const authors = await fetchAuthorsByUserIds([other]);
+  return { id: data.id, other_user_id: other, other: authors.get(other) ?? null };
+}
+
+export async function listDmMessages(threadId: string): Promise<DmMessage[]> {
+  const { data, error } = await supabase
+    .from("community_messages")
+    .select("id,dm_thread_id,author_id,body,created_at")
+    .eq("dm_thread_id", threadId)
+    .is("hidden_at", null)
+    .order("created_at", { ascending: true })
+    .limit(300);
+  if (error) throw error;
+  return (data ?? []) as DmMessage[];
+}
+
+export async function sendDmMessage(input: { threadId: string; authorId: string; body: string }) {
+  const { error } = await supabase.from("community_messages").insert({
+    dm_thread_id: input.threadId,
+    author_id: input.authorId,
+    body: input.body,
+  });
+  // "Post DM message as participant" re-checks the block on every insert, so
+  // blocking someone mid-conversation stops the next message, not just the
+  // next thread.
+  if (error)
+    throw new Error(/row-level security/i.test(error.message) ? "dm_blocked" : error.message);
+}
+
+/** Look someone up by handle, to start a conversation. */
+export async function findProfileByHandle(handle: string): Promise<PostAuthor | null> {
+  const { data, error } = await supabase
+    .from("community_profiles")
+    .select("user_id,handle,display_name,avatar_url")
+    .eq("handle", handle.trim().toLowerCase().replace(/^@/, ""))
+    .maybeSingle();
+  if (error) throw error;
+  return (data as PostAuthor) ?? null;
+}

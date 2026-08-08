@@ -8,7 +8,19 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarCheck, Globe, Loader2, Lock, Scale, Video, Phone, MapPin, X } from "lucide-react";
+import {
+  BadgeCheck,
+  CalendarCheck,
+  Clock3,
+  Globe,
+  Loader2,
+  Lock,
+  Scale,
+  Video,
+  Phone,
+  MapPin,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -143,8 +155,10 @@ function ConsultationsView() {
     [prosQ.data],
   );
 
-  const upcoming = (mineQ.data ?? []).filter((c) => c.status === "booked");
-  const past = (mineQ.data ?? []).filter((c) => c.status !== "booked");
+  const upcoming = (mineQ.data ?? []).filter((c) => c.status === "booked" && !c.is_past);
+  // Still "booked" but the end time has gone by, plus everything cancelled or
+  // finished. Shown, quietly, so a person can see what they did.
+  const past = (mineQ.data ?? []).filter((c) => c.status !== "booked" || c.is_past);
 
   return (
     <div className="reading-column py-2 sm:py-4">
@@ -239,6 +253,25 @@ function ConsultationsView() {
                     </p>
                   ) : null}
 
+                  {/* The platform's own claim, not the professional's: this
+                      person's licence was checked by a person, on this date. */}
+                  <p className="m-0 mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.8125rem] text-muted-foreground">
+                    {pro.verified_at ? (
+                      <span className="inline-flex items-center gap-1.5">
+                        <BadgeCheck className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
+                        {t("consult.licence_checked", {
+                          when: new Date(pro.verified_at).toLocaleDateString(),
+                        })}
+                      </span>
+                    ) : null}
+                    {pro.response_within_days ? (
+                      <span className="inline-flex items-center gap-1.5">
+                        <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
+                        {t("consult.responds_within", { days: pro.response_within_days })}
+                      </span>
+                    ) : null}
+                  </p>
+
                   {slots.length === 0 ? (
                     <p className="m-0 mt-3 text-sm text-muted-foreground">
                       {t("consult.no_slots")}
@@ -320,7 +353,9 @@ function ConsultationsView() {
                   </p>
                   <p className="m-0 mt-1 text-sm text-muted-foreground">
                     {c.starts_at ? formatSlotTime(c.starts_at) : "—"} ·{" "}
-                    {t(`consult.status_${c.status}`)}
+                    {c.is_past && c.status === "booked"
+                      ? t("consult.status_past")
+                      : t(`consult.status_${c.status}`)}
                   </p>
                 </article>
               ))}

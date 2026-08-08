@@ -22,6 +22,10 @@ export type BookableProfessional = {
   license_jurisdiction: string | null;
   languages: string[];
   consultation_blurb: string | null;
+  /** When a platform admin checked this person's licence (S4-1). */
+  verified_at: string | null;
+  /** What they say their usual reply time is, in days (S4-4). */
+  response_within_days: number | null;
 };
 
 export type OpenSlot = {
@@ -53,6 +57,10 @@ export type ConsultationWithSlot = Consultation & {
   starts_at: string | null;
   duration_minutes: number | null;
   mode: ConsultationMode | null;
+  /** End of the slot, so "has this happened" needs no arithmetic here. */
+  ends_at: string | null;
+  /** Still `booked`, but the end time has passed (S4-4). */
+  is_past: boolean;
   professional_name: string | null;
   jurisdiction: string | null;
 };
@@ -90,7 +98,9 @@ export async function listBookableProfessionals(filters?: {
   // 20260808200000_professionals_directory.sql.
   let q = supabase
     .from("bookable_professionals")
-    .select("id, display_name, license_jurisdiction, languages, consultation_blurb");
+    .select(
+      "id, display_name, license_jurisdiction, languages, consultation_blurb, verified_at, response_within_days",
+    );
 
   if (filters?.jurisdiction) q = q.eq("license_jurisdiction", filters.jurisdiction);
   if (filters?.language) q = q.contains("languages", [filters.language]);
@@ -201,35 +211,33 @@ export async function cancelConsultation(input: {
 // Reading bookings. Both sides use the same shape.
 // -------------------------------------------------------------------------
 
-async function hydrate(rows: Consultation[]): Promise<ConsultationWithSlot[]> {
+/**
+ * Bookings come from `consultations_with_slot`, which carries the slot times
+ * and `is_past`. Only the professional's name still needs a second read, and
+ * that goes through the directory view: an applicant cannot read
+ * `professionals` directly, by design.
+ */
+async function hydrate(
+  rows: Array<
+    Consultation & {
+      starts_at: string;
+      duration_minutes: number;
+      mode: ConsultationMode;
+      ends_at: string;
+      is_past: boolean;
+    }
+  >,
+): Promise<ConsultationWithSlot[]> {
   if (rows.length === 0) return [];
-  const [{ data: slots }, { data: pros }] = await Promise.all([
-    supabase
-      .from("consultation_slots")
-      .select("id, starts_at, duration_minutes, mode")
-      .in(
-        "id",
-        rows.map((r) => r.slot_id),
-      ),
-    supabase
-      .from("bookable_professionals")
-      .select("id, display_name, license_jurisdiction")
-      .in(
-        "id",
-        rows.map((r) => r.professional_id),
-      ),
-  ]);
 
-  const slotById = new Map(
-    (
-      (slots ?? []) as Array<{
-        id: string;
-        starts_at: string;
-        duration_minutes: number;
-        mode: ConsultationMode;
-      }>
-    ).map((s) => [s.id, s]),
-  );
+  const { data: pros } = await supabase
+    .from("bookable_professionals")
+    .select("id, display_name, license_jurisdiction")
+    .in(
+      "id",
+      rows.map((r) => r.professional_id),
+    );
+
   const proById = new Map(
     (
       (pros ?? []) as Array<{
@@ -241,39 +249,50 @@ async function hydrate(rows: Consultation[]): Promise<ConsultationWithSlot[]> {
   );
 
   return rows.map((r) => {
-    const s = slotById.get(r.slot_id);
     const p = proById.get(r.professional_id);
     return {
       ...r,
-      starts_at: s?.starts_at ?? null,
-      duration_minutes: s?.duration_minutes ?? null,
-      mode: s?.mode ?? null,
       professional_name: p?.display_name ?? null,
       jurisdiction: p?.license_jurisdiction ?? null,
     };
   });
 }
 
+const CONSULTATION_VIEW_COLS =
+  "id, slot_id, professional_id, applicant_id, status, topic, applicant_display_name, language, cancelled_at, cancel_reason, created_at, starts_at, duration_minutes, mode, ends_at, is_past";
+
 export async function listMyConsultations(applicantId: string): Promise<ConsultationWithSlot[]> {
   const { data, error } = await supabase
-    .from("consultations")
-    .select("*")
+    .from("consultations_with_slot")
+    .select(CONSULTATION_VIEW_COLS)
     .eq("applicant_id", applicantId)
-    .order("created_at", { ascending: false });
+    .order("starts_at", { ascending: false });
   if (error) throw error;
-  return hydrate((data ?? []) as Consultation[]);
+  return hydrate((data ?? []) as never);
 }
 
 export async function listProfessionalConsultations(
   professionalId: string,
 ): Promise<ConsultationWithSlot[]> {
   const { data, error } = await supabase
-    .from("consultations")
-    .select("*")
+    .from("consultations_with_slot")
+    .select(CONSULTATION_VIEW_COLS)
     .eq("professional_id", professionalId)
-    .order("created_at", { ascending: false });
+    .order("starts_at", { ascending: false });
   if (error) throw error;
-  return hydrate((data ?? []) as Consultation[]);
+  return hydrate((data ?? []) as never);
+}
+
+/**
+ * Close out an appointment that has already happened (S4-4). Either party may
+ * do it; the database refuses if the end time has not passed, so nothing can
+ * be marked done in advance.
+ */
+export async function completeConsultation(consultationId: string) {
+  const { error } = await supabase.rpc("complete_consultation", {
+    p_consultation_id: consultationId,
+  });
+  if (error) throw error;
 }
 
 // -------------------------------------------------------------------------
@@ -335,10 +354,19 @@ export async function updateConsultationProfile(input: {
   professionalId: string;
   languages: string[];
   blurb: string;
+  responseWithinDays: number | null;
 }) {
+  // Only the three columns a professional is allowed to touch. Licence,
+  // jurisdiction and verified_at are held shut by a trigger — see
+  // 20260809100000_professional_verification.sql — so an attempt to include
+  // them here would fail loudly rather than quietly succeed.
   const { error } = await supabase
     .from("professionals")
-    .update({ languages: input.languages, consultation_blurb: input.blurb.trim() || null })
+    .update({
+      languages: input.languages,
+      consultation_blurb: input.blurb.trim() || null,
+      response_within_days: input.responseWithinDays,
+    })
     .eq("id", input.professionalId);
   if (error) throw error;
 }
