@@ -10,6 +10,7 @@ import {
   listRoomMessages,
   sendRoomMessage,
 } from "@/lib/community-service";
+import { ReportBlockMenu } from "@/components/community/ReportBlockMenu";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { Button } from "@/components/ui/button";
@@ -43,7 +44,7 @@ function Room() {
 
   const messagesQuery = useQuery({
     queryKey: ["community-room-messages", roomId],
-    queryFn: () => listRoomMessages(roomId!),
+    queryFn: () => listRoomMessages(roomId!, user?.id),
     enabled: !!roomId,
   });
 
@@ -72,8 +73,7 @@ function Room() {
   }, [messagesQuery.data?.length]);
 
   const sendMut = useMutation({
-    mutationFn: () =>
-      sendRoomMessage({ roomId: roomId!, authorId: user!.id, body: body.trim() }),
+    mutationFn: () => sendRoomMessage({ roomId: roomId!, authorId: user!.id, body: body.trim() }),
     onSuccess: () => {
       setBody("");
       qc.invalidateQueries({ queryKey: ["community-room-messages", roomId] });
@@ -116,12 +116,17 @@ function Room() {
           <div className="text-sm text-muted-foreground">{t("common.loading")}</div>
         )}
         {messagesQuery.data?.length === 0 && (
-          <div className="text-center text-sm text-muted-foreground">{t("community.room_empty")}</div>
+          <div className="text-center text-sm text-muted-foreground">
+            {t("community.room_empty")}
+          </div>
         )}
         {messagesQuery.data?.map((m) => {
           const mine = m.author_id === user?.id;
           return (
-            <div key={m.id} className={mine ? "text-end" : "text-start"}>
+            <div
+              key={m.id}
+              className={"group flex items-start gap-1 " + (mine ? "justify-end" : "justify-start")}
+            >
               <div
                 className={
                   "inline-block max-w-[85%] rounded-lg px-3 py-2 text-[15px] " +
@@ -142,6 +147,14 @@ function Room() {
                 </div>
                 <div className="whitespace-pre-wrap">{m.body}</div>
               </div>
+              {/* Sits beside the bubble rather than inside it, so it reads the
+                  same on both sides of the conversation. */}
+              <ReportBlockMenu
+                targetType="message"
+                targetId={m.id}
+                authorId={m.author_id}
+                invalidateKey={["community-room-messages", roomId]}
+              />
             </div>
           );
         })}

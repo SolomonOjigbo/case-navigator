@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { AIGeneratedBanner } from "@/components/primitives/AIGeneratedBanner";
 import { PageHeader } from "@/components/shell/PageHeader";
+import { DocumentVerdicts } from "@/components/documents/DocumentVerdict";
 import { EmptyState } from "@/components/shell/EmptyState";
 import { useSession } from "@/hooks/use-session";
 import { getOrCreateOwnCase } from "@/lib/case-service";
@@ -17,6 +18,8 @@ import {
   listDocumentsForCase,
   uploadDocument,
   type DocRow,
+  needsAttention,
+  type DocVerdict,
 } from "@/lib/documents-service";
 import { processDocument } from "@/lib/documents.functions";
 
@@ -264,33 +267,45 @@ function readabilityKey(r: string | null) {
   return r ? `documents.readability.${r}` : "documents.readability.unknown";
 }
 
-function DocRowLine({ d }: { d: DocRow & { connected_events: number } }) {
+function DocRowLine({ d }: { d: DocRow & { connected_events: number; verdicts: DocVerdict[] } }) {
   const { t } = useTranslation();
+  const attention = d.verdicts.filter((v) => needsAttention(v.relationship));
   return (
-    <tr className="border-t border-border">
-      <td className="px-3 py-2.5 pe-3 font-mono text-xs">{d.reference_code}</td>
-      <td className="px-3 py-2.5 pe-3">{d.original_filename}</td>
-      <td className="px-3 py-2.5 pe-3">{d.doc_type ?? t("documents.unknown")}</td>
-      <td className="px-3 py-2.5 pe-3">{d.document_date ?? "—"}</td>
-      <td className="px-3 py-2.5 pe-3">{d.primary_language ?? "—"}</td>
-      <td className="px-3 py-2.5 pe-3">{t(readabilityKey(d.readability))}</td>
-      <td className="px-3 py-2.5 pe-3">{t(`documents.translation.${d.translation_status}`)}</td>
-      <td className="px-3 py-2.5 pe-3">{d.connected_events}</td>
-      <td className="px-3 py-2.5 pe-3">{t(statusKey(d.processing_status))}</td>
-      <td className="py-2">
-        <Link
-          to="/app/documents/$documentId"
-          params={{ documentId: d.id }}
-          className="inline-flex items-center gap-1 text-primary underline-offset-2 hover:underline"
-        >
-          {t("documents.open")} <ArrowRight aria-hidden className="h-3 w-3" />
-        </Link>
-      </td>
-    </tr>
+    <>
+      <tr className={"border-t border-border" + (attention.length ? " border-b-0" : "")}>
+        <td className="px-3 py-2.5 pe-3 font-mono text-xs">{d.reference_code}</td>
+        <td className="px-3 py-2.5 pe-3">{d.original_filename}</td>
+        <td className="px-3 py-2.5 pe-3">{d.doc_type ?? t("documents.unknown")}</td>
+        <td className="px-3 py-2.5 pe-3">{d.document_date ?? "—"}</td>
+        <td className="px-3 py-2.5 pe-3">{d.primary_language ?? "—"}</td>
+        <td className="px-3 py-2.5 pe-3">{t(readabilityKey(d.readability))}</td>
+        <td className="px-3 py-2.5 pe-3">{t(`documents.translation.${d.translation_status}`)}</td>
+        <td className="px-3 py-2.5 pe-3">{d.connected_events}</td>
+        <td className="px-3 py-2.5 pe-3">{t(statusKey(d.processing_status))}</td>
+        <td className="py-2">
+          <Link
+            to="/app/documents/$documentId"
+            params={{ documentId: d.id }}
+            className="inline-flex items-center gap-1 text-primary underline-offset-2 hover:underline"
+          >
+            {t("documents.open")} <ArrowRight aria-hidden className="h-3 w-3" />
+          </Link>
+        </td>
+      </tr>
+      {/* A document that disagrees with the timeline should not be a number in
+        an "events" column. It gets its own row, spanning the table. */}
+      {attention.length > 0 ? (
+        <tr>
+          <td colSpan={10} className="px-3 pb-3">
+            <DocumentVerdicts verdicts={attention} />
+          </td>
+        </tr>
+      ) : null}
+    </>
   );
 }
 
-function DocCard({ d }: { d: DocRow & { connected_events: number } }) {
+function DocCard({ d }: { d: DocRow & { connected_events: number; verdicts: DocVerdict[] } }) {
   const { t } = useTranslation();
   return (
     <Card className="p-4">
@@ -313,6 +328,7 @@ function DocCard({ d }: { d: DocRow & { connected_events: number } }) {
             <dt className="text-muted-foreground">{t("documents.cols.status")}</dt>
             <dd>{t(statusKey(d.processing_status))}</dd>
           </dl>
+          <DocumentVerdicts verdicts={d.verdicts} />
           <div className="mt-3">
             <Link
               to="/app/documents/$documentId"

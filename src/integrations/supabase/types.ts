@@ -10,7 +10,32 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.15"
+  }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -388,6 +413,8 @@ export type Database = {
           author_id: string
           body: string
           created_at: string
+          hidden_at: string | null
+          hidden_by: string | null
           id: string
           post_id: string
         }
@@ -395,6 +422,8 @@ export type Database = {
           author_id: string
           body: string
           created_at?: string
+          hidden_at?: string | null
+          hidden_by?: string | null
           id?: string
           post_id: string
         }
@@ -402,6 +431,8 @@ export type Database = {
           author_id?: string
           body?: string
           created_at?: string
+          hidden_at?: string | null
+          hidden_by?: string | null
           id?: string
           post_id?: string
         }
@@ -468,6 +499,8 @@ export type Database = {
           body: string
           created_at: string
           dm_thread_id: string | null
+          hidden_at: string | null
+          hidden_by: string | null
           id: string
           room_id: string | null
         }
@@ -476,6 +509,8 @@ export type Database = {
           body: string
           created_at?: string
           dm_thread_id?: string | null
+          hidden_at?: string | null
+          hidden_by?: string | null
           id?: string
           room_id?: string | null
         }
@@ -484,6 +519,8 @@ export type Database = {
           body?: string
           created_at?: string
           dm_thread_id?: string | null
+          hidden_at?: string | null
+          hidden_by?: string | null
           id?: string
           room_id?: string | null
         }
@@ -509,6 +546,8 @@ export type Database = {
           author_id: string
           body: string
           created_at: string
+          hidden_at: string | null
+          hidden_by: string | null
           id: string
           image_url: string | null
           updated_at: string
@@ -517,6 +556,8 @@ export type Database = {
           author_id: string
           body: string
           created_at?: string
+          hidden_at?: string | null
+          hidden_by?: string | null
           id?: string
           image_url?: string | null
           updated_at?: string
@@ -525,6 +566,8 @@ export type Database = {
           author_id?: string
           body?: string
           created_at?: string
+          hidden_at?: string | null
+          hidden_by?: string | null
           id?: string
           image_url?: string | null
           updated_at?: string
@@ -570,6 +613,10 @@ export type Database = {
           id: string
           reason: string | null
           reporter_id: string
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
           target_id: string
           target_type: string
         }
@@ -578,6 +625,10 @@ export type Database = {
           id?: string
           reason?: string | null
           reporter_id: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
           target_id: string
           target_type: string
         }
@@ -586,6 +637,10 @@ export type Database = {
           id?: string
           reason?: string | null
           reporter_id?: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
           target_id?: string
           target_type?: string
         }
@@ -1739,6 +1794,64 @@ export type Database = {
           },
         ]
       }
+      review_notices: {
+        Row: {
+          acknowledged_at: string | null
+          case_id: string
+          correction_id: string | null
+          created_at: string
+          id: string
+          kind: string
+          reviewer_id: string
+          target_id: string
+          target_type: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          case_id: string
+          correction_id?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          reviewer_id: string
+          target_id: string
+          target_type: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          case_id?: string
+          correction_id?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          reviewer_id?: string
+          target_id?: string
+          target_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_notices_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_notices_correction_id_fkey"
+            columns: ["correction_id"]
+            isOneToOne: false
+            referencedRelation: "user_corrections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_notices_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       review_status: {
         Row: {
           case_id: string
@@ -2231,6 +2344,10 @@ export type Database = {
       }
     }
     Functions: {
+      cascade_stale_from_fact: {
+        Args: { _correction_id?: string; _fact_id: string }
+        Returns: Json
+      }
       has_active_consent: {
         Args: { _consent_type: string; _user_id: string }
         Returns: boolean
@@ -2375,6 +2492,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       app_role: ["applicant", "professional", "platform_admin"],

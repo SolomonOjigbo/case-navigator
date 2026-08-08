@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { listBlockedIds, withoutBlocked } from "./moderation-service";
 
 export type CommunityProfile = {
   id: string;
@@ -105,19 +106,28 @@ async function fetchAuthorsByUserIds(userIds: string[]) {
 }
 
 export async function listFeed(currentUserId: string): Promise<PostWithMeta[]> {
-  const { data: posts, error } = await supabase
-    .from("community_posts")
-    .select("id,author_id,body,image_url,created_at")
-    .order("created_at", { ascending: false })
-    .limit(100);
+  // Two independent filters. hidden_at is a moderator decision and applies to
+  // everyone; blocks are personal and apply only to this reader.
+  const [{ data: posts, error }, blocked] = await Promise.all([
+    supabase
+      .from("community_posts")
+      .select("id,author_id,body,image_url,created_at")
+      .is("hidden_at", null)
+      .order("created_at", { ascending: false })
+      .limit(100),
+    listBlockedIds(currentUserId).catch(() => new Set<string>()),
+  ]);
   if (error) throw error;
-  const list = (posts ?? []) as Array<{
-    id: string;
-    author_id: string;
-    body: string;
-    image_url: string | null;
-    created_at: string;
-  }>;
+  const list = withoutBlocked(
+    (posts ?? []) as Array<{
+      id: string;
+      author_id: string;
+      body: string;
+      image_url: string | null;
+      created_at: string;
+    }>,
+    blocked,
+  );
   if (list.length === 0) return [];
 
   const ids = list.map((p) => p.id);
@@ -181,23 +191,26 @@ export async function toggleLike(input: {
   }
 }
 
-export async function listComments(postId: string): Promise<CommunityComment[]> {
+export async function listComments(
+  postId: string,
+  currentUserId?: string,
+): Promise<CommunityComment[]> {
+  const blocked = currentUserId
+    ? await listBlockedIds(currentUserId).catch(() => new Set<string>())
+    : new Set<string>();
   const { data, error } = await supabase
     .from("community_comments")
     .select("id,post_id,author_id,body,created_at")
+    .is("hidden_at", null)
     .eq("post_id", postId)
     .order("created_at", { ascending: true });
   if (error) throw error;
-  const rows = (data ?? []) as Array<Omit<CommunityComment, "author">>;
+  const rows = withoutBlocked((data ?? []) as Array<Omit<CommunityComment, "author">>, blocked);
   const authors = await fetchAuthorsByUserIds(rows.map((r) => r.author_id));
   return rows.map((r) => ({ ...r, author: authors.get(r.author_id) ?? null }));
 }
 
-export async function addComment(input: {
-  postId: string;
-  authorId: string;
-  body: string;
-}) {
+export async function addComment(input: { postId: string; authorId: string; body: string }) {
   const { error } = await supabase.from("community_comments").insert({
     post_id: input.postId,
     author_id: input.authorId,
@@ -226,24 +239,32 @@ export async function getRoomBySlug(slug: string): Promise<Room | null> {
   return (data as Room | null) ?? null;
 }
 
-export async function listRoomMessages(roomId: string): Promise<RoomMessage[]> {
-  const { data, error } = await supabase
-    .from("community_messages")
-    .select("id,room_id,author_id,body,created_at")
-    .eq("room_id", roomId)
-    .order("created_at", { ascending: true })
-    .limit(200);
+export async function listRoomMessages(
+  roomId: string,
+  currentUserId?: string,
+): Promise<RoomMessage[]> {
+  const [{ data, error }, blocked] = await Promise.all([
+    supabase
+      .from("community_messages")
+      .select("id,room_id,author_id,body,created_at")
+      .eq("room_id", roomId)
+      .is("hidden_at", null)
+      .order("created_at", { ascending: true })
+      .limit(200),
+    currentUserId
+      ? listBlockedIds(currentUserId).catch(() => new Set<string>())
+      : Promise.resolve(new Set<string>()),
+  ]);
   if (error) throw error;
-  const rows = (data ?? []) as Array<Omit<RoomMessage, "author"> & { room_id: string }>;
+  const rows = withoutBlocked(
+    (data ?? []) as Array<Omit<RoomMessage, "author"> & { room_id: string }>,
+    blocked,
+  );
   const authors = await fetchAuthorsByUserIds(rows.map((r) => r.author_id));
   return rows.map((r) => ({ ...r, author: authors.get(r.author_id) ?? null }));
 }
 
-export async function sendRoomMessage(input: {
-  roomId: string;
-  authorId: string;
-  body: string;
-}) {
+export async function sendRoomMessage(input: { roomId: string; authorId: string; body: string }) {
   const { error } = await supabase.from("community_messages").insert({
     room_id: input.roomId,
     author_id: input.authorId,

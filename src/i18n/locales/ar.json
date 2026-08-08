@@ -118,7 +118,8 @@
     "back_to_rooms": "Back to rooms",
     "post_delete": "Delete",
     "post_deleted": "Post deleted.",
-    "just_now": "just now"
+    "just_now": "just now",
+    "nav_moderation": "البلاغات"
   },
   "auth_page": {
     "heading_signin": "Sign in",
@@ -378,5 +379,59 @@
     "failed": "تعذّرت قراءة قصتك الآن.",
     "consent_needed": "يحتاج هذا إلى إذنك بمعالجة الذكاء الاصطناعي أولًا.",
     "open_import": "إدراج قصة كتبتها من قبل"
+  },
+  "moderation": {
+    "menu_label": "خيارات أخرى",
+    "report": "الإبلاغ عن هذا",
+    "block": "حظر هذا الشخص",
+    "reported": "شكرًا لك. سيطّلع أحد المشرفين على هذا.",
+    "report_failed": "تعذّر إرسال البلاغ.",
+    "blocked": "تم الحظر. لن ترى منشوراته.",
+    "block_failed": "تعذّر حظر هذا الشخص.",
+    "report_title": "الإبلاغ عن هذا المحتوى",
+    "report_help": "سيقرأ أحد المشرفين هذا. لا يتم إخبار الشخص المُبلَّغ عنه بهوية المُبلِّغ.",
+    "report_reason": "السبب",
+    "report_detail": "أي شيء تود إضافته (اختياري)",
+    "report_submit": "إرسال البلاغ",
+    "reason_harassment": "مضايقة أو إساءة",
+    "reason_personal_info": "يشارك معلومات شخصية عن أحدهم",
+    "reason_misinformation": "نصائح مضللة بشأن الطلبات",
+    "reason_spam": "رسائل مزعجة أو إعلانات",
+    "reason_other": "شيء آخر",
+    "title": "البلاغات",
+    "intro": "محتوى أبلغ عنه المجتمع. الإخفاء يزيله عن الجميع، ويُحتفظ بالأصل ليبقى القرار موثّقًا.",
+    "not_admin": "هذه الصفحة مخصصة للمشرفين.",
+    "tab_open": "مفتوحة",
+    "tab_actioned": "تم اتخاذ إجراء",
+    "tab_dismissed": "مرفوضة",
+    "queue_empty": "لا يوجد شيء في الانتظار.",
+    "content_gone": "لم يعد هذا المحتوى متاحًا.",
+    "already_hidden": "مخفي بالفعل",
+    "hide": "إخفاء عن الجميع",
+    "dismiss": "رفض البلاغ",
+    "note_label": "ملاحظة",
+    "note_placeholder": "سبب قرارك (يُحفظ مع البلاغ)",
+    "resolved": "تم إغلاق البلاغ.",
+    "resolve_failed": "تعذّر إغلاق البلاغ."
+  },
+  "documents": {
+    "verdict": {
+      "potential_conflict": "تصف هذه الورقة و\"{{event}}\" الأمور بشكل مختلف. قد يستحق الأمر نظرة ثانية.",
+      "date_needs_clarification": "التاريخ في هذه الورقة والتاريخ في \"{{event}}\" ليسا متطابقين.",
+      "identity_needs_clarification": "قد لا يتطابق الاسم أو الهوية في هذه الورقة مع \"{{event}}\".",
+      "requires_professional_review": "ينبغي أن يطّلع مختص قانوني على هذا إلى جانب \"{{event}}\".",
+      "directly_supports": "يصف الشيء نفسه",
+      "partially_supports": "يصف جزءًا منه",
+      "background_context": "يقدم خلفية",
+      "related_person_or_org": "يذكر شخصًا أو جهة وردت فيه",
+      "relevance_uncertain": "قد يكون مرتبطًا وقد لا يكون",
+      "not_connected": "لا يبدو مرتبطًا",
+      "generic_attention": "قد يستحق النظر في هذه الورقة و\"{{event}}\" معًا.",
+      "generic_connected": "يبدو مرتبطًا",
+      "attention_help": "لا يتغير شيء في قصتك إلا إذا قررت ذلك. غالبًا ما توجد أسباب بسيطة لهذا.",
+      "go_clarify": "اطّلع على هذا في شاشة التوضيح",
+      "connected_title": "مرتبط بـ {{count}} مما كتبت",
+      "connected_title_plural": "مرتبط بـ {{count}} مما كتبت"
+    }
   }
 }

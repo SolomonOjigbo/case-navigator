@@ -118,7 +118,8 @@
     "back_to_rooms": "Back to rooms",
     "post_delete": "Delete",
     "post_deleted": "Post deleted.",
-    "just_now": "just now"
+    "just_now": "just now",
+    "nav_moderation": "Reports"
   },
   "auth_page": {
     "heading_signin": "Sign in",
@@ -381,6 +382,24 @@
       "corrections_title": "Notes about this document",
       "corrections_intro": "Anything you write here is your own note. It does not change the original file.",
       "saved": "Saved."
+    },
+    "verdict": {
+      "potential_conflict": "This paper and \"{{event}}\" describe things differently. It may be worth a second look.",
+      "date_needs_clarification": "The date on this paper and the date on \"{{event}}\" are not the same.",
+      "identity_needs_clarification": "The name or identity on this paper may not match \"{{event}}\".",
+      "requires_professional_review": "A legal professional should look at this alongside \"{{event}}\".",
+      "directly_supports": "describes the same thing",
+      "partially_supports": "describes part of it",
+      "background_context": "gives background",
+      "related_person_or_org": "mentions a person or organisation from it",
+      "relevance_uncertain": "may or may not be connected",
+      "not_connected": "does not appear to be connected",
+      "generic_attention": "This paper and \"{{event}}\" may be worth a second look together.",
+      "generic_connected": "appears to be connected",
+      "attention_help": "Nothing changes in your story unless you say so. There are often simple reasons for this.",
+      "go_clarify": "Look at this on the Clarify screen",
+      "connected_title": "Connected to {{count}} thing you have written",
+      "connected_title_plural": "Connected to {{count}} things you have written"
     }
   },
   "auth_extra": {
@@ -890,5 +909,39 @@
     "failed": "Your story could not be read just now.",
     "consent_needed": "This needs your permission for AI processing first.",
     "open_import": "Bring in a story you have written"
+  },
+  "moderation": {
+    "menu_label": "More options",
+    "report": "Report this",
+    "block": "Block this person",
+    "reported": "Thank you. A moderator will look at this.",
+    "report_failed": "That report could not be sent.",
+    "blocked": "Blocked. You will not see their posts.",
+    "block_failed": "That person could not be blocked.",
+    "report_title": "Report this content",
+    "report_help": "A moderator will read this. The person you are reporting is not told who reported them.",
+    "report_reason": "Reason",
+    "report_detail": "Anything you want to add (optional)",
+    "report_submit": "Send report",
+    "reason_harassment": "Harassment or abuse",
+    "reason_personal_info": "Shares someone's personal information",
+    "reason_misinformation": "Misleading advice about claims",
+    "reason_spam": "Spam or advertising",
+    "reason_other": "Something else",
+    "title": "Reports",
+    "intro": "Content the community has reported. Hiding removes it for everyone; the original is kept so the decision stays on record.",
+    "not_admin": "This page is for moderators.",
+    "tab_open": "Open",
+    "tab_actioned": "Actioned",
+    "tab_dismissed": "Dismissed",
+    "queue_empty": "Nothing waiting.",
+    "content_gone": "That content is no longer available.",
+    "already_hidden": "Already hidden",
+    "hide": "Hide for everyone",
+    "dismiss": "Dismiss",
+    "note_label": "Note",
+    "note_placeholder": "Why you decided this (kept on the report)",
+    "resolved": "Report closed.",
+    "resolve_failed": "That report could not be closed."
   }
 }

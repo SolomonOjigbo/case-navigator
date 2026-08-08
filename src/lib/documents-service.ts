@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { Relationship } from "./map-evidence.functions";
 
 export type DocRow = {
   id: string;
@@ -141,9 +142,23 @@ export async function uploadDocument(params: {
   return { document: docRow as DocRow, documentVersionId: versionId };
 }
 
-export async function listDocumentsForCase(caseId: string): Promise<
-  Array<DocRow & { connected_events: number }>
-> {
+/**
+ * What the evidence map concluded about one document — the part that used to
+ * be visible only on the Evidence Map screen, so uploading a passport page
+ * told you nothing.
+ */
+export type DocVerdict = {
+  relationship: Relationship;
+  eventId: string;
+  eventTitle: string;
+  /** The map's own wording; already guardrailed when it was written. */
+  explanation: string;
+  userConfirmed: boolean;
+};
+
+export async function listDocumentsForCase(
+  caseId: string,
+): Promise<Array<DocRow & { connected_events: number; verdicts: DocVerdict[] }>> {
   const { data: docs, error } = await supabase
     .from("documents")
     .select(DOC_COLS)
@@ -153,16 +168,69 @@ export async function listDocumentsForCase(caseId: string): Promise<
   const rows = (docs ?? []) as DocRow[];
   if (rows.length === 0) return [];
   const ids = rows.map((r) => r.id);
-  const { data: links } = await supabase
-    .from("evidence_event_links")
-    .select("document_id")
-    .eq("case_id", caseId)
-    .in("document_id", ids);
+
+  const [{ data: links }, { data: events }] = await Promise.all([
+    supabase
+      .from("evidence_event_links")
+      .select("document_id, event_id, relationship, explanation, user_confirmed, stale")
+      .eq("case_id", caseId)
+      .in("document_id", ids),
+    supabase.from("events").select("id, title").eq("case_id", caseId),
+  ]);
+
+  const titles = new Map(
+    ((events ?? []) as Array<{ id: string; title: string }>).map((e) => [e.id, e.title]),
+  );
+
   const counts = new Map<string, number>();
-  for (const l of (links ?? []) as { document_id: string }[]) {
+  const verdicts = new Map<string, DocVerdict[]>();
+  for (const l of (links ?? []) as Array<{
+    document_id: string;
+    event_id: string;
+    relationship: Relationship;
+    explanation: string;
+    user_confirmed: boolean;
+    stale: boolean | null;
+  }>) {
+    if (l.stale) continue; // a correction invalidated this link
     counts.set(l.document_id, (counts.get(l.document_id) ?? 0) + 1);
+    verdicts.set(l.document_id, [
+      ...(verdicts.get(l.document_id) ?? []),
+      {
+        relationship: l.relationship,
+        eventId: l.event_id,
+        eventTitle: titles.get(l.event_id) ?? "",
+        explanation: l.explanation,
+        userConfirmed: l.user_confirmed,
+      },
+    ]);
   }
-  return rows.map((r) => ({ ...r, connected_events: counts.get(r.id) ?? 0 }));
+
+  return rows.map((r) => ({
+    ...r,
+    connected_events: counts.get(r.id) ?? 0,
+    // Anything needing a second look sorts first.
+    verdicts: (verdicts.get(r.id) ?? []).sort(
+      (a, b) => rankRelationship(b.relationship) - rankRelationship(a.relationship),
+    ),
+  }));
+}
+
+/** Relationships that ask something of the person, ordered by how much. */
+const NEEDS_ATTENTION: readonly Relationship[] = [
+  "potential_conflict",
+  "date_needs_clarification",
+  "identity_needs_clarification",
+  "requires_professional_review",
+];
+
+export function needsAttention(r: Relationship): boolean {
+  return NEEDS_ATTENTION.includes(r);
+}
+
+function rankRelationship(r: Relationship): number {
+  const i = NEEDS_ATTENTION.indexOf(r);
+  return i === -1 ? 0 : NEEDS_ATTENTION.length - i;
 }
 
 export async function getDocument(documentId: string): Promise<DocRow | null> {
@@ -208,10 +276,7 @@ export async function createDocSignedUrl(storagePath: string, expiresIn = 3600) 
 }
 
 export type CorrectableField =
-  | "doc_type"
-  | "document_date"
-  | "issuer_stated_on_document"
-  | "declared_origin";
+  "doc_type" | "document_date" | "issuer_stated_on_document" | "declared_origin";
 
 export async function saveDocumentCorrection(params: {
   caseId: string;
@@ -221,7 +286,8 @@ export async function saveDocumentCorrection(params: {
   value: string | null;
 }): Promise<DocRow> {
   const { caseId, userId, document, field, value } = params;
-  const prev = ((document as unknown as Record<string, string | null>)[field] ?? null) as string | null;
+  const prev = ((document as unknown as Record<string, string | null>)[field] ?? null) as
+    string | null;
   const patch: Record<string, string | boolean | null> = { [field]: value };
   if (field === "doc_type") patch.doc_type_user_confirmed = true;
   const { data, error } = await supabase

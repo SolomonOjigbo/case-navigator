@@ -15,6 +15,7 @@ import { useSession } from "@/hooks/use-session";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { ReportBlockMenu } from "./ReportBlockMenu";
 
 export function PostCard({ post }: { post: PostWithMeta }) {
   const { t } = useTranslation();
@@ -27,7 +28,7 @@ export function PostCard({ post }: { post: PostWithMeta }) {
 
   const commentsQuery = useQuery({
     queryKey: ["community-comments", post.id],
-    queryFn: () => listComments(post.id),
+    queryFn: () => listComments(post.id, user?.id),
     enabled: showComments,
   });
 
@@ -46,8 +47,7 @@ export function PostCard({ post }: { post: PostWithMeta }) {
   });
 
   const commentMut = useMutation({
-    mutationFn: () =>
-      addComment({ postId: post.id, authorId: user!.id, body: commentText.trim() }),
+    mutationFn: () => addComment({ postId: post.id, authorId: user!.id, body: commentText.trim() }),
     onSuccess: () => {
       setCommentText("");
       qc.invalidateQueries({ queryKey: ["community-comments", post.id] });
@@ -56,7 +56,11 @@ export function PostCard({ post }: { post: PostWithMeta }) {
   });
 
   const authorLabel = displayNameOf(post.author);
-  const initials = (post.author?.display_name?.[0] || post.author?.handle?.[0] || "?").toUpperCase();
+  const initials = (
+    post.author?.display_name?.[0] ||
+    post.author?.handle?.[0] ||
+    "?"
+  ).toUpperCase();
   const timeAgo = safeAgo(post.created_at, t("community.just_now"));
 
   return (
@@ -74,7 +78,7 @@ export function PostCard({ post }: { post: PostWithMeta }) {
           </div>
           <div className="text-xs text-muted-foreground">{timeAgo}</div>
         </div>
-        {isMine && (
+        {isMine ? (
           <Button
             variant="ghost"
             size="sm"
@@ -83,6 +87,13 @@ export function PostCard({ post }: { post: PostWithMeta }) {
           >
             <Trash2 className="h-4 w-4" aria-hidden />
           </Button>
+        ) : (
+          <ReportBlockMenu
+            targetType="post"
+            targetId={post.id}
+            authorId={post.author_id}
+            invalidateKey={["community-feed"]}
+          />
         )}
       </header>
 

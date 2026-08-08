@@ -29,6 +29,7 @@ import { Route as AppSharingRouteImport } from './routes/app.sharing'
 import { Route as AppStoryRouteImport } from './routes/app.story'
 import { Route as AppTimelineRouteImport } from './routes/app.timeline'
 import { Route as CommunityFeedRouteImport } from './routes/community.feed'
+import { Route as CommunityModerationRouteImport } from './routes/community.moderation'
 import { Route as CommunityProfileRouteImport } from './routes/community.profile'
 import { Route as CommunityRoomsRouteImport } from './routes/community.rooms'
 import { Route as DebugGuardrailsRouteImport } from './routes/debug.guardrails'
@@ -142,6 +143,11 @@ const CommunityFeedRoute = CommunityFeedRouteImport.update({
   path: '/feed',
   getParentRoute: () => CommunityRoute,
 } as any)
+const CommunityModerationRoute = CommunityModerationRouteImport.update({
+  id: '/moderation',
+  path: '/moderation',
+  getParentRoute: () => CommunityRoute,
+} as any)
 const CommunityProfileRoute = CommunityProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -225,6 +231,7 @@ export interface FileRoutesByFullPath {
   '/app/story': typeof AppStoryRouteWithChildren
   '/app/timeline': typeof AppTimelineRoute
   '/community/feed': typeof CommunityFeedRoute
+  '/community/moderation': typeof CommunityModerationRoute
   '/community/profile': typeof CommunityProfileRoute
   '/community/rooms': typeof CommunityRoomsRouteWithChildren
   '/debug/guardrails': typeof DebugGuardrailsRoute
@@ -258,6 +265,7 @@ export interface FileRoutesByTo {
   '/app/sharing': typeof AppSharingRoute
   '/app/timeline': typeof AppTimelineRoute
   '/community/feed': typeof CommunityFeedRoute
+  '/community/moderation': typeof CommunityModerationRoute
   '/community/profile': typeof CommunityProfileRoute
   '/community/rooms': typeof CommunityRoomsRouteWithChildren
   '/debug/guardrails': typeof DebugGuardrailsRoute
@@ -293,6 +301,7 @@ export interface FileRoutesById {
   '/app/story': typeof AppStoryRouteWithChildren
   '/app/timeline': typeof AppTimelineRoute
   '/community/feed': typeof CommunityFeedRoute
+  '/community/moderation': typeof CommunityModerationRoute
   '/community/profile': typeof CommunityProfileRoute
   '/community/rooms': typeof CommunityRoomsRouteWithChildren
   '/debug/guardrails': typeof DebugGuardrailsRoute
@@ -329,6 +338,7 @@ export interface FileRouteTypes {
     | '/app/story'
     | '/app/timeline'
     | '/community/feed'
+    | '/community/moderation'
     | '/community/profile'
     | '/community/rooms'
     | '/debug/guardrails'
@@ -362,6 +372,7 @@ export interface FileRouteTypes {
     | '/app/sharing'
     | '/app/timeline'
     | '/community/feed'
+    | '/community/moderation'
     | '/community/profile'
     | '/community/rooms'
     | '/debug/guardrails'
@@ -396,6 +407,7 @@ export interface FileRouteTypes {
     | '/app/story'
     | '/app/timeline'
     | '/community/feed'
+    | '/community/moderation'
     | '/community/profile'
     | '/community/rooms'
     | '/debug/guardrails'
@@ -563,6 +575,13 @@ declare module '@tanstack/react-router' {
       path: '/feed'
       fullPath: '/community/feed'
       preLoaderRoute: typeof CommunityFeedRouteImport
+      parentRoute: typeof CommunityRoute
+    }
+    '/community/moderation': {
+      id: '/community/moderation'
+      path: '/moderation'
+      fullPath: '/community/moderation'
+      preLoaderRoute: typeof CommunityModerationRouteImport
       parentRoute: typeof CommunityRoute
     }
     '/community/profile': {
@@ -734,12 +753,14 @@ const CommunityRoomsRouteWithChildren = CommunityRoomsRoute._addFileChildren(
 
 interface CommunityRouteChildren {
   CommunityFeedRoute: typeof CommunityFeedRoute
+  CommunityModerationRoute: typeof CommunityModerationRoute
   CommunityProfileRoute: typeof CommunityProfileRoute
   CommunityRoomsRoute: typeof CommunityRoomsRouteWithChildren
 }
 
 const CommunityRouteChildren: CommunityRouteChildren = {
   CommunityFeedRoute: CommunityFeedRoute,
+  CommunityModerationRoute: CommunityModerationRoute,
   CommunityProfileRoute: CommunityProfileRoute,
   CommunityRoomsRoute: CommunityRoomsRouteWithChildren,
 }
