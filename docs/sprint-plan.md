@@ -233,7 +233,9 @@ but S4-1 (verification) then has to move ahead of S3, not after it. Putting an
 unverified name in front of an asylum claimant is the real exposure in the
 booking model, and it is cheap to prevent.
 
-**Status: Sprint 1 shipped 2026-08-08** (commit `39334ea`) — documentation
+**Status: Sprints 1 and 2 shipped 2026-08-08** (`39334ea`, `709b1bd`) — documentation
 advisor, narrative intake, guardrail tests, plus two bugs found on the way (a
 missing `<Outlet />` that made the story sections unreachable, and a delete in
-analyzeGaps that would have wiped the advisor's output).
+analyzeGaps that would have wiped the advisor's output). Sprint 2 surfaced the
+per-document verdict, wired report/block, and added the moderation queue with
+a migration for report lifecycle and soft-hiding.
