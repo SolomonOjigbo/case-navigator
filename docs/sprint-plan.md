@@ -612,6 +612,71 @@ record every other message this product sends already had.
 
 ---
 
+### Sprint 8 — Direct messages notify, and the front door gets a door handle
+
+Sprint 7 notified forum replies and left direct messages silent, which is the
+wrong way round: a forum reply can wait, and a message from one person to one
+person usually cannot. And the community became the front door in Sprint 6
+while keeping the navigation of a side room — a hamburger, on the surface most
+people reach first and most of them on a phone.
+
+| Ticket | Description | Est. |
+|---|---|---|
+| S8-1 | Direct message notifications, with their own preference. | 2d |
+| S8-2 | Unread counts per surface, and opening a thread clears its own. | 1d |
+| S8-3 | Mobile navigation for the community. | 2d |
+
+**Acceptance:** a direct message notifies its recipient and nobody else; a room
+message notifies no one; opening a conversation clears its count; the community
+has a tab bar on a phone.
+
+#### Delivered
+
+**Direct messages notify, under the same rule as S7-1**: written by a trigger,
+no INSERT policy, so a notification cannot become a way around a block. The
+preference is separate from `notify_replies` on purpose — wanting to know when
+a person writes to you is a different appetite from wanting a badge whenever a
+thread moves, and one switch cannot express both.
+
+Room messages deliberately do not notify. A room is live chat, and a
+notification per line is noise that teaches people to ignore the badge that
+matters. Verified along with the rest: the recipient is told, the sender is
+not, a third party sees nothing, the preference suppresses it, and a room line
+notifies no one.
+
+**The two surfaces carry their own counts.** "Three things happened" and
+"someone is waiting for you to answer" are different pieces of news, and the
+second is the one people act on, so Messages has its own number. Opening a
+conversation or a topic clears that conversation's notifications — a count
+that does not go down when you have read the thing is a count people stop
+believing.
+
+**The digest covers both, and says less about the private one.** A forum entry
+names the topic; a direct message says only that one arrived, from whom. The
+in-app list shows a line of it and the email does not, because the app is
+behind a sign-in and an inbox may be shared, read over a shoulder, or synced to
+a device the person does not control. The subject line moved from "replied" to
+"waiting" to cover both.
+
+**The community has a tab bar on phones** — Forums, Activity, Messages, Search,
+More — matching the applicant bar so the two shells feel like one product, with
+counts on the icons because on a phone the sidebar is a sheet nobody has open.
+"Notifications" became "Activity" in the bar: a five-slot bar truncated it to
+"Notificati…", and a truncated word is a worse label than a shorter one.
+
+#### Known limits
+
+- **No push, and no unread-since marker inside a thread.** Someone returning to
+  a long conversation still has to find their place by memory.
+- **The digest is still the only email.** There is no per-notification email and
+  should not be; one message a day is the right ceiling for this.
+- **Sending domain still unverified**, carried from Sprint 7 — mail records
+  `failed` until that is done at the provider.
+- **Moderation remains reactive**, unchanged and still the right trade at this
+  size.
+
+---
+
 ## 4. Sequencing rationale
 
 Sprint 1 first because it is the only one of the four features with a
@@ -632,7 +697,7 @@ but S4-1 (verification) then has to move ahead of S3, not after it. Putting an
 unverified name in front of an asylum claimant is the real exposure in the
 booking model, and it is cheap to prevent.
 
-**Status: Sprints 1–7 shipped.** Sprints 1 and 2 on 2026-08-08 (`39334ea`, `709b1bd`) — documentation
+**Status: Sprints 1–8 shipped.** Sprints 1 and 2 on 2026-08-08 (`39334ea`, `709b1bd`) — documentation
 advisor, narrative intake, guardrail tests, plus two bugs found on the way (a
 missing `<Outlet />` that made the story sections unreachable, and a delete in
 analyzeGaps that would have wiped the advisor's output). Sprint 2 surfaced the

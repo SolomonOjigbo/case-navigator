@@ -32,6 +32,7 @@ function View() {
   const [dmPolicy, setDmPolicy] = useState<DmPolicy>("anyone");
   const [notifyReplies, setNotifyReplies] = useState(true);
   const [emailDigest, setEmailDigest] = useState(true);
+  const [notifyMessages, setNotifyMessages] = useState(true);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -42,6 +43,7 @@ function View() {
       setDmPolicy(data.dm_policy ?? "anyone");
       setNotifyReplies(data.notify_replies ?? true);
       setEmailDigest(data.email_digest ?? true);
+      setNotifyMessages(data.notify_messages ?? true);
     }
   }, [data]);
 
@@ -62,6 +64,7 @@ function View() {
         dmPolicy,
         notifyReplies,
         emailDigest,
+        notifyMessages,
       });
       toast.success(t("community.profile_saved"));
       qc.invalidateQueries({ queryKey: ["community-profile", user.id] });
@@ -157,6 +160,15 @@ function View() {
               onChange={(e) => setNotifyReplies(e.target.checked)}
             />
             <span>{t("notif.prefs_in_app")}</span>
+          </label>
+          <label className="flex items-start gap-2.5 text-sm">
+            <input
+              type="checkbox"
+              className="mt-1"
+              checked={notifyMessages}
+              onChange={(e) => setNotifyMessages(e.target.checked)}
+            />
+            <span>{t("notif.prefs_messages")}</span>
           </label>
           <label className="flex items-start gap-2.5 text-sm">
             <input

@@ -25,7 +25,9 @@ describe("what the digest says", () => {
   });
 
   it("counts correctly and reads naturally for one", () => {
-    expect(one.subject).toBe("Someone replied to you on CaseMap");
+    // "waiting" rather than "replied" since S8-1: the digest now covers direct
+    // messages as well as forum replies, and one word has to cover both.
+    expect(one.subject).toBe("Someone is waiting for you on CaseMap");
     expect(many.subject).toContain("14");
   });
 
@@ -41,6 +43,42 @@ describe("what the digest says", () => {
 
   it("says how to stop receiving it", () => {
     expect(one.text.toLowerCase()).toContain("to stop these emails");
+  });
+});
+
+describe("direct messages in the digest (S8-1)", () => {
+  const dm = digestMessage({
+    items: [{ who: "Bilal F.", topic: null }],
+    appUrl: "https://example.test/community/notifications",
+  });
+
+  it("says a message arrived and who from", () => {
+    expect(dm.text).toContain("Bilal F. sent you a message");
+  });
+
+  it("says nothing at all about what the message said", () => {
+    // The in-app list shows a line of it; an inbox does not. This is the whole
+    // difference between the two surfaces.
+    expect(dm.text).not.toContain('"');
+    expect(dm.text.split("\n").filter((l) => l.startsWith("- "))).toHaveLength(1);
+  });
+
+  it("does not name the conversation", () => {
+    // Naming it would name the other person twice and say nothing useful.
+    expect(dm.text).not.toContain("replied in");
+  });
+
+  it("mixes with forum replies in one message", () => {
+    const mixed = digestMessage({
+      items: [
+        { who: "Maryam K.", topic: "Hearings" },
+        { who: "Bilal F.", topic: null },
+      ],
+      appUrl: "u",
+    });
+    expect(mixed.text).toContain('Maryam K. replied in "Hearings"');
+    expect(mixed.text).toContain("Bilal F. sent you a message");
+    expect(mixed.subject).toContain("2");
   });
 });
 

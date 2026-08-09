@@ -57,6 +57,10 @@ function Inbox() {
 
   function open(n: NotificationItem) {
     if (!n.read_at) readOneMut.mutate(n.id);
+    if (n.dm_thread_id) {
+      navigate({ to: "/community/messages/$threadId", params: { threadId: n.dm_thread_id } });
+      return;
+    }
     if (n.topic_id) navigate({ to: "/community/t/$topicId", params: { topicId: n.topic_id } });
   }
 

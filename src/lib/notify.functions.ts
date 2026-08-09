@@ -330,7 +330,7 @@ export async function sendCommunityDigests(): Promise<{
   // not something to email them about.
   const { data: pending } = await db
     .from("community_notifications")
-    .select("id, recipient_id, actor_id, topic_id")
+    .select("id, recipient_id, actor_id, topic_id, kind")
     .is("read_at", null)
     .is("emailed_at", null)
     .limit(2000);
@@ -396,7 +396,13 @@ export async function sendCommunityDigests(): Promise<{
 
     const items = rows.map((r) => ({
       who: nameOf.get(r.actor_id) ?? "Someone",
-      topic: (r.topic_id ? titleOf.get(r.topic_id) : null) ?? "a topic",
+      // Null for a direct message: the digest says one arrived and stops
+      // there. Naming the conversation would name the other person twice and
+      // say nothing useful.
+      topic:
+        r.kind === "direct_message"
+          ? null
+          : ((r.topic_id ? titleOf.get(r.topic_id) : null) ?? "a topic"),
     }));
 
     const message = digestMessage({

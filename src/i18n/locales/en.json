@@ -134,7 +134,11 @@
     "nav_talk_to_lawyer": "Talk to a lawyer",
     "section_private": "Private to you",
     "section_moderation": "Moderation",
-    "nav_notifications": "Notifications"
+    "nav_notifications": "Notifications",
+    "tab_forums": "Forums",
+    "tab_notifications": "Activity",
+    "tab_messages": "Messages",
+    "tab_search": "Search"
   },
   "auth_page": {
     "heading_signin": "Sign in",
@@ -1238,6 +1242,8 @@
     "prefs_in_app": "Tell me in the app when someone replies to me.",
     "prefs_email": "Send me one email a day if something is waiting.",
     "prefs_email_help": "One message a day at most, and only when there is something unread. It names who replied and where — never anything from your case.",
-    "rate_limited": "You have posted a lot in a short time. Please try again shortly."
+    "rate_limited": "You have posted a lot in a short time. Please try again shortly.",
+    "prefs_messages": "Tell me when someone sends me a direct message.",
+    "kind_direct_message": "{{who}} sent you a message"
   }
 }

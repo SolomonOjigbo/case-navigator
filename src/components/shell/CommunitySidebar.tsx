@@ -16,7 +16,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { useSession } from "@/hooks/use-session";
 import { isPlatformAdmin } from "@/lib/moderation-service";
-import { countUnread } from "@/lib/notification-service";
+import { countUnread, countUnreadMessages } from "@/lib/notification-service";
 import {
   Sidebar,
   SidebarContent,
@@ -63,6 +63,21 @@ export function CommunitySidebar() {
   });
   const unread = unreadQ.data ?? 0;
 
+  const unreadDmQ = useQuery({
+    queryKey: ["notifications-unread-dm", user?.id],
+    enabled: !!user?.id,
+    queryFn: countUnreadMessages,
+    refetchInterval: 60_000,
+  });
+  const unreadDm = unreadDmQ.data ?? 0;
+
+  /** Which links carry a count, and which count. */
+  function badgeFor(key: string): number {
+    if (key === "nav_notifications") return unread;
+    if (key === "nav_messages") return unreadDm;
+    return 0;
+  }
+
   const forumItems = [
     { to: "/community", key: "nav_forums", icon: LayoutGrid, exact: true },
     { to: "/community/notifications", key: "nav_notifications", icon: Bell },
@@ -106,9 +121,9 @@ export function CommunitySidebar() {
                     <Link to={to} className="flex items-center gap-2">
                       <Icon className="h-4 w-4" aria-hidden />
                       <span className="flex-1">{t(`community.${key}`)}</span>
-                      {key === "nav_notifications" && unread > 0 ? (
+                      {badgeFor(key) > 0 ? (
                         <span className="chip-brand shrink-0 px-1.5 py-0 text-[0.6875rem] tabular-nums">
-                          {unread > 99 ? "99+" : unread}
+                          {badgeFor(key) > 99 ? "99+" : badgeFor(key)}
                         </span>
                       ) : null}
                     </Link>

@@ -16,6 +16,8 @@ export type CommunityProfile = {
   notify_replies: boolean;
   /** One digest email a day when something is unread (S7-2). */
   email_digest: boolean;
+  /** In-app notifications when someone sends a direct message (S8-1). */
+  notify_messages: boolean;
 };
 
 export type PostAuthor = Pick<
@@ -53,7 +55,9 @@ export const HANDLE_RE = /^[a-z0-9_]{3,20}$/;
 export async function getMyCommunityProfile(userId: string) {
   const { data, error } = await supabase
     .from("community_profiles")
-    .select("id,user_id,handle,display_name,avatar_url,bio,dm_policy,notify_replies,email_digest")
+    .select(
+      "id,user_id,handle,display_name,avatar_url,bio,dm_policy,notify_replies,email_digest,notify_messages",
+    )
     .eq("user_id", userId)
     .maybeSingle();
   if (error) throw error;
@@ -68,6 +72,7 @@ export async function upsertCommunityProfile(input: {
   dmPolicy?: DmPolicy;
   notifyReplies?: boolean;
   emailDigest?: boolean;
+  notifyMessages?: boolean;
 }) {
   const existing = await getMyCommunityProfile(input.userId);
   if (existing) {
@@ -80,6 +85,7 @@ export async function upsertCommunityProfile(input: {
         ...(input.dmPolicy ? { dm_policy: input.dmPolicy } : {}),
         ...(input.notifyReplies === undefined ? {} : { notify_replies: input.notifyReplies }),
         ...(input.emailDigest === undefined ? {} : { email_digest: input.emailDigest }),
+        ...(input.notifyMessages === undefined ? {} : { notify_messages: input.notifyMessages }),
       })
       .eq("user_id", input.userId);
     if (error) throw error;
@@ -92,6 +98,7 @@ export async function upsertCommunityProfile(input: {
       dm_policy: input.dmPolicy ?? "anyone",
       notify_replies: input.notifyReplies ?? true,
       email_digest: input.emailDigest ?? true,
+      notify_messages: input.notifyMessages ?? true,
     });
     if (error) throw error;
   }

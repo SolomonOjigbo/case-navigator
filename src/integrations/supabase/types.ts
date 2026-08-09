@@ -576,9 +576,11 @@ export type Database = {
           actor_id: string
           comment_id: string | null
           created_at: string
+          dm_thread_id: string | null
           emailed_at: string | null
           id: string
           kind: string
+          message_id: string | null
           read_at: string | null
           recipient_id: string
           topic_id: string | null
@@ -587,9 +589,11 @@ export type Database = {
           actor_id: string
           comment_id?: string | null
           created_at?: string
+          dm_thread_id?: string | null
           emailed_at?: string | null
           id?: string
           kind: string
+          message_id?: string | null
           read_at?: string | null
           recipient_id: string
           topic_id?: string | null
@@ -598,9 +602,11 @@ export type Database = {
           actor_id?: string
           comment_id?: string | null
           created_at?: string
+          dm_thread_id?: string | null
           emailed_at?: string | null
           id?: string
           kind?: string
+          message_id?: string | null
           read_at?: string | null
           recipient_id?: string
           topic_id?: string | null
@@ -611,6 +617,20 @@ export type Database = {
             columns: ["comment_id"]
             isOneToOne: false
             referencedRelation: "community_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_notifications_dm_thread_id_fkey"
+            columns: ["dm_thread_id"]
+            isOneToOne: false
+            referencedRelation: "community_dm_threads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_notifications_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "community_messages"
             referencedColumns: ["id"]
           },
           {
@@ -691,6 +711,7 @@ export type Database = {
           email_digest: boolean
           handle: string
           id: string
+          notify_messages: boolean
           notify_replies: boolean
           updated_at: string
           user_id: string
@@ -704,6 +725,7 @@ export type Database = {
           email_digest?: boolean
           handle: string
           id?: string
+          notify_messages?: boolean
           notify_replies?: boolean
           updated_at?: string
           user_id: string
@@ -717,6 +739,7 @@ export type Database = {
           email_digest?: boolean
           handle?: string
           id?: string
+          notify_messages?: boolean
           notify_replies?: boolean
           updated_at?: string
           user_id?: string
@@ -2934,6 +2957,14 @@ export type Database = {
         Returns: boolean
       }
       mark_notifications_read: { Args: never; Returns: undefined }
+      mark_thread_notifications_read: {
+        Args: { p_thread_id: string }
+        Returns: undefined
+      }
+      mark_topic_notifications_read: {
+        Args: { p_topic_id: string }
+        Returns: undefined
+      }
       revoke_professional_verification: {
         Args: { p_note?: string; p_professional_id: string }
         Returns: undefined

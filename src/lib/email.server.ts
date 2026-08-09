@@ -165,7 +165,8 @@ export function reminderMessage(f: AppointmentFacts, forRole: "applicant" | "pro
 
 export type DigestItem = {
   who: string;
-  topic: string;
+  /** The topic title, or null for a direct message. */
+  topic: string | null;
 };
 
 export function digestMessage(input: { items: DigestItem[]; appUrl: string }): {
@@ -173,14 +174,19 @@ export function digestMessage(input: { items: DigestItem[]; appUrl: string }): {
   text: string;
 } {
   const count = input.items.length;
-  const lines = input.items.slice(0, 10).map((i) => `- ${i.who} replied in "${i.topic}"`);
+  // A direct message says only that one arrived. The in-app list shows a line
+  // of it; an inbox does not get that, because an inbox may be shared, read
+  // over a shoulder, or synced to a device the person does not control.
+  const lines = input.items
+    .slice(0, 10)
+    .map((i) => (i.topic ? `- ${i.who} replied in "${i.topic}"` : `- ${i.who} sent you a message`));
   const more = count > 10 ? [`...and ${count - 10} more.`] : [];
 
   return {
     subject:
-      count === 1 ? "Someone replied to you on CaseMap" : `${count} replies waiting on CaseMap`,
+      count === 1 ? "Someone is waiting for you on CaseMap" : `${count} things waiting on CaseMap`,
     text: [
-      count === 1 ? "Someone replied to you." : `There are ${count} replies waiting for you.`,
+      count === 1 ? "Someone is waiting for you." : `There are ${count} things waiting for you.`,
       ``,
       ...lines,
       ...more,

@@ -5,7 +5,7 @@
 // written, and the reply box is at the bottom where someone lands after
 // reading. Report and block sit on every post, quietly, as they do elsewhere.
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Heart, Loader2, MessagesSquare, Pin, Send, Trash2 } from "lucide-react";
@@ -27,6 +27,7 @@ import {
 } from "@/lib/community-service";
 import { getTopic, setTopicPinned, topicHeading } from "@/lib/forum-service";
 import { checkDraft, type DraftFinding } from "@/lib/draft-check";
+import { markTopicRead } from "@/lib/notification-service";
 import { DraftCheckDialog } from "@/components/community/DraftCheckDialog";
 
 function TopicView() {
@@ -62,6 +63,17 @@ function Thread() {
     enabled: !!user?.id,
     queryFn: () => isPlatformAdmin(user!.id),
   });
+
+  // Same rule as a conversation: opening the thread is reading the replies.
+  useEffect(() => {
+    if (!user?.id) return;
+    void markTopicRead(topicId)
+      .then(() => {
+        qc.invalidateQueries({ queryKey: ["notifications-unread"] });
+        qc.invalidateQueries({ queryKey: ["notifications"] });
+      })
+      .catch(() => {});
+  }, [topicId, user?.id, qc]);
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["forum-topic", topicId] });

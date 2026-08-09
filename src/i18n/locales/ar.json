@@ -134,7 +134,11 @@
     "nav_talk_to_lawyer": "التحدث إلى محامٍ",
     "section_private": "خاص بك",
     "section_moderation": "الإشراف",
-    "nav_notifications": "الإشعارات"
+    "nav_notifications": "الإشعارات",
+    "tab_forums": "المنتديات",
+    "tab_notifications": "النشاط",
+    "tab_messages": "الرسائل",
+    "tab_search": "بحث"
   },
   "auth_page": {
     "heading_signin": "Sign in",
@@ -743,6 +747,8 @@
     "prefs_in_app": "أبلغني داخل التطبيق عندما يرد عليّ أحد.",
     "prefs_email": "أرسل لي رسالة واحدة يوميًا إن كان هناك ما ينتظرني.",
     "prefs_email_help": "رسالة واحدة يوميًا على الأكثر، وفقط عند وجود شيء غير مقروء. تذكر من ردّ وأين — ولا شيء من ملفك أبدًا.",
-    "rate_limited": "نشرت الكثير في وقت قصير. يرجى المحاولة بعد قليل."
+    "rate_limited": "نشرت الكثير في وقت قصير. يرجى المحاولة بعد قليل.",
+    "prefs_messages": "أبلغني عندما يرسل لي أحد رسالة مباشرة.",
+    "kind_direct_message": "أرسل لك {{who}} رسالة"
   }
 }

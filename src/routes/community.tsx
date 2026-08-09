@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { CommunitySidebar } from "@/components/shell/CommunitySidebar";
+import { CommunityTabBar } from "@/components/shell/CommunityTabBar";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/hooks/use-session";
@@ -62,10 +63,13 @@ function CommunityLayout() {
           >
             {t("community.banner")}
           </div>
-          <main className="flex-1 px-4 py-6">
+          {/* pb-safe-nav keeps the last row clear of the mobile tab bar. */}
+          <main className="pb-safe-nav flex-1 px-4 py-6 md:pb-6">
             <Outlet />
           </main>
         </div>
+
+        <CommunityTabBar />
       </div>
     </SidebarProvider>
   );
