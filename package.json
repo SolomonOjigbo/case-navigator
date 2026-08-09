@@ -11,7 +11,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "i18n:report": "node scripts/i18n-report.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",

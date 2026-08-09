@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CommunityRouteImport } from './routes/community'
@@ -18,8 +19,11 @@ import { Route as OrientationRouteImport } from './routes/orientation'
 import { Route as ProRouteImport } from './routes/pro'
 import { Route as RecoveryCodesRouteImport } from './routes/recovery-codes'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as AdminProfessionalsRouteImport } from './routes/admin.professionals'
+import { Route as ApiRemindersRouteImport } from './routes/api.reminders'
 import { Route as AppActivityRouteImport } from './routes/app.activity'
 import { Route as AppClarifyRouteImport } from './routes/app.clarify'
+import { Route as AppConsultationsRouteImport } from './routes/app.consultations'
 import { Route as AppDocumentsRouteImport } from './routes/app.documents'
 import { Route as AppEvidenceMapRouteImport } from './routes/app.evidence-map'
 import { Route as AppQuestionsRouteImport } from './routes/app.questions'
@@ -29,16 +33,22 @@ import { Route as AppSharingRouteImport } from './routes/app.sharing'
 import { Route as AppStoryRouteImport } from './routes/app.story'
 import { Route as AppTimelineRouteImport } from './routes/app.timeline'
 import { Route as CommunityFeedRouteImport } from './routes/community.feed'
+import { Route as CommunityMessagesRouteImport } from './routes/community.messages'
 import { Route as CommunityModerationRouteImport } from './routes/community.moderation'
 import { Route as CommunityProfileRouteImport } from './routes/community.profile'
 import { Route as CommunityRoomsRouteImport } from './routes/community.rooms'
 import { Route as DebugGuardrailsRouteImport } from './routes/debug.guardrails'
+import { Route as ProAvailabilityRouteImport } from './routes/pro.availability'
 import { Route as ProCalibrationRouteImport } from './routes/pro.calibration'
 import { Route as ProCasesRouteImport } from './routes/pro.cases'
+import { Route as ProVerificationRouteImport } from './routes/pro.verification'
 import { Route as AppDocumentsDocumentIdRouteImport } from './routes/app.documents.$documentId'
 import { Route as AppStoryIndexRouteImport } from './routes/app.story.index'
 import { Route as AppStorySectionRouteImport } from './routes/app.story.$section'
 import { Route as AppStoryImportRouteImport } from './routes/app.story.import'
+import { Route as CommunityMessagesIndexRouteImport } from './routes/community.messages.index'
+import { Route as CommunityMessagesThreadIdRouteImport } from './routes/community.messages.$threadId'
+import { Route as CommunityRoomsIndexRouteImport } from './routes/community.rooms.index'
 import { Route as CommunityRoomsSlugRouteImport } from './routes/community.rooms.$slug'
 import { Route as ProCasesCaseIdRouteImport } from './routes/pro.cases.$caseId'
 import { Route as AppStorySectionHistoryPromptRouteImport } from './routes/app.story.$section.history.$prompt'
@@ -46,6 +56,11 @@ import { Route as AppStorySectionHistoryPromptRouteImport } from './routes/app.s
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRoute = AppRouteImport.update({
@@ -88,6 +103,16 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminProfessionalsRoute = AdminProfessionalsRouteImport.update({
+  id: '/professionals',
+  path: '/professionals',
+  getParentRoute: () => AdminRoute,
+} as any)
+const ApiRemindersRoute = ApiRemindersRouteImport.update({
+  id: '/api/reminders',
+  path: '/api/reminders',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppActivityRoute = AppActivityRouteImport.update({
   id: '/activity',
   path: '/activity',
@@ -96,6 +121,11 @@ const AppActivityRoute = AppActivityRouteImport.update({
 const AppClarifyRoute = AppClarifyRouteImport.update({
   id: '/clarify',
   path: '/clarify',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppConsultationsRoute = AppConsultationsRouteImport.update({
+  id: '/consultations',
+  path: '/consultations',
   getParentRoute: () => AppRoute,
 } as any)
 const AppDocumentsRoute = AppDocumentsRouteImport.update({
@@ -143,6 +173,11 @@ const CommunityFeedRoute = CommunityFeedRouteImport.update({
   path: '/feed',
   getParentRoute: () => CommunityRoute,
 } as any)
+const CommunityMessagesRoute = CommunityMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
+  getParentRoute: () => CommunityRoute,
+} as any)
 const CommunityModerationRoute = CommunityModerationRouteImport.update({
   id: '/moderation',
   path: '/moderation',
@@ -163,6 +198,11 @@ const DebugGuardrailsRoute = DebugGuardrailsRouteImport.update({
   path: '/debug/guardrails',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProAvailabilityRoute = ProAvailabilityRouteImport.update({
+  id: '/availability',
+  path: '/availability',
+  getParentRoute: () => ProRoute,
+} as any)
 const ProCalibrationRoute = ProCalibrationRouteImport.update({
   id: '/calibration',
   path: '/calibration',
@@ -171,6 +211,11 @@ const ProCalibrationRoute = ProCalibrationRouteImport.update({
 const ProCasesRoute = ProCasesRouteImport.update({
   id: '/cases',
   path: '/cases',
+  getParentRoute: () => ProRoute,
+} as any)
+const ProVerificationRoute = ProVerificationRouteImport.update({
+  id: '/verification',
+  path: '/verification',
   getParentRoute: () => ProRoute,
 } as any)
 const AppDocumentsDocumentIdRoute = AppDocumentsDocumentIdRouteImport.update({
@@ -193,6 +238,22 @@ const AppStoryImportRoute = AppStoryImportRouteImport.update({
   path: '/import',
   getParentRoute: () => AppStoryRoute,
 } as any)
+const CommunityMessagesIndexRoute = CommunityMessagesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CommunityMessagesRoute,
+} as any)
+const CommunityMessagesThreadIdRoute =
+  CommunityMessagesThreadIdRouteImport.update({
+    id: '/$threadId',
+    path: '/$threadId',
+    getParentRoute: () => CommunityMessagesRoute,
+  } as any)
+const CommunityRoomsIndexRoute = CommunityRoomsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CommunityRoomsRoute,
+} as any)
 const CommunityRoomsSlugRoute = CommunityRoomsSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
@@ -212,6 +273,7 @@ const AppStorySectionHistoryPromptRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/community': typeof CommunityRouteWithChildren
@@ -220,8 +282,11 @@ export interface FileRoutesByFullPath {
   '/pro': typeof ProRouteWithChildren
   '/recovery-codes': typeof RecoveryCodesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin/professionals': typeof AdminProfessionalsRoute
+  '/api/reminders': typeof ApiRemindersRoute
   '/app/activity': typeof AppActivityRoute
   '/app/clarify': typeof AppClarifyRoute
+  '/app/consultations': typeof AppConsultationsRoute
   '/app/documents': typeof AppDocumentsRouteWithChildren
   '/app/evidence-map': typeof AppEvidenceMapRoute
   '/app/questions': typeof AppQuestionsRoute
@@ -231,22 +296,29 @@ export interface FileRoutesByFullPath {
   '/app/story': typeof AppStoryRouteWithChildren
   '/app/timeline': typeof AppTimelineRoute
   '/community/feed': typeof CommunityFeedRoute
+  '/community/messages': typeof CommunityMessagesRouteWithChildren
   '/community/moderation': typeof CommunityModerationRoute
   '/community/profile': typeof CommunityProfileRoute
   '/community/rooms': typeof CommunityRoomsRouteWithChildren
   '/debug/guardrails': typeof DebugGuardrailsRoute
+  '/pro/availability': typeof ProAvailabilityRoute
   '/pro/calibration': typeof ProCalibrationRoute
   '/pro/cases': typeof ProCasesRouteWithChildren
+  '/pro/verification': typeof ProVerificationRoute
   '/app/documents/$documentId': typeof AppDocumentsDocumentIdRoute
   '/app/story/$section': typeof AppStorySectionRouteWithChildren
   '/app/story/import': typeof AppStoryImportRoute
+  '/community/messages/$threadId': typeof CommunityMessagesThreadIdRoute
   '/community/rooms/$slug': typeof CommunityRoomsSlugRoute
   '/pro/cases/$caseId': typeof ProCasesCaseIdRoute
   '/app/story/': typeof AppStoryIndexRoute
+  '/community/messages/': typeof CommunityMessagesIndexRoute
+  '/community/rooms/': typeof CommunityRoomsIndexRoute
   '/app/story/$section/history/$prompt': typeof AppStorySectionHistoryPromptRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/community': typeof CommunityRouteWithChildren
@@ -255,8 +327,11 @@ export interface FileRoutesByTo {
   '/pro': typeof ProRouteWithChildren
   '/recovery-codes': typeof RecoveryCodesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin/professionals': typeof AdminProfessionalsRoute
+  '/api/reminders': typeof ApiRemindersRoute
   '/app/activity': typeof AppActivityRoute
   '/app/clarify': typeof AppClarifyRoute
+  '/app/consultations': typeof AppConsultationsRoute
   '/app/documents': typeof AppDocumentsRouteWithChildren
   '/app/evidence-map': typeof AppEvidenceMapRoute
   '/app/questions': typeof AppQuestionsRoute
@@ -267,21 +342,26 @@ export interface FileRoutesByTo {
   '/community/feed': typeof CommunityFeedRoute
   '/community/moderation': typeof CommunityModerationRoute
   '/community/profile': typeof CommunityProfileRoute
-  '/community/rooms': typeof CommunityRoomsRouteWithChildren
   '/debug/guardrails': typeof DebugGuardrailsRoute
+  '/pro/availability': typeof ProAvailabilityRoute
   '/pro/calibration': typeof ProCalibrationRoute
   '/pro/cases': typeof ProCasesRouteWithChildren
+  '/pro/verification': typeof ProVerificationRoute
   '/app/documents/$documentId': typeof AppDocumentsDocumentIdRoute
   '/app/story/$section': typeof AppStorySectionRouteWithChildren
   '/app/story/import': typeof AppStoryImportRoute
+  '/community/messages/$threadId': typeof CommunityMessagesThreadIdRoute
   '/community/rooms/$slug': typeof CommunityRoomsSlugRoute
   '/pro/cases/$caseId': typeof ProCasesCaseIdRoute
   '/app/story': typeof AppStoryIndexRoute
+  '/community/messages': typeof CommunityMessagesIndexRoute
+  '/community/rooms': typeof CommunityRoomsIndexRoute
   '/app/story/$section/history/$prompt': typeof AppStorySectionHistoryPromptRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/community': typeof CommunityRouteWithChildren
@@ -290,8 +370,11 @@ export interface FileRoutesById {
   '/pro': typeof ProRouteWithChildren
   '/recovery-codes': typeof RecoveryCodesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin/professionals': typeof AdminProfessionalsRoute
+  '/api/reminders': typeof ApiRemindersRoute
   '/app/activity': typeof AppActivityRoute
   '/app/clarify': typeof AppClarifyRoute
+  '/app/consultations': typeof AppConsultationsRoute
   '/app/documents': typeof AppDocumentsRouteWithChildren
   '/app/evidence-map': typeof AppEvidenceMapRoute
   '/app/questions': typeof AppQuestionsRoute
@@ -301,24 +384,31 @@ export interface FileRoutesById {
   '/app/story': typeof AppStoryRouteWithChildren
   '/app/timeline': typeof AppTimelineRoute
   '/community/feed': typeof CommunityFeedRoute
+  '/community/messages': typeof CommunityMessagesRouteWithChildren
   '/community/moderation': typeof CommunityModerationRoute
   '/community/profile': typeof CommunityProfileRoute
   '/community/rooms': typeof CommunityRoomsRouteWithChildren
   '/debug/guardrails': typeof DebugGuardrailsRoute
+  '/pro/availability': typeof ProAvailabilityRoute
   '/pro/calibration': typeof ProCalibrationRoute
   '/pro/cases': typeof ProCasesRouteWithChildren
+  '/pro/verification': typeof ProVerificationRoute
   '/app/documents/$documentId': typeof AppDocumentsDocumentIdRoute
   '/app/story/$section': typeof AppStorySectionRouteWithChildren
   '/app/story/import': typeof AppStoryImportRoute
+  '/community/messages/$threadId': typeof CommunityMessagesThreadIdRoute
   '/community/rooms/$slug': typeof CommunityRoomsSlugRoute
   '/pro/cases/$caseId': typeof ProCasesCaseIdRoute
   '/app/story/': typeof AppStoryIndexRoute
+  '/community/messages/': typeof CommunityMessagesIndexRoute
+  '/community/rooms/': typeof CommunityRoomsIndexRoute
   '/app/story/$section/history/$prompt': typeof AppStorySectionHistoryPromptRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/app'
     | '/auth'
     | '/community'
@@ -327,8 +417,11 @@ export interface FileRouteTypes {
     | '/pro'
     | '/recovery-codes'
     | '/sitemap.xml'
+    | '/admin/professionals'
+    | '/api/reminders'
     | '/app/activity'
     | '/app/clarify'
+    | '/app/consultations'
     | '/app/documents'
     | '/app/evidence-map'
     | '/app/questions'
@@ -338,22 +431,29 @@ export interface FileRouteTypes {
     | '/app/story'
     | '/app/timeline'
     | '/community/feed'
+    | '/community/messages'
     | '/community/moderation'
     | '/community/profile'
     | '/community/rooms'
     | '/debug/guardrails'
+    | '/pro/availability'
     | '/pro/calibration'
     | '/pro/cases'
+    | '/pro/verification'
     | '/app/documents/$documentId'
     | '/app/story/$section'
     | '/app/story/import'
+    | '/community/messages/$threadId'
     | '/community/rooms/$slug'
     | '/pro/cases/$caseId'
     | '/app/story/'
+    | '/community/messages/'
+    | '/community/rooms/'
     | '/app/story/$section/history/$prompt'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/app'
     | '/auth'
     | '/community'
@@ -362,8 +462,11 @@ export interface FileRouteTypes {
     | '/pro'
     | '/recovery-codes'
     | '/sitemap.xml'
+    | '/admin/professionals'
+    | '/api/reminders'
     | '/app/activity'
     | '/app/clarify'
+    | '/app/consultations'
     | '/app/documents'
     | '/app/evidence-map'
     | '/app/questions'
@@ -374,20 +477,25 @@ export interface FileRouteTypes {
     | '/community/feed'
     | '/community/moderation'
     | '/community/profile'
-    | '/community/rooms'
     | '/debug/guardrails'
+    | '/pro/availability'
     | '/pro/calibration'
     | '/pro/cases'
+    | '/pro/verification'
     | '/app/documents/$documentId'
     | '/app/story/$section'
     | '/app/story/import'
+    | '/community/messages/$threadId'
     | '/community/rooms/$slug'
     | '/pro/cases/$caseId'
     | '/app/story'
+    | '/community/messages'
+    | '/community/rooms'
     | '/app/story/$section/history/$prompt'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/app'
     | '/auth'
     | '/community'
@@ -396,8 +504,11 @@ export interface FileRouteTypes {
     | '/pro'
     | '/recovery-codes'
     | '/sitemap.xml'
+    | '/admin/professionals'
+    | '/api/reminders'
     | '/app/activity'
     | '/app/clarify'
+    | '/app/consultations'
     | '/app/documents'
     | '/app/evidence-map'
     | '/app/questions'
@@ -407,23 +518,30 @@ export interface FileRouteTypes {
     | '/app/story'
     | '/app/timeline'
     | '/community/feed'
+    | '/community/messages'
     | '/community/moderation'
     | '/community/profile'
     | '/community/rooms'
     | '/debug/guardrails'
+    | '/pro/availability'
     | '/pro/calibration'
     | '/pro/cases'
+    | '/pro/verification'
     | '/app/documents/$documentId'
     | '/app/story/$section'
     | '/app/story/import'
+    | '/community/messages/$threadId'
     | '/community/rooms/$slug'
     | '/pro/cases/$caseId'
     | '/app/story/'
+    | '/community/messages/'
+    | '/community/rooms/'
     | '/app/story/$section/history/$prompt'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRoute
   CommunityRoute: typeof CommunityRouteWithChildren
@@ -432,6 +550,7 @@ export interface RootRouteChildren {
   ProRoute: typeof ProRouteWithChildren
   RecoveryCodesRoute: typeof RecoveryCodesRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiRemindersRoute: typeof ApiRemindersRoute
   DebugGuardrailsRoute: typeof DebugGuardrailsRoute
 }
 
@@ -442,6 +561,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app': {
@@ -500,6 +626,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/professionals': {
+      id: '/admin/professionals'
+      path: '/professionals'
+      fullPath: '/admin/professionals'
+      preLoaderRoute: typeof AdminProfessionalsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/api/reminders': {
+      id: '/api/reminders'
+      path: '/api/reminders'
+      fullPath: '/api/reminders'
+      preLoaderRoute: typeof ApiRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/activity': {
       id: '/app/activity'
       path: '/activity'
@@ -512,6 +652,13 @@ declare module '@tanstack/react-router' {
       path: '/clarify'
       fullPath: '/app/clarify'
       preLoaderRoute: typeof AppClarifyRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/consultations': {
+      id: '/app/consultations'
+      path: '/consultations'
+      fullPath: '/app/consultations'
+      preLoaderRoute: typeof AppConsultationsRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/documents': {
@@ -577,6 +724,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CommunityFeedRouteImport
       parentRoute: typeof CommunityRoute
     }
+    '/community/messages': {
+      id: '/community/messages'
+      path: '/messages'
+      fullPath: '/community/messages'
+      preLoaderRoute: typeof CommunityMessagesRouteImport
+      parentRoute: typeof CommunityRoute
+    }
     '/community/moderation': {
       id: '/community/moderation'
       path: '/moderation'
@@ -605,6 +759,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DebugGuardrailsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pro/availability': {
+      id: '/pro/availability'
+      path: '/availability'
+      fullPath: '/pro/availability'
+      preLoaderRoute: typeof ProAvailabilityRouteImport
+      parentRoute: typeof ProRoute
+    }
     '/pro/calibration': {
       id: '/pro/calibration'
       path: '/calibration'
@@ -617,6 +778,13 @@ declare module '@tanstack/react-router' {
       path: '/cases'
       fullPath: '/pro/cases'
       preLoaderRoute: typeof ProCasesRouteImport
+      parentRoute: typeof ProRoute
+    }
+    '/pro/verification': {
+      id: '/pro/verification'
+      path: '/verification'
+      fullPath: '/pro/verification'
+      preLoaderRoute: typeof ProVerificationRouteImport
       parentRoute: typeof ProRoute
     }
     '/app/documents/$documentId': {
@@ -647,6 +815,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppStoryImportRouteImport
       parentRoute: typeof AppStoryRoute
     }
+    '/community/messages/': {
+      id: '/community/messages/'
+      path: '/'
+      fullPath: '/community/messages/'
+      preLoaderRoute: typeof CommunityMessagesIndexRouteImport
+      parentRoute: typeof CommunityMessagesRoute
+    }
+    '/community/messages/$threadId': {
+      id: '/community/messages/$threadId'
+      path: '/$threadId'
+      fullPath: '/community/messages/$threadId'
+      preLoaderRoute: typeof CommunityMessagesThreadIdRouteImport
+      parentRoute: typeof CommunityMessagesRoute
+    }
+    '/community/rooms/': {
+      id: '/community/rooms/'
+      path: '/'
+      fullPath: '/community/rooms/'
+      preLoaderRoute: typeof CommunityRoomsIndexRouteImport
+      parentRoute: typeof CommunityRoomsRoute
+    }
     '/community/rooms/$slug': {
       id: '/community/rooms/$slug'
       path: '/$slug'
@@ -670,6 +859,16 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface AdminRouteChildren {
+  AdminProfessionalsRoute: typeof AdminProfessionalsRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminProfessionalsRoute: AdminProfessionalsRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface AppDocumentsRouteChildren {
   AppDocumentsDocumentIdRoute: typeof AppDocumentsDocumentIdRoute
@@ -714,6 +913,7 @@ const AppStoryRouteWithChildren = AppStoryRoute._addFileChildren(
 interface AppRouteChildren {
   AppActivityRoute: typeof AppActivityRoute
   AppClarifyRoute: typeof AppClarifyRoute
+  AppConsultationsRoute: typeof AppConsultationsRoute
   AppDocumentsRoute: typeof AppDocumentsRouteWithChildren
   AppEvidenceMapRoute: typeof AppEvidenceMapRoute
   AppQuestionsRoute: typeof AppQuestionsRoute
@@ -727,6 +927,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppActivityRoute: AppActivityRoute,
   AppClarifyRoute: AppClarifyRoute,
+  AppConsultationsRoute: AppConsultationsRoute,
   AppDocumentsRoute: AppDocumentsRouteWithChildren,
   AppEvidenceMapRoute: AppEvidenceMapRoute,
   AppQuestionsRoute: AppQuestionsRoute,
@@ -739,12 +940,27 @@ const AppRouteChildren: AppRouteChildren = {
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
+interface CommunityMessagesRouteChildren {
+  CommunityMessagesThreadIdRoute: typeof CommunityMessagesThreadIdRoute
+  CommunityMessagesIndexRoute: typeof CommunityMessagesIndexRoute
+}
+
+const CommunityMessagesRouteChildren: CommunityMessagesRouteChildren = {
+  CommunityMessagesThreadIdRoute: CommunityMessagesThreadIdRoute,
+  CommunityMessagesIndexRoute: CommunityMessagesIndexRoute,
+}
+
+const CommunityMessagesRouteWithChildren =
+  CommunityMessagesRoute._addFileChildren(CommunityMessagesRouteChildren)
+
 interface CommunityRoomsRouteChildren {
   CommunityRoomsSlugRoute: typeof CommunityRoomsSlugRoute
+  CommunityRoomsIndexRoute: typeof CommunityRoomsIndexRoute
 }
 
 const CommunityRoomsRouteChildren: CommunityRoomsRouteChildren = {
   CommunityRoomsSlugRoute: CommunityRoomsSlugRoute,
+  CommunityRoomsIndexRoute: CommunityRoomsIndexRoute,
 }
 
 const CommunityRoomsRouteWithChildren = CommunityRoomsRoute._addFileChildren(
@@ -753,6 +969,7 @@ const CommunityRoomsRouteWithChildren = CommunityRoomsRoute._addFileChildren(
 
 interface CommunityRouteChildren {
   CommunityFeedRoute: typeof CommunityFeedRoute
+  CommunityMessagesRoute: typeof CommunityMessagesRouteWithChildren
   CommunityModerationRoute: typeof CommunityModerationRoute
   CommunityProfileRoute: typeof CommunityProfileRoute
   CommunityRoomsRoute: typeof CommunityRoomsRouteWithChildren
@@ -760,6 +977,7 @@ interface CommunityRouteChildren {
 
 const CommunityRouteChildren: CommunityRouteChildren = {
   CommunityFeedRoute: CommunityFeedRoute,
+  CommunityMessagesRoute: CommunityMessagesRouteWithChildren,
   CommunityModerationRoute: CommunityModerationRoute,
   CommunityProfileRoute: CommunityProfileRoute,
   CommunityRoomsRoute: CommunityRoomsRouteWithChildren,
@@ -782,19 +1000,24 @@ const ProCasesRouteWithChildren = ProCasesRoute._addFileChildren(
 )
 
 interface ProRouteChildren {
+  ProAvailabilityRoute: typeof ProAvailabilityRoute
   ProCalibrationRoute: typeof ProCalibrationRoute
   ProCasesRoute: typeof ProCasesRouteWithChildren
+  ProVerificationRoute: typeof ProVerificationRoute
 }
 
 const ProRouteChildren: ProRouteChildren = {
+  ProAvailabilityRoute: ProAvailabilityRoute,
   ProCalibrationRoute: ProCalibrationRoute,
   ProCasesRoute: ProCasesRouteWithChildren,
+  ProVerificationRoute: ProVerificationRoute,
 }
 
 const ProRouteWithChildren = ProRoute._addFileChildren(ProRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRoute,
   CommunityRoute: CommunityRouteWithChildren,
@@ -803,6 +1026,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProRoute: ProRouteWithChildren,
   RecoveryCodesRoute: RecoveryCodesRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiRemindersRoute: ApiRemindersRoute,
   DebugGuardrailsRoute: DebugGuardrailsRoute,
 }
 export const routeTree = rootRouteImport

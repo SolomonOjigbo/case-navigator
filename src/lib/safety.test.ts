@@ -2,7 +2,7 @@
 // not regress. These are the checks that make the guardrails real rather than
 // aspirational.
 import { describe, expect, it } from "vitest";
-import { runGuardrails } from "./guardrails";
+import { hitsForbiddenVocabulary, runGuardrails } from "./guardrails";
 import { checkGate1, GATE1_CONFIDENCE_THRESHOLD, passesGate1 } from "./gate1";
 import { FORBIDDEN_VOCABULARY, AMBIGUOUS_DATE_PATTERN } from "./ai-prompts";
 import {
@@ -524,5 +524,35 @@ describe("correction messages", () => {
       reviewer_notices: 0,
     });
     expect(parseCascadeCounts({ events: "many" }).events).toBe(0);
+  });
+});
+
+describe("forbidden vocabulary matches words, not fragments", () => {
+  // Regression. The scanner used substring matching, so the entry "lie" fired
+  // on "client", "believe", "relief" and "earlier". A hit blocks the whole
+  // model response, so ordinary extractions were being discarded for
+  // containing the word "client".
+  it("does not fire on ordinary words that contain a forbidden word", () => {
+    for (const phrase of [
+      "The client arrived earlier than expected.",
+      "I believe the relief was granted in 2019.",
+      "The supplier applied for a permit.",
+      "An unofficial translation was supplied.",
+    ]) {
+      expect(hitsForbiddenVocabulary(phrase), phrase).toBeNull();
+    }
+  });
+
+  it("still fires on the words themselves", () => {
+    expect(hitsForbiddenVocabulary("This account is credible.")).toBe("credible");
+    expect(hitsForbiddenVocabulary("They are lying about it.")).toBe("lying");
+    expect(hitsForbiddenVocabulary("That is a lie.")).toBe("lie");
+    expect(hitsForbiddenVocabulary("This is a strong case.")).toBe("strong case");
+    expect(hitsForbiddenVocabulary("The document is an official record.")).toBe("official");
+  });
+
+  it("matches regardless of case and punctuation", () => {
+    expect(hitsForbiddenVocabulary("CREDIBLE?")).toBe("credible");
+    expect(hitsForbiddenVocabulary("(fake)")).toBe("fake");
   });
 });

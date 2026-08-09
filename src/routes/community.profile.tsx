@@ -7,6 +7,7 @@ import {
   getMyCommunityProfile,
   upsertCommunityProfile,
   HANDLE_RE,
+  type DmPolicy,
 } from "@/lib/community-service";
 import { useSession } from "@/hooks/use-session";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ function View() {
   const [handle, setHandle] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
+  const [dmPolicy, setDmPolicy] = useState<DmPolicy>("anyone");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -35,6 +37,7 @@ function View() {
       setHandle(data.handle);
       setDisplayName(data.display_name ?? "");
       setBio(data.bio ?? "");
+      setDmPolicy(data.dm_policy ?? "anyone");
     }
   }, [data]);
 
@@ -52,6 +55,7 @@ function View() {
         handle,
         displayName: displayName.trim() || null,
         bio: bio.trim() || null,
+        dmPolicy,
       });
       toast.success(t("community.profile_saved"));
       qc.invalidateQueries({ queryKey: ["community-profile", user.id] });
@@ -102,6 +106,37 @@ function View() {
             maxLength={500}
           />
         </div>
+        {/* Who may write to you. Existing conversations are unaffected —
+            closing an inbox should not end conversations already under way. */}
+        <fieldset className="surface-card m-0 grid gap-2 border-0 p-4">
+          <legend className="px-1 text-[0.9375rem] font-semibold text-foreground">
+            {t("community.dm_policy_label")}
+          </legend>
+          <label className="flex items-start gap-2.5 text-sm">
+            <input
+              type="radio"
+              name="dm-policy"
+              className="mt-1"
+              checked={dmPolicy === "anyone"}
+              onChange={() => setDmPolicy("anyone")}
+            />
+            <span>{t("community.dm_policy_anyone")}</span>
+          </label>
+          <label className="flex items-start gap-2.5 text-sm">
+            <input
+              type="radio"
+              name="dm-policy"
+              className="mt-1"
+              checked={dmPolicy === "nobody"}
+              onChange={() => setDmPolicy("nobody")}
+            />
+            <span>{t("community.dm_policy_nobody")}</span>
+          </label>
+          <p className="m-0 text-[0.8125rem] text-muted-foreground">
+            {t("community.dm_policy_help")}
+          </p>
+        </fieldset>
+
         <Button type="submit" disabled={busy}>
           {t("community.save_profile")}
         </Button>

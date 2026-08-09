@@ -197,6 +197,59 @@ their jurisdiction; the professional sees it; no case data is visible to that
 professional unless a `sharing_grant` exists — verified by an RLS integration
 test alongside the existing ones.
 
+#### Delivered
+
+S3-1 to S3-4 are built and verified end to end against the live project, both
+sides, with a real booking and a real cancellation.
+
+- `consultation_slots` and `consultations` (`20260808180000`). A consultation
+  has no `case_id` and no column large enough to carry case material; `topic`
+  is capped at 300 characters. Only verified, active professionals can be
+  listed or booked, enforced by RLS rather than by the client.
+- `/app/consultations` — browse by place and language, pick a slot, confirm
+  behind the four disclosures (no case access, advice happens in the
+  appointment, the lawyer bills directly, cancel any time), carry the
+  "Questions for My Lawyer" list into the appointment.
+- `/pro/availability` — publish and withdraw times, see bookings, edit the
+  languages and blurb the directory shows. A time someone has taken cannot be
+  withdrawn; the booking must be cancelled first.
+- Acceptance test in `rls.integration.test.ts`: books a real slot, proves the
+  professional sees the booking and still reads zero rows from every
+  case-scoped table, that `consultations` has no `case_id` to select, that a
+  third applicant sees nothing, and that the slot cannot be taken twice.
+
+Two things had to be fixed to get there, both pre-existing:
+
+- **`professionals` was unreadable by everyone** (`42P17`, infinite recursion:
+  its SELECT policy read `sharing_grants`, whose SELECT policy read
+  `professionals`). Every `/pro/*` screen begins by reading that table, so this
+  was breaking more than booking. Fixed in `20260808200000` with SECURITY
+  DEFINER helpers, the same pattern `has_role` already used.
+- **The directory had nowhere to read from.** An applicant browsing for the
+  first time can see no `professionals` row by design. Added the
+  `bookable_professionals` view: five fields, verified and active only, so
+  browsing does not expose licence numbers or organisation membership.
+
+A booking now also carries `applicant_display_name` (`20260808220000`) — the
+name the applicant types at the point of booking. `profiles` is own-row only,
+so before this a professional saw an appointment with no idea who was coming,
+while both screens promised them a name.
+
+#### Not delivered
+
+**S3-5 (email).** Cancellation works, in-app, from either side. Confirmations
+and reminders **by email do not exist** — there is no transactional email
+infrastructure in this project at all: no provider, no credentials, no
+templates, no send path. Someone who books and closes the tab has nothing to
+remind them. This needs a provider decision (Resend, Postmark, SES) before it
+can be built, and is roughly 3d once that is made.
+
+**Still the real exposure: S4-1.** `professionals.verified_at` is still set by
+hand in SQL. Everything above enforces "only verified professionals can be
+booked" precisely and provably — but nothing yet checks that a verified
+professional holds the licence they claim. In a booking product that is the
+liability, and it is a Sprint 4 ticket.
+
 ---
 
 ### Sprint 4 — Ask a Lawyer (trust) + Community DMs
@@ -210,6 +263,165 @@ test alongside the existing ones.
 
 **Acceptance:** an unverified professional cannot appear in the directory or
 answer a consultation.
+
+#### Delivered
+
+All four tickets, verified end to end against the live project.
+
+**S4-1 — verification.** The hole this sprint existed to close was worse than
+the plan assumed. `professionals` had `GRANT UPDATE ... TO authenticated` and a
+policy of `auth.uid() = user_id` with no column restriction, so a professional
+could set their own `license_number`, `license_jurisdiction` and `verified_at`.
+Confirmed by doing it: signing in as the seed professional and rewriting the
+licence number succeeded. Row-level security cannot restrict *which columns* an
+update touches, so the fix is a trigger
+(`professionals_guard_privileged_columns`). A professional may now edit how they
+appear — display name, languages, blurb, reply time — and nothing else.
+
+Around that: `professional_verifications` (submission, evidence, decision, who
+decided and when), a private `professional-evidence` bucket with no UPDATE or
+DELETE policy so a submission stays as submitted, `/pro/verification` for
+sending details, and `/admin/professionals` for reviewing them. Approval and
+revocation go through two SECURITY DEFINER functions that refuse anyone without
+`platform_admin`. Revoking also withdraws the professional's future slots, and
+deliberately leaves existing bookings visible to both parties so they can be
+cancelled rather than silently vanishing.
+
+**S4-2 — directory.** Browsing by jurisdiction and language shipped in Sprint 3.
+Added what someone actually needs in order to choose: when the licence was
+checked (the platform's claim, not the professional's) and the reply time they
+state.
+
+**S4-3 — direct messages.** `community_dm_threads` and the DM half of
+`community_messages` were written in the first migration and had sat unused
+ever since. Now `/community/messages`, with realtime, and blocking enforced by
+the existing insert policies — which re-check the pair on every message, so a
+block stops the next message, not just the next conversation.
+
+**S4-4 — response expectations and staleness.** Professionals state a usual
+reply time. A booking's end is derived from its slot (`consultations_with_slot`,
+`is_past`) rather than written by a scheduled job, so an appointment that has
+happened stops looking like one that is coming; either party can close it out
+with `complete_consultation()`, which refuses to run before the end time.
+
+Three pre-existing faults surfaced and are fixed here:
+
+- **`hitsForbiddenVocabulary` matched substrings, not words.** The entry `"lie"`
+  fired on "client", "believe", "relief" and "earlier". A vocabulary hit
+  discards the entire model response, so ordinary extractions were being thrown
+  away for containing the word "client". Found when the string "Earlier
+  submissions" tripped the scanner in a new test. Now word-boundary matched,
+  with a regression test.
+- **`/community/rooms` was a layout route with no `<Outlet />`,** so opening a
+  room rendered the room list instead and topic rooms were unreachable — the
+  same fault found in `app.story` last sprint. Split into a layout and an index
+  route.
+- **A platform admin could not read `professionals` at all,** so "Currently
+  listed" was always empty and revocation could not be reached from the screen.
+  The decision functions run as SECURITY DEFINER and were never blocked, which
+  is why this only showed up by using the page.
+
+**Verification:** the RLS suite gains six tests — an unverified professional is
+absent from the directory, their slots are invisible, they cannot be booked,
+they cannot set their own `verified_at`/`active`/licence/jurisdiction, neither
+they nor an applicant can approve a submission, and the queue does not leak.
+Plus two for DMs: a third party (including a platform admin) reads neither the
+thread nor its messages, and a block refuses sends in both directions. 14 RLS
+tests pass live; 143 unit tests pass.
+
+#### Known limits
+
+- **A moderator cannot see a reported DM.** Reporting from a conversation files
+  against the profile, and the reporter's own words are the only context, because
+  RLS does not show private messages to anyone but the two participants. The
+  alternative — letting moderators read private conversations — is worse. If
+  reported DMs need to be reviewable, the right shape is the reporter attaching
+  the specific messages they are reporting, which is a separate ticket.
+- **Nothing stops an unsolicited first message.** Blocking is after the fact.
+  A per-account "who may message me" setting is not built.
+- **Verification is a person reading a document.** There is no integration with
+  a law-society register, so an admin approving a submission is asserting they
+  checked it themselves. The screen says so.
+
+---
+
+### Sprint 5 — Loose ends that reach a real person
+
+Not in the original four. This sprint is what §2 and the "Known limits" notes
+from Sprints 3 and 4 had accumulated: the things that would be felt by someone
+actually using the product.
+
+| Ticket | Description | Est. |
+|---|---|---|
+| S5-1 | Duplicate case creation: find the cause and make it impossible. | 2d |
+| S5-2 | Transactional email for appointments — the S3-5 carry-over. | 4d |
+| S5-3 | Who may message you, and reports that carry the messages they are about. | 3d |
+| S5-4 | Make the Arabic gap measurable and stop it widening. | 1d |
+
+**Acceptance:** twelve simultaneous callers get one case; a booking, a
+cancellation and a reminder each record exactly one delivery per person; a
+closed inbox refuses a new conversation without touching existing ones; a
+moderator sees only the messages a reporter chose to show them.
+
+#### Delivered
+
+**S5-1 — the duplicate case, cause found.** Reported in an earlier sprint and
+not diagnosed at the time. It is a read-then-insert race with two writers: the
+`handle_new_user` trigger creates a draft case on signup, and
+`getOrCreateOwnCase` creates one if it does not find one — and that function is
+called from `audit-service` on sign-in and from the consent screen as well as
+from route queries. The first two do not share React Query's cache, so two
+copies could be in flight, both find nothing, and both insert. Reproduced in
+this project's own data: the seed professional had two cases created 279ms
+apart. Clarify reads the case with `.maybeSingle()`, which is why the symptom
+was "No case yet" on a case that plainly existed.
+
+Fixed in three layers: existing duplicates merged (audit history moved, and the
+migration refuses to run if any duplicate holds real case material), a unique
+index so a second case is impossible, and `get_or_create_own_case()` doing the
+whole thing in one statement. Twelve simultaneous calls now return one id.
+
+**S5-2 — email.** Off unless `RESEND_API_KEY` is set; without it every message
+is recorded as `skipped` rather than silently dropped. Confirmation on booking,
+notice on cancellation from either side, and a reminder 24 hours ahead driven by
+a Vercel cron. The endpoint fails closed without `CRON_SECRET` — an open
+endpoint that sends mail is a way to mail people repeatedly.
+
+Two constraints in the messages themselves: no case material (the fields they
+draw on cannot hold any), and no tracking pixels, remote images or click
+wrapping — all three tell a third party when a refugee opened their mail. Send
+once is enforced by claiming a row in `email_deliveries` before sending, so the
+hourly job reminds once; proved by running it twice.
+
+**S5-3 — message controls.** `dm_policy` on a community profile decides who may
+*start* a conversation; existing threads are untouched, because closing an inbox
+should not silently end conversations already under way. And a reported
+conversation now carries the specific messages the reporter ticked. A moderator
+still cannot read a thread — the excerpts are copied into the report, only the
+reporter can attach them, and only their own messages from that person are
+offered. This is the one path by which anything private becomes visible, and
+the screen says so before anything is sent.
+
+**S5-4 — the Arabic gap, measured.** `npm run i18n:report` gives the real
+number: **571 strings need a translator** — 424 missing outright and 147 present
+but still in English, which the earlier "424 missing" count had not caught. Five
+tests hold the line: namespaces added since Sprint 3 must be complete in both
+languages, no English may sit in `ar.json` for those, the overall gap has a
+ceiling that may only fall, no orphan keys, and interpolation variables must
+match — `{{when}}` rendered as anything else prints a placeholder to the person
+least able to work out what it meant.
+
+#### Known limits
+
+- **Email is built but unproven against a real provider.** Every path was
+  exercised with no key configured, which exercises everything except the
+  provider call itself. The first deployment with `RESEND_API_KEY` set should
+  book one appointment and check the mail arrives.
+- **Reminders are a single 24-hour notice.** No second reminder, no per-person
+  preference, no unsubscribe link — the only mail this sends is about an
+  appointment the person booked themselves.
+- **The Arabic ceiling is 430, not 0.** The check stops the gap widening; it
+  does not close it. That still needs a translator.
 
 ---
 
@@ -233,7 +445,7 @@ but S4-1 (verification) then has to move ahead of S3, not after it. Putting an
 unverified name in front of an asylum claimant is the real exposure in the
 booking model, and it is cheap to prevent.
 
-**Status: Sprints 1 and 2 shipped 2026-08-08** (`39334ea`, `709b1bd`) — documentation
+**Status: Sprints 1–5 shipped.** Sprints 1 and 2 on 2026-08-08 (`39334ea`, `709b1bd`) — documentation
 advisor, narrative intake, guardrail tests, plus two bugs found on the way (a
 missing `<Outlet />` that made the story sections unreachable, and a delete in
 analyzeGaps that would have wiped the advisor's output). Sprint 2 surfaced the

@@ -35,8 +35,24 @@ VALUES
   ('aaaaaaaa-0000-4000-8000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'seed.amina@example.test',  crypt('seed-password-1', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"Amina Testcase"}', '', '', '', '', '', '', '', ''),
   ('aaaaaaaa-0000-4000-8000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'seed.bilal@example.test',  crypt('seed-password-2', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"Bilal Fictional"}', '', '', '', '', '', '', '', ''),
   ('aaaaaaaa-0000-4000-8000-000000000003', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'seed.chen@example.test',   crypt('seed-password-3', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"Chen Imaginary"}', '', '', '', '', '', '', '', ''),
-  ('bbbbbbbb-0000-4000-8000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'seed.lawyer@example.test', crypt('seed-password-4', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"Sam Notreal (fictional lawyer)"}', '', '', '', '', '', '', '', '')
+  ('bbbbbbbb-0000-4000-8000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'seed.lawyer@example.test', crypt('seed-password-4', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"Sam Notreal (fictional lawyer)"}', '', '', '', '', '', '', '', ''),
+  -- A second professional who has NOT been checked. The point of the fixture:
+  -- an unverified professional must be invisible in the directory and
+  -- unbookable, and that is only provable if one exists.
+  ('bbbbbbbb-0000-4000-8000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'seed.unchecked@example.test', crypt('seed-password-5', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"Pat Unchecked (fictional, unverified)"}', '', '', '', '', '', '', '', ''),
+  -- A platform admin, so moderation and verification have an owner that is
+  -- not also an applicant.
+  ('cccccccc-0000-4000-8000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'seed.admin@example.test', crypt('seed-password-6', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"Sam Admin (synthetic)"}', '', '', '', '', '', '', '', '')
 ON CONFLICT (id) DO NOTHING;
+
+-- Roles. The handle_new_user trigger gives every account 'applicant'; these
+-- two need more.
+INSERT INTO public.user_roles (user_id, role)
+VALUES
+  ('bbbbbbbb-0000-4000-8000-000000000001', 'professional'),
+  ('bbbbbbbb-0000-4000-8000-000000000002', 'professional'),
+  ('cccccccc-0000-4000-8000-000000000001', 'platform_admin')
+ON CONFLICT DO NOTHING;
 
 -- Everything below is public schema. The story_responses append-only trigger
 -- only guards UPDATE and DELETE (and this seed only INSERTs), so no role
@@ -56,6 +72,28 @@ VALUES (
   'bbbbbbbb-0000-4000-8000-000000000001',
   'c0000000-0000-4000-8000-000000000001',
   'SEED-LIC-0001', 'CA', 'Sam Notreal (fictional lawyer)', now(), NULL, true
+) ON CONFLICT (id) DO NOTHING;
+
+-- Unverified: verified_at IS NULL and active = false. Nothing lists them.
+INSERT INTO public.professionals (id, user_id, organization_id, license_number, license_jurisdiction, display_name, verified_at, verified_by, active)
+VALUES (
+  'd0000000-0000-4000-8000-000000000002',
+  'bbbbbbbb-0000-4000-8000-000000000002',
+  NULL,
+  NULL, NULL, 'Pat Unchecked (fictional, unverified)', NULL, NULL, false
+) ON CONFLICT (id) DO NOTHING;
+
+-- ...and their submission, sitting in the admin queue.
+INSERT INTO public.professional_verifications
+  (id, professional_id, submitted_by, license_number, license_jurisdiction, display_name, organization_name, note, status)
+VALUES (
+  'd1000000-0000-4000-8000-000000000001',
+  'd0000000-0000-4000-8000-000000000002',
+  'bbbbbbbb-0000-4000-8000-000000000002',
+  'SEED-LIC-0002', 'CA', 'Pat Unchecked (fictional, unverified)',
+  'Example Legal Clinic (synthetic)',
+  'Synthetic seed submission. Approving this in a real project would list a person who does not exist.',
+  'pending'
 ) ON CONFLICT (id) DO NOTHING;
 
 -- -------------------------------------------------------------------------
@@ -190,6 +228,50 @@ VALUES
   -- guessed into position.
   ('e3200000-0000-4000-8000-00000000000a', 'e0000000-0000-4000-8000-00000000000c', 'SEED-E-C1', 'Meeting referred to in the letter', NULL, 'unknown', 'Northtown',
    'The applicant said they do not remember the date.', 'user_confirmed', false, true)
+ON CONFLICT (id) DO NOTHING;
+
+-- -------------------------------------------------------------------------
+-- One active sharing grant: CASE A, shared with the fictional lawyer.
+--
+-- Without this the professional side of the seed has nothing to open, and the
+-- revocation test in rls.integration.test.ts has no grant to revoke. CASE B
+-- and CASE C are deliberately left unshared, so "a professional with no grant
+-- sees nothing" has something real to prove.
+-- -------------------------------------------------------------------------
+INSERT INTO public.sharing_grants (id, case_id, professional_id, scopes, purpose_note, starts_at, expires_at, created_by)
+VALUES (
+  'f0000000-0000-4000-8000-00000000000a',
+  'e0000000-0000-4000-8000-00000000000a',
+  'd0000000-0000-4000-8000-000000000001',
+  ARRAY['story','documents','timeline','evidence_map','questions'],
+  'Seed data. Fictional review of a fictional case.',
+  now(), now() + interval '365 days',
+  'aaaaaaaa-0000-4000-8000-000000000001'
+) ON CONFLICT (id) DO NOTHING;
+
+-- -------------------------------------------------------------------------
+-- Consultation availability, so the booking screens have something to show.
+--
+-- Times are relative to when the seed runs, and far enough ahead to clear the
+-- one-hour lead time in consultation-service.
+-- -------------------------------------------------------------------------
+UPDATE public.professionals
+SET languages = ARRAY['en', 'ar'],
+    consultation_blurb = 'Refugee and asylum matters. First consultations are 30 minutes.'
+WHERE id = 'd0000000-0000-4000-8000-000000000001';
+
+INSERT INTO public.consultation_slots (id, professional_id, starts_at, duration_minutes, mode)
+VALUES
+  ('f1000000-0000-4000-8000-000000000001', 'd0000000-0000-4000-8000-000000000001',
+   date_trunc('hour', now()) + interval '2 days' + interval '9 hours', 30, 'video'),
+  ('f1000000-0000-4000-8000-000000000002', 'd0000000-0000-4000-8000-000000000001',
+   date_trunc('hour', now()) + interval '2 days' + interval '10 hours', 30, 'phone'),
+  ('f1000000-0000-4000-8000-000000000003', 'd0000000-0000-4000-8000-000000000001',
+   date_trunc('hour', now()) + interval '3 days' + interval '9 hours', 45, 'video'),
+  ('f1000000-0000-4000-8000-000000000004', 'd0000000-0000-4000-8000-000000000001',
+   date_trunc('hour', now()) + interval '3 days' + interval '14 hours', 30, 'in_person'),
+  ('f1000000-0000-4000-8000-000000000005', 'd0000000-0000-4000-8000-000000000001',
+   date_trunc('hour', now()) + interval '4 days' + interval '11 hours', 60, 'video')
 ON CONFLICT (id) DO NOTHING;
 
 RESET search_path;

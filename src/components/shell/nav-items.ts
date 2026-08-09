@@ -5,6 +5,7 @@ import {
   Network,
   HelpCircle,
   MessageSquare,
+  Scale,
   ShieldCheck,
   CheckSquare,
   Lock,
@@ -16,7 +17,7 @@ import {
  * One source of truth for applicant navigation, shared by the desktop sidebar
  * and the mobile tab bar so the two can never drift apart.
  *
- * The ten destinations are grouped by what the person is trying to do rather
+ * The destinations are grouped by what the person is trying to do rather
  * than listed flat: writing things down, checking what they wrote, then
  * deciding who sees it. Someone opening this under stress should be able to
  * tell where they are in that arc at a glance.
@@ -57,6 +58,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     key: "share",
     items: [
       { to: "/app/review", key: "review", icon: ShieldCheck },
+      { to: "/app/consultations", key: "consultations", icon: Scale },
       { to: "/app/sharing", key: "privacy", icon: Lock },
     ],
   },

@@ -25,6 +25,7 @@ import {
   type QueueItem,
   type ReportRow,
 } from "@/lib/moderation-service";
+import { listReportExcerpts } from "@/lib/community-service";
 
 function ModerationView() {
   const { t } = useTranslation();
@@ -125,6 +126,14 @@ function ReportRowCard({
   const { t } = useTranslation();
   const [note, setNote] = useState("");
 
+  // Only profile reports can carry excerpts, so this asks for nothing on the
+  // ordinary post and comment reports.
+  const excerptsQ = useQuery({
+    queryKey: ["report-excerpts", item.id],
+    enabled: item.target_type === "profile",
+    queryFn: () => listReportExcerpts(item.id),
+  });
+
   return (
     <article className="surface-card p-4">
       <div className="flex flex-wrap items-center gap-2">
@@ -144,6 +153,33 @@ function ReportRowCard({
       <blockquote className="mt-3 rounded-lg border border-border bg-surface-sunken/50 p-3 text-[0.9375rem] leading-relaxed whitespace-pre-wrap text-foreground">
         {item.preview ?? t("moderation.content_gone")}
       </blockquote>
+
+      {/* A reported conversation carries only what the reporter chose to show.
+          Private messages are not readable here or anywhere else. */}
+      {excerptsQ.data && excerptsQ.data.length > 0 ? (
+        <section className="mt-3">
+          <p className="m-0 text-[0.8125rem] text-muted-foreground">
+            {t("moderation.excerpts_label", { count: excerptsQ.data.length })}
+          </p>
+          <ul className="m-0 mt-2 grid list-none gap-1.5 p-0">
+            {excerptsQ.data.map((x) => (
+              <li
+                key={x.id}
+                className="rounded-lg border border-border bg-surface-sunken/50 p-2.5 text-sm"
+              >
+                <span className="block whitespace-pre-wrap text-foreground">{x.body}</span>
+                <span className="mt-0.5 block text-[0.75rem] text-muted-foreground">
+                  {new Date(x.sent_at).toLocaleString()}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : item.target_type === "profile" ? (
+        <p className="mt-3 mb-0 text-[0.8125rem] text-muted-foreground">
+          {t("moderation.no_excerpts")}
+        </p>
+      ) : null}
 
       {readOnly ? (
         item.resolution_note ? (

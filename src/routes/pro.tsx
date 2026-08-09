@@ -45,6 +45,26 @@ function ProLayout() {
           >
             {t("pro.nav_calibration")}
           </Link>
+          <Link
+            to="/pro/availability"
+            className="rounded-md px-3 py-1.5 text-[14px] text-foreground hover:bg-accent"
+            activeProps={{
+              className:
+                "rounded-md px-3 py-1.5 text-[14px] font-semibold text-foreground bg-accent",
+            }}
+          >
+            {t("pro_avail.nav")}
+          </Link>
+          <Link
+            to="/pro/verification"
+            className="rounded-md px-3 py-1.5 text-[14px] text-foreground hover:bg-accent"
+            activeProps={{
+              className:
+                "rounded-md px-3 py-1.5 text-[14px] font-semibold text-foreground bg-accent",
+            }}
+          >
+            {t("pro_verify.nav")}
+          </Link>
         </nav>
         <div className="ms-auto">
           <LanguageSwitcher />
