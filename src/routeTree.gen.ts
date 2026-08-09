@@ -32,11 +32,14 @@ import { Route as AppReviewDetailsRouteImport } from './routes/app.review-detail
 import { Route as AppSharingRouteImport } from './routes/app.sharing'
 import { Route as AppStoryRouteImport } from './routes/app.story'
 import { Route as AppTimelineRouteImport } from './routes/app.timeline'
+import { Route as CommunityIndexRouteImport } from './routes/community.index'
 import { Route as CommunityFeedRouteImport } from './routes/community.feed'
 import { Route as CommunityMessagesRouteImport } from './routes/community.messages'
 import { Route as CommunityModerationRouteImport } from './routes/community.moderation'
+import { Route as CommunityNewRouteImport } from './routes/community.new'
 import { Route as CommunityProfileRouteImport } from './routes/community.profile'
 import { Route as CommunityRoomsRouteImport } from './routes/community.rooms'
+import { Route as CommunitySearchRouteImport } from './routes/community.search'
 import { Route as DebugGuardrailsRouteImport } from './routes/debug.guardrails'
 import { Route as ProAvailabilityRouteImport } from './routes/pro.availability'
 import { Route as ProCalibrationRouteImport } from './routes/pro.calibration'
@@ -46,10 +49,12 @@ import { Route as AppDocumentsDocumentIdRouteImport } from './routes/app.documen
 import { Route as AppStoryIndexRouteImport } from './routes/app.story.index'
 import { Route as AppStorySectionRouteImport } from './routes/app.story.$section'
 import { Route as AppStoryImportRouteImport } from './routes/app.story.import'
+import { Route as CommunityCSlugRouteImport } from './routes/community.c.$slug'
 import { Route as CommunityMessagesIndexRouteImport } from './routes/community.messages.index'
 import { Route as CommunityMessagesThreadIdRouteImport } from './routes/community.messages.$threadId'
 import { Route as CommunityRoomsIndexRouteImport } from './routes/community.rooms.index'
 import { Route as CommunityRoomsSlugRouteImport } from './routes/community.rooms.$slug'
+import { Route as CommunityTTopicIdRouteImport } from './routes/community.t.$topicId'
 import { Route as ProCasesCaseIdRouteImport } from './routes/pro.cases.$caseId'
 import { Route as AppStorySectionHistoryPromptRouteImport } from './routes/app.story.$section.history.$prompt'
 
@@ -168,6 +173,11 @@ const AppTimelineRoute = AppTimelineRouteImport.update({
   path: '/timeline',
   getParentRoute: () => AppRoute,
 } as any)
+const CommunityIndexRoute = CommunityIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CommunityRoute,
+} as any)
 const CommunityFeedRoute = CommunityFeedRouteImport.update({
   id: '/feed',
   path: '/feed',
@@ -183,6 +193,11 @@ const CommunityModerationRoute = CommunityModerationRouteImport.update({
   path: '/moderation',
   getParentRoute: () => CommunityRoute,
 } as any)
+const CommunityNewRoute = CommunityNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => CommunityRoute,
+} as any)
 const CommunityProfileRoute = CommunityProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -191,6 +206,11 @@ const CommunityProfileRoute = CommunityProfileRouteImport.update({
 const CommunityRoomsRoute = CommunityRoomsRouteImport.update({
   id: '/rooms',
   path: '/rooms',
+  getParentRoute: () => CommunityRoute,
+} as any)
+const CommunitySearchRoute = CommunitySearchRouteImport.update({
+  id: '/search',
+  path: '/search',
   getParentRoute: () => CommunityRoute,
 } as any)
 const DebugGuardrailsRoute = DebugGuardrailsRouteImport.update({
@@ -238,6 +258,11 @@ const AppStoryImportRoute = AppStoryImportRouteImport.update({
   path: '/import',
   getParentRoute: () => AppStoryRoute,
 } as any)
+const CommunityCSlugRoute = CommunityCSlugRouteImport.update({
+  id: '/c/$slug',
+  path: '/c/$slug',
+  getParentRoute: () => CommunityRoute,
+} as any)
 const CommunityMessagesIndexRoute = CommunityMessagesIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -258,6 +283,11 @@ const CommunityRoomsSlugRoute = CommunityRoomsSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
   getParentRoute: () => CommunityRoomsRoute,
+} as any)
+const CommunityTTopicIdRoute = CommunityTTopicIdRouteImport.update({
+  id: '/t/$topicId',
+  path: '/t/$topicId',
+  getParentRoute: () => CommunityRoute,
 } as any)
 const ProCasesCaseIdRoute = ProCasesCaseIdRouteImport.update({
   id: '/$caseId',
@@ -298,18 +328,23 @@ export interface FileRoutesByFullPath {
   '/community/feed': typeof CommunityFeedRoute
   '/community/messages': typeof CommunityMessagesRouteWithChildren
   '/community/moderation': typeof CommunityModerationRoute
+  '/community/new': typeof CommunityNewRoute
   '/community/profile': typeof CommunityProfileRoute
   '/community/rooms': typeof CommunityRoomsRouteWithChildren
+  '/community/search': typeof CommunitySearchRoute
   '/debug/guardrails': typeof DebugGuardrailsRoute
   '/pro/availability': typeof ProAvailabilityRoute
   '/pro/calibration': typeof ProCalibrationRoute
   '/pro/cases': typeof ProCasesRouteWithChildren
   '/pro/verification': typeof ProVerificationRoute
+  '/community/': typeof CommunityIndexRoute
   '/app/documents/$documentId': typeof AppDocumentsDocumentIdRoute
   '/app/story/$section': typeof AppStorySectionRouteWithChildren
   '/app/story/import': typeof AppStoryImportRoute
+  '/community/c/$slug': typeof CommunityCSlugRoute
   '/community/messages/$threadId': typeof CommunityMessagesThreadIdRoute
   '/community/rooms/$slug': typeof CommunityRoomsSlugRoute
+  '/community/t/$topicId': typeof CommunityTTopicIdRoute
   '/pro/cases/$caseId': typeof ProCasesCaseIdRoute
   '/app/story/': typeof AppStoryIndexRoute
   '/community/messages/': typeof CommunityMessagesIndexRoute
@@ -321,7 +356,6 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRouteWithChildren
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
-  '/community': typeof CommunityRouteWithChildren
   '/consent': typeof ConsentRoute
   '/orientation': typeof OrientationRoute
   '/pro': typeof ProRouteWithChildren
@@ -341,17 +375,22 @@ export interface FileRoutesByTo {
   '/app/timeline': typeof AppTimelineRoute
   '/community/feed': typeof CommunityFeedRoute
   '/community/moderation': typeof CommunityModerationRoute
+  '/community/new': typeof CommunityNewRoute
   '/community/profile': typeof CommunityProfileRoute
+  '/community/search': typeof CommunitySearchRoute
   '/debug/guardrails': typeof DebugGuardrailsRoute
   '/pro/availability': typeof ProAvailabilityRoute
   '/pro/calibration': typeof ProCalibrationRoute
   '/pro/cases': typeof ProCasesRouteWithChildren
   '/pro/verification': typeof ProVerificationRoute
+  '/community': typeof CommunityIndexRoute
   '/app/documents/$documentId': typeof AppDocumentsDocumentIdRoute
   '/app/story/$section': typeof AppStorySectionRouteWithChildren
   '/app/story/import': typeof AppStoryImportRoute
+  '/community/c/$slug': typeof CommunityCSlugRoute
   '/community/messages/$threadId': typeof CommunityMessagesThreadIdRoute
   '/community/rooms/$slug': typeof CommunityRoomsSlugRoute
+  '/community/t/$topicId': typeof CommunityTTopicIdRoute
   '/pro/cases/$caseId': typeof ProCasesCaseIdRoute
   '/app/story': typeof AppStoryIndexRoute
   '/community/messages': typeof CommunityMessagesIndexRoute
@@ -386,18 +425,23 @@ export interface FileRoutesById {
   '/community/feed': typeof CommunityFeedRoute
   '/community/messages': typeof CommunityMessagesRouteWithChildren
   '/community/moderation': typeof CommunityModerationRoute
+  '/community/new': typeof CommunityNewRoute
   '/community/profile': typeof CommunityProfileRoute
   '/community/rooms': typeof CommunityRoomsRouteWithChildren
+  '/community/search': typeof CommunitySearchRoute
   '/debug/guardrails': typeof DebugGuardrailsRoute
   '/pro/availability': typeof ProAvailabilityRoute
   '/pro/calibration': typeof ProCalibrationRoute
   '/pro/cases': typeof ProCasesRouteWithChildren
   '/pro/verification': typeof ProVerificationRoute
+  '/community/': typeof CommunityIndexRoute
   '/app/documents/$documentId': typeof AppDocumentsDocumentIdRoute
   '/app/story/$section': typeof AppStorySectionRouteWithChildren
   '/app/story/import': typeof AppStoryImportRoute
+  '/community/c/$slug': typeof CommunityCSlugRoute
   '/community/messages/$threadId': typeof CommunityMessagesThreadIdRoute
   '/community/rooms/$slug': typeof CommunityRoomsSlugRoute
+  '/community/t/$topicId': typeof CommunityTTopicIdRoute
   '/pro/cases/$caseId': typeof ProCasesCaseIdRoute
   '/app/story/': typeof AppStoryIndexRoute
   '/community/messages/': typeof CommunityMessagesIndexRoute
@@ -433,18 +477,23 @@ export interface FileRouteTypes {
     | '/community/feed'
     | '/community/messages'
     | '/community/moderation'
+    | '/community/new'
     | '/community/profile'
     | '/community/rooms'
+    | '/community/search'
     | '/debug/guardrails'
     | '/pro/availability'
     | '/pro/calibration'
     | '/pro/cases'
     | '/pro/verification'
+    | '/community/'
     | '/app/documents/$documentId'
     | '/app/story/$section'
     | '/app/story/import'
+    | '/community/c/$slug'
     | '/community/messages/$threadId'
     | '/community/rooms/$slug'
+    | '/community/t/$topicId'
     | '/pro/cases/$caseId'
     | '/app/story/'
     | '/community/messages/'
@@ -456,7 +505,6 @@ export interface FileRouteTypes {
     | '/admin'
     | '/app'
     | '/auth'
-    | '/community'
     | '/consent'
     | '/orientation'
     | '/pro'
@@ -476,17 +524,22 @@ export interface FileRouteTypes {
     | '/app/timeline'
     | '/community/feed'
     | '/community/moderation'
+    | '/community/new'
     | '/community/profile'
+    | '/community/search'
     | '/debug/guardrails'
     | '/pro/availability'
     | '/pro/calibration'
     | '/pro/cases'
     | '/pro/verification'
+    | '/community'
     | '/app/documents/$documentId'
     | '/app/story/$section'
     | '/app/story/import'
+    | '/community/c/$slug'
     | '/community/messages/$threadId'
     | '/community/rooms/$slug'
+    | '/community/t/$topicId'
     | '/pro/cases/$caseId'
     | '/app/story'
     | '/community/messages'
@@ -520,18 +573,23 @@ export interface FileRouteTypes {
     | '/community/feed'
     | '/community/messages'
     | '/community/moderation'
+    | '/community/new'
     | '/community/profile'
     | '/community/rooms'
+    | '/community/search'
     | '/debug/guardrails'
     | '/pro/availability'
     | '/pro/calibration'
     | '/pro/cases'
     | '/pro/verification'
+    | '/community/'
     | '/app/documents/$documentId'
     | '/app/story/$section'
     | '/app/story/import'
+    | '/community/c/$slug'
     | '/community/messages/$threadId'
     | '/community/rooms/$slug'
+    | '/community/t/$topicId'
     | '/pro/cases/$caseId'
     | '/app/story/'
     | '/community/messages/'
@@ -717,6 +775,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTimelineRouteImport
       parentRoute: typeof AppRoute
     }
+    '/community/': {
+      id: '/community/'
+      path: '/'
+      fullPath: '/community/'
+      preLoaderRoute: typeof CommunityIndexRouteImport
+      parentRoute: typeof CommunityRoute
+    }
     '/community/feed': {
       id: '/community/feed'
       path: '/feed'
@@ -738,6 +803,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CommunityModerationRouteImport
       parentRoute: typeof CommunityRoute
     }
+    '/community/new': {
+      id: '/community/new'
+      path: '/new'
+      fullPath: '/community/new'
+      preLoaderRoute: typeof CommunityNewRouteImport
+      parentRoute: typeof CommunityRoute
+    }
     '/community/profile': {
       id: '/community/profile'
       path: '/profile'
@@ -750,6 +822,13 @@ declare module '@tanstack/react-router' {
       path: '/rooms'
       fullPath: '/community/rooms'
       preLoaderRoute: typeof CommunityRoomsRouteImport
+      parentRoute: typeof CommunityRoute
+    }
+    '/community/search': {
+      id: '/community/search'
+      path: '/search'
+      fullPath: '/community/search'
+      preLoaderRoute: typeof CommunitySearchRouteImport
       parentRoute: typeof CommunityRoute
     }
     '/debug/guardrails': {
@@ -815,6 +894,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppStoryImportRouteImport
       parentRoute: typeof AppStoryRoute
     }
+    '/community/c/$slug': {
+      id: '/community/c/$slug'
+      path: '/c/$slug'
+      fullPath: '/community/c/$slug'
+      preLoaderRoute: typeof CommunityCSlugRouteImport
+      parentRoute: typeof CommunityRoute
+    }
     '/community/messages/': {
       id: '/community/messages/'
       path: '/'
@@ -842,6 +928,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/community/rooms/$slug'
       preLoaderRoute: typeof CommunityRoomsSlugRouteImport
       parentRoute: typeof CommunityRoomsRoute
+    }
+    '/community/t/$topicId': {
+      id: '/community/t/$topicId'
+      path: '/t/$topicId'
+      fullPath: '/community/t/$topicId'
+      preLoaderRoute: typeof CommunityTTopicIdRouteImport
+      parentRoute: typeof CommunityRoute
     }
     '/pro/cases/$caseId': {
       id: '/pro/cases/$caseId'
@@ -971,16 +1064,26 @@ interface CommunityRouteChildren {
   CommunityFeedRoute: typeof CommunityFeedRoute
   CommunityMessagesRoute: typeof CommunityMessagesRouteWithChildren
   CommunityModerationRoute: typeof CommunityModerationRoute
+  CommunityNewRoute: typeof CommunityNewRoute
   CommunityProfileRoute: typeof CommunityProfileRoute
   CommunityRoomsRoute: typeof CommunityRoomsRouteWithChildren
+  CommunitySearchRoute: typeof CommunitySearchRoute
+  CommunityIndexRoute: typeof CommunityIndexRoute
+  CommunityCSlugRoute: typeof CommunityCSlugRoute
+  CommunityTTopicIdRoute: typeof CommunityTTopicIdRoute
 }
 
 const CommunityRouteChildren: CommunityRouteChildren = {
   CommunityFeedRoute: CommunityFeedRoute,
   CommunityMessagesRoute: CommunityMessagesRouteWithChildren,
   CommunityModerationRoute: CommunityModerationRoute,
+  CommunityNewRoute: CommunityNewRoute,
   CommunityProfileRoute: CommunityProfileRoute,
   CommunityRoomsRoute: CommunityRoomsRouteWithChildren,
+  CommunitySearchRoute: CommunitySearchRoute,
+  CommunityIndexRoute: CommunityIndexRoute,
+  CommunityCSlugRoute: CommunityCSlugRoute,
+  CommunityTTopicIdRoute: CommunityTTopicIdRoute,
 }
 
 const CommunityRouteWithChildren = CommunityRoute._addFileChildren(

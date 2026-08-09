@@ -437,6 +437,96 @@ least able to work out what it meant.
 
 ---
 
+### Sprint 6 — The community becomes the centre of gravity
+
+A repositioning rather than a feature. The community moves from a side room to
+the front door: CaseMap becomes a place where people going through asylum and
+immigration share what they have been through, with the private case tools
+alongside rather than in front.
+
+The reasoning is about who arrives. Someone signing up today landed on a blank
+form asking them to write down what happened to them — the hardest thing in
+the product, on day one, before any reason to trust it. The community is the
+part that is useful to a person who is not ready for that yet, and the part
+where they can be useful to someone else.
+
+| Ticket | Description | Est. |
+|---|---|---|
+| S6-1 | Forums: categories, titled topics, replies, activity ordering, search. | 4d |
+| S6-2 | Forum screens: index, category, thread, composer, search. | 4d |
+| S6-3 | Re-centre the app: sign-in lands in the community, one navigation with the forums first and the case tools as a section. | 2d |
+| S6-4 | Safety for a bigger front door: what not to write in public, and the wall between community identity and case. | 2d |
+
+**Acceptance:** a signed-in person lands in the forums, finds a category, reads
+a thread and replies; the reply bumps the topic; nothing from anyone's case is
+reachable from any community screen.
+
+#### Delivered
+
+**Topics are `community_posts` rows with a title and a category, and replies
+are `community_comments`.** That is the load-bearing decision. Everything built
+in Sprints 2 to 5 sits on those two tables — the moderation queue's
+`hidden_at`, the `is_blocked_pair` read policy, reporting, report excerpts. A
+parallel `forum_topics` table would have needed a parallel copy of all of it,
+and a moderation path that only some content passes through is worse than
+none.
+
+- Ten seeded categories, named to avoid two traps: they promise no answers
+  ("Legal advice") and they do not label people by status ("Refused
+  claimants"). Nobody should have to file themselves under a setback to ask a
+  question.
+- Ordering is by last activity, not creation: a question answered this morning
+  is more use than one posted this morning and ignored. A trigger maintains
+  `last_activity_at` and `reply_count` so the index does not count replies per
+  row.
+- Search is `websearch_to_tsquery` over a generated `tsvector`, title weighted
+  above body, `simple` rather than `english` — the forum is multilingual and
+  English stemming applied to Arabic does more harm than none.
+- Pinning is an RPC, not an UPDATE policy. A policy letting admins update posts
+  would also let them rewrite the body of someone's post, which is not a power
+  worth handing out to make a topic sticky. Pins apply in a category and
+  deliberately not in "recently active", where they would contradict the
+  heading.
+- The old flat feed is a redirect. It was one chronological stream in which
+  the same questions were asked weekly with the answers already scrolled away.
+  The route stays because people share links.
+
+**The composer carries the safety work.** A notice above the form, every time
+rather than dismissed forever — someone who posted about housing in March is
+in a different position in June when they write about the people who threatened
+them. It names the specific things that identify a person rather than saying
+"be careful", covers other people who cannot consent to being written about,
+states the wall in both directions, and offers a direct message as the place
+for what should not be public. Eighteen tests hold that copy and the wall.
+
+**The wall itself is tested, not just asserted.** `forum-service` may not read
+any case-scoped table, and may not read `profiles` — the real name given at
+signup — only `community_profiles`, the handle. Every listing function must
+apply both the moderator filter and the personal block filter.
+
+**Demo content.** Fourteen topics and thirty-one replies across the categories,
+written as seed data rather than poked into the database, with fixed UUID
+prefixes so the whole set is removable. Seed content in a forum is not filler:
+it is the first thing a new member reads, and people match the register of what
+is already there. So the posts model the behaviour the notice asks for — no
+names, places, dates or file numbers — and they answer each other.
+
+#### Known limits
+
+- **Signed-in and pseudonymous, by default.** The forums are not publicly
+  readable. Opening them to search engines would bring people who need this
+  and cannot yet sign up, and is also a materially different safety posture for
+  a population whose posts could reach the wrong readers. That decision is not
+  mine to take silently; the schema supports either.
+- **No notifications.** Someone who answers a question does not know whether
+  the person came back. Email exists as of Sprint 5, and a "someone replied to
+  you" digest is the natural next use of it.
+- **Moderation is reactive.** Reports and blocks work; nothing scans a post
+  before it appears. For a forum this size that is the right trade, and it will
+  not stay right as it grows.
+
+---
+
 ## 4. Sequencing rationale
 
 Sprint 1 first because it is the only one of the four features with a
@@ -457,7 +547,7 @@ but S4-1 (verification) then has to move ahead of S3, not after it. Putting an
 unverified name in front of an asylum claimant is the real exposure in the
 booking model, and it is cheap to prevent.
 
-**Status: Sprints 1–5 shipped.** Sprints 1 and 2 on 2026-08-08 (`39334ea`, `709b1bd`) — documentation
+**Status: Sprints 1–6 shipped.** Sprints 1 and 2 on 2026-08-08 (`39334ea`, `709b1bd`) — documentation
 advisor, narrative intake, guardrail tests, plus two bugs found on the way (a
 missing `<Outlet />` that made the story sections unreachable, and a delete in
 analyzeGaps that would have wiped the advisor's output). Sprint 2 surfaced the

@@ -37,6 +37,21 @@ const EN = flatten(en as Tree);
 const AR = flatten(ar as Tree);
 
 /**
+ * i18next plural suffixes.
+ *
+ * These need special handling in two of the checks below, because plural
+ * categories are a property of the language and not of the string. English has
+ * two ("1 reply" / "2 replies"); Arabic has six, and two of them —
+ * "رد واحد" and "ردّان" — carry the number in the word itself and so contain no
+ * `{{count}}` at all. Treating those as missing keys or as interpolation
+ * mismatches would push a translator towards writing worse Arabic to satisfy a
+ * test.
+ */
+const PLURAL_SUFFIX = /_(zero|one|two|few|many|other)$/;
+const baseKey = (key: string) => key.replace(PLURAL_SUFFIX, "");
+const isPlural = (key: string) => PLURAL_SUFFIX.test(key);
+
+/**
  * Namespaces added from Sprint 3 onwards. These were translated as they were
  * written and must stay that way — a missing key here is a regression, not a
  * backlog item.
@@ -48,6 +63,7 @@ const KEPT_COMPLETE = [
   "admin_pro",
   "admin_shell",
   "dm",
+  "forum",
 ] as const;
 
 /**
@@ -60,10 +76,13 @@ const MAX_MISSING_AR = 430;
 describe("locale completeness", () => {
   it("has no missing keys in namespaces added since Sprint 3", () => {
     const missing: string[] = [];
+    const arBases = new Set([...AR.keys()].map(baseKey));
     for (const key of EN.keys()) {
       const ns = key.split(".")[0];
       if (!(KEPT_COMPLETE as readonly string[]).includes(ns)) continue;
-      if (!AR.has(key)) missing.push(key);
+      // For a plural key it is enough that Arabic has some form of it; which
+      // forms exist is decided by the language, not by the English original.
+      if (isPlural(key) ? !arBases.has(baseKey(key)) : !AR.has(key)) missing.push(key);
     }
     expect(
       missing,
@@ -100,7 +119,10 @@ describe("locale completeness", () => {
 
   it("has no Arabic key that English does not have", () => {
     // A stale key is dead weight a translator will still be asked to maintain.
-    const orphans = [...AR.keys()].filter((k) => !EN.has(k));
+    // A plural variant counts as present when English has any form of it:
+    // `replies_two` is a real Arabic form with no English counterpart.
+    const enBases = new Set([...EN.keys()].map(baseKey));
+    const orphans = [...AR.keys()].filter((k) => !EN.has(k) && !enBases.has(baseKey(k)));
     expect(
       orphans,
       `keys in ar.json with no English counterpart:\n${orphans.join("\n")}`,
@@ -116,6 +138,9 @@ describe("locale completeness", () => {
     for (const [key, value] of EN) {
       const arValue = AR.get(key);
       if (!arValue) continue;
+      // See PLURAL_SUFFIX: a dedicated dual or singular form may name the
+      // quantity in words rather than interpolating it.
+      if (isPlural(key)) continue;
       const a = vars(value).join(",");
       const b = vars(arValue).join(",");
       if (a !== b) mismatched.push(`${key}: en[${a}] ar[${b}]`);

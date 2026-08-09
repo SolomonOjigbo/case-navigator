@@ -19,18 +19,6 @@ export type PostAuthor = Pick<
   "user_id" | "handle" | "display_name" | "avatar_url"
 >;
 
-export type PostWithMeta = {
-  id: string;
-  author_id: string;
-  body: string;
-  image_url: string | null;
-  created_at: string;
-  author: PostAuthor | null;
-  like_count: number;
-  liked_by_me: boolean;
-  comment_count: number;
-};
-
 export type CommunityComment = {
   id: string;
   post_id: string;
@@ -99,6 +87,17 @@ export async function upsertCommunityProfile(input: {
   }
 }
 
+/**
+ * Community handles for a set of user ids.
+ *
+ * Exported as `fetchAuthors` for the forum service: one lookup, so the rule
+ * that a community identity is a handle and never a real name is enforced in
+ * one place.
+ */
+export async function fetchAuthors(userIds: string[]) {
+  return fetchAuthorsByUserIds(userIds);
+}
+
 async function fetchAuthorsByUserIds(userIds: string[]) {
   const unique = Array.from(new Set(userIds));
   if (unique.length === 0) return new Map<string, PostAuthor>();
@@ -112,66 +111,10 @@ async function fetchAuthorsByUserIds(userIds: string[]) {
   return map;
 }
 
-export async function listFeed(currentUserId: string): Promise<PostWithMeta[]> {
-  // Two independent filters. hidden_at is a moderator decision and applies to
-  // everyone; blocks are personal and apply only to this reader.
-  const [{ data: posts, error }, blocked] = await Promise.all([
-    supabase
-      .from("community_posts")
-      .select("id,author_id,body,image_url,created_at")
-      .is("hidden_at", null)
-      .order("created_at", { ascending: false })
-      .limit(100),
-    listBlockedIds(currentUserId).catch(() => new Set<string>()),
-  ]);
-  if (error) throw error;
-  const list = withoutBlocked(
-    (posts ?? []) as Array<{
-      id: string;
-      author_id: string;
-      body: string;
-      image_url: string | null;
-      created_at: string;
-    }>,
-    blocked,
-  );
-  if (list.length === 0) return [];
-
-  const ids = list.map((p) => p.id);
-  const authors = await fetchAuthorsByUserIds(list.map((p) => p.author_id));
-
-  const [{ data: likes }, { data: comments }] = await Promise.all([
-    supabase.from("community_likes").select("post_id,user_id").in("post_id", ids),
-    supabase.from("community_comments").select("post_id").in("post_id", ids),
-  ]);
-
-  const likeCount = new Map<string, number>();
-  const likedByMe = new Set<string>();
-  for (const l of (likes ?? []) as Array<{ post_id: string; user_id: string }>) {
-    likeCount.set(l.post_id, (likeCount.get(l.post_id) ?? 0) + 1);
-    if (l.user_id === currentUserId) likedByMe.add(l.post_id);
-  }
-  const commentCount = new Map<string, number>();
-  for (const c of (comments ?? []) as Array<{ post_id: string }>) {
-    commentCount.set(c.post_id, (commentCount.get(c.post_id) ?? 0) + 1);
-  }
-
-  return list.map((p) => ({
-    ...p,
-    author: authors.get(p.author_id) ?? null,
-    like_count: likeCount.get(p.id) ?? 0,
-    liked_by_me: likedByMe.has(p.id),
-    comment_count: commentCount.get(p.id) ?? 0,
-  }));
-}
-
-export async function createPost(input: { authorId: string; body: string }) {
-  const { error } = await supabase.from("community_posts").insert({
-    author_id: input.authorId,
-    body: input.body,
-  });
-  if (error) throw error;
-}
+// listFeed() and createPost() lived here to serve the flat feed, which the
+// forums replaced in S6-3. Creating and listing topics now lives in
+// forum-service, so there is one way to make a post rather than two that
+// drift apart.
 
 export async function deletePost(postId: string) {
   const { error } = await supabase.from("community_posts").delete().eq("id", postId);

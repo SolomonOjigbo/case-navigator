@@ -274,4 +274,207 @@ VALUES
    date_trunc('hour', now()) + interval '4 days' + interval '11 hours', 60, 'video')
 ON CONFLICT (id) DO NOTHING;
 
+-- =========================================================================
+-- COMMUNITY DEMO CONTENT (Sprint 6)
+--
+-- SYNTHETIC. Every member, topic and reply below is invented, and the fixed
+-- UUID prefixes (f2/f3/f4) make the whole set removable in three statements.
+--
+-- Written with some care, because seed content in a forum is not filler: it
+-- is the first thing a new member reads, and people match the register of
+-- what is already there. So these posts model the behaviour the composer
+-- notice asks for — no names, no places, no dates, no case numbers — and they
+-- answer each other rather than each ending in a question nobody took up.
+-- =========================================================================
+
+INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, confirmation_token, recovery_token, email_change_token_new, email_change, email_change_token_current, phone_change, phone_change_token, reauthentication_token)
+VALUES
+  ('f2000000-0000-4000-8000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'seed.maryam@example.test', crypt('seed-password-7', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"Maryam K."}', '', '', '', '', '', '', '', ''),
+  ('f2000000-0000-4000-8000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'seed.samuel@example.test', crypt('seed-password-8', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"Samuel O."}', '', '', '', '', '', '', '', ''),
+  ('f2000000-0000-4000-8000-000000000003', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'seed.farida@example.test', crypt('seed-password-9', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"Farida N."}', '', '', '', '', '', '', '', ''),
+  ('f2000000-0000-4000-8000-000000000004', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'seed.tomas@example.test', crypt('seed-password-10', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"Tomas B."}', '', '', '', '', '', '', '', ''),
+  ('f2000000-0000-4000-8000-000000000005', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'seed.ayaan@example.test', crypt('seed-password-11', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{"display_name":"Ayaan H."}', '', '', '', '', '', '', '', '')
+ON CONFLICT (id) DO NOTHING;
+
+-- Handles. A community identity is a handle and a chosen display name; the
+-- real name on the account never appears in the forum.
+INSERT INTO public.community_profiles (id, user_id, handle, display_name, bio)
+VALUES
+  ('f3000000-0000-4000-8000-000000000001', 'aaaaaaaa-0000-4000-8000-000000000003', 'chen_i',  'Chen I.',   'Waiting. Happy to answer questions about the early steps.'),
+  ('f3000000-0000-4000-8000-000000000002', 'f2000000-0000-4000-8000-000000000001', 'maryam_k','Maryam K.', 'Two years in. Ask me about interpreters.'),
+  ('f3000000-0000-4000-8000-000000000003', 'f2000000-0000-4000-8000-000000000002', 'samuel_o','Samuel O.', NULL),
+  ('f3000000-0000-4000-8000-000000000004', 'f2000000-0000-4000-8000-000000000003', 'farida_n','Farida N.', 'Here mostly to read.'),
+  ('f3000000-0000-4000-8000-000000000005', 'f2000000-0000-4000-8000-000000000004', 'tomas_b', 'Tomas B.',  NULL),
+  ('f3000000-0000-4000-8000-000000000006', 'f2000000-0000-4000-8000-000000000005', 'ayaan_h', 'Ayaan H.',  'Got my decision last year.'),
+  ('f3000000-0000-4000-8000-000000000007', 'cccccccc-0000-4000-8000-000000000001', 'casemap_team', 'CaseMap team', 'We keep this place running.')
+ON CONFLICT (user_id) DO NOTHING;
+
+-- -------------------------------------------------------------------------
+-- Topics
+-- -------------------------------------------------------------------------
+INSERT INTO public.community_posts (id, author_id, category_id, title, body, created_at, last_activity_at, pinned_at)
+VALUES
+  ('f4000000-0000-4000-8000-000000000001', 'cccccccc-0000-4000-8000-000000000001',
+   (SELECT id FROM public.community_categories WHERE slug='introductions'),
+   'Welcome — how this place works',
+   E'This is a space for people going through asylum and immigration processes to share what they have been through and what they learned.\n\nA few things worth knowing:\n\nNobody here is a lawyer, and nothing written here is legal advice. What people can give you is experience, which is often the thing that is hardest to find.\n\nPlease leave out anything that identifies you or anyone else — full names, addresses, the town you are from, dates of birth, file numbers. Not because anyone here would misuse it, but because this is a public space and you cannot know who is reading.\n\nIf someone is unkind, use the report button. A moderator reads every report.\n\nYou are welcome to just read for a while. Plenty of people do.',
+   now() - interval '40 days', now() - interval '40 days', now() - interval '40 days'),
+
+  ('f4000000-0000-4000-8000-000000000002', 'f2000000-0000-4000-8000-000000000001',
+   (SELECT id FROM public.community_categories WHERE slug='introductions'),
+   'Hello from someone two years in',
+   E'I have been in this process for about two years now. When I started I did not know a single person who had done it, and I made every mistake there is to make.\n\nHappy to answer anything, especially about interpreters — I went through four before I found one I could actually talk to.',
+   now() - interval '31 days', now() - interval '31 days', NULL),
+
+  ('f4000000-0000-4000-8000-000000000003', 'aaaaaaaa-0000-4000-8000-000000000003',
+   (SELECT id FROM public.community_categories WHERE slug='asylum-process'),
+   'What actually happens at the first interview?',
+   E'I have my first interview coming up and I do not really know what to expect. Is it one long conversation? Do they stop you and ask things again? I keep imagining it going badly.\n\nIf anyone can describe what the room was actually like I would be grateful.',
+   now() - interval '24 days', now() - interval '24 days', NULL),
+
+  ('f4000000-0000-4000-8000-000000000004', 'f2000000-0000-4000-8000-000000000002',
+   (SELECT id FROM public.community_categories WHERE slug='asylum-process'),
+   'The waiting is the part nobody prepares you for',
+   E'I was ready for the questions. I was not ready for eleven months of nothing.\n\nWhat helped me was giving the waiting a shape — one small thing each week that was mine, not the process. Language class, a walk, cooking something properly. It sounds thin written down but it was the difference between the months passing and the months sitting on me.\n\nHow is everyone else handling it?',
+   now() - interval '18 days', now() - interval '18 days', NULL),
+
+  ('f4000000-0000-4000-8000-000000000005', 'f2000000-0000-4000-8000-000000000001',
+   (SELECT id FROM public.community_categories WHERE slug='hearings-and-interviews'),
+   'Things I wish I had known before my hearing',
+   E'Written down while it is still fresh, in case it is useful.\n\nYou can ask for a break. I did not know this and I sat there for three hours getting worse.\n\nIf you do not understand a question, say so. Answering the question you think was asked is worse than asking for it again.\n\n"I do not remember" is a real answer. I spent weeks afraid of it and it turned out to be fine to say.\n\nTake water. Nobody tells you that either.',
+   now() - interval '15 days', now() - interval '15 days', NULL),
+
+  ('f4000000-0000-4000-8000-000000000006', 'f2000000-0000-4000-8000-000000000003',
+   (SELECT id FROM public.community_categories WHERE slug='hearings-and-interviews'),
+   'Is it normal to be asked the same thing twice?',
+   E'In my interview I was asked about the same period twice, quite far apart, and worded differently both times. I answered the same both times as far as I know but it left me shaken — like I had been caught at something.\n\nDoes this happen to everyone?',
+   now() - interval '11 days', now() - interval '11 days', NULL),
+
+  ('f4000000-0000-4000-8000-000000000007', 'f2000000-0000-4000-8000-000000000004',
+   (SELECT id FROM public.community_categories WHERE slug='documents-and-evidence'),
+   'What do you do when a document simply does not exist?',
+   E'I was asked for something that I have no way of getting. The office that issued it does not function any more, and the people who could confirm it are not people I can contact safely.\n\nI have been treating this as a failure on my part. Is that how it is seen, or is there a normal way this is handled?',
+   now() - interval '9 days', now() - interval '9 days', NULL),
+
+  ('f4000000-0000-4000-8000-000000000008', 'aaaaaaaa-0000-4000-8000-000000000002',
+   (SELECT id FROM public.community_categories WHERE slug='documents-and-evidence'),
+   'Keeping track of what you have already sent',
+   E'Small practical thing that saved me a lot of panic: keep one list of every document, when you sent it, and who to. I did not do this for the first year and spent an entire weekend trying to work out whether I had already sent something.\n\nA notebook is enough. It does not have to be clever.',
+   now() - interval '7 days', now() - interval '7 days', NULL),
+
+  ('f4000000-0000-4000-8000-000000000009', 'f2000000-0000-4000-8000-000000000005',
+   (SELECT id FROM public.community_categories WHERE slug='finding-a-lawyer'),
+   'How did you find someone you could trust?',
+   E'I am trying to find representation and I have no way of telling who is good. I have had two conversations that left me feeling like a number.\n\nWhat did you ask people, in the first meeting, that told you something real?',
+   now() - interval '6 days', now() - interval '6 days', NULL),
+
+  ('f4000000-0000-4000-8000-00000000000a', 'f2000000-0000-4000-8000-000000000001',
+   (SELECT id FROM public.community_categories WHERE slug='language-and-translation'),
+   'On interpreters, and asking for a different one',
+   E'It took me four interpreters to find one I could speak in front of. The first three were competent — that was not the problem. The problem was dialect with one, and with another I simply could not say certain things in front of him.\n\nYou are allowed to ask for someone else. I did not know that for a long time and I lost a year being half-understood.',
+   now() - interval '5 days', now() - interval '5 days', NULL),
+
+  ('f4000000-0000-4000-8000-00000000000b', 'f2000000-0000-4000-8000-000000000002',
+   (SELECT id FROM public.community_categories WHERE slug='daily-life'),
+   'Small things that made the first months easier',
+   E'Not paperwork. The rest of it.\n\nA library card, because it is warm and free and nobody asks you anything. A cheap phone plan with enough data for the calls. One place where you are a regular — for me a market stall where after a month they knew my face.\n\nWhat were yours?',
+   now() - interval '4 days', now() - interval '4 days', NULL),
+
+  ('f4000000-0000-4000-8000-00000000000c', 'f2000000-0000-4000-8000-000000000003',
+   (SELECT id FROM public.community_categories WHERE slug='family-and-children'),
+   'How much do you tell your children?',
+   E'Mine are eight and thirteen. The older one has worked out most of it and asks questions I do not know how to answer honestly without frightening her.\n\nI would like to hear from people who have been through this with children — what you said, and what you wish you had said.',
+   now() - interval '3 days', now() - interval '3 days', NULL),
+
+  ('f4000000-0000-4000-8000-00000000000d', 'f2000000-0000-4000-8000-000000000005',
+   (SELECT id FROM public.community_categories WHERE slug='after-a-decision'),
+   'It is not the ending you imagine',
+   E'I got my decision last year, and the thing nobody told me is that the day itself was strange rather than joyful. I had built it up for so long that when it came I mostly felt tired.\n\nIt got better. But if you are expecting fireworks and you get flatness instead, there is nothing wrong with you.',
+   now() - interval '2 days', now() - interval '2 days', NULL),
+
+  ('f4000000-0000-4000-8000-00000000000e', 'aaaaaaaa-0000-4000-8000-000000000001',
+   (SELECT id FROM public.community_categories WHERE slug='anything-else'),
+   'Does anyone else find the forms harder than the story?',
+   E'I can talk about what happened. I have had to do it enough times.\n\nWhat I cannot do is the boxes. Something about the small print and the exact dates makes me freeze in a way that talking never does. I have sat in front of the same page for two hours.\n\nIs this just me?',
+   now() - interval '1 day', now() - interval '1 day', NULL)
+ON CONFLICT (id) DO NOTHING;
+
+-- -------------------------------------------------------------------------
+-- Replies
+-- -------------------------------------------------------------------------
+INSERT INTO public.community_comments (id, post_id, author_id, body, created_at)
+VALUES
+  ('f5000000-0000-4000-8000-000000000001', 'f4000000-0000-4000-8000-000000000002', 'aaaaaaaa-0000-4000-8000-000000000003', 'Welcome. I am at the beginning and reading everything you write.', now() - interval '30 days'),
+  ('f5000000-0000-4000-8000-000000000002', 'f4000000-0000-4000-8000-000000000002', 'f2000000-0000-4000-8000-000000000004', 'Four interpreters. That is reassuring to read, honestly — I assumed I was being difficult.', now() - interval '29 days'),
+
+  ('f5000000-0000-4000-8000-000000000003', 'f4000000-0000-4000-8000-000000000003', 'f2000000-0000-4000-8000-000000000001', E'It was a long conversation, and yes, they go back over things. It is not a trap — they are building a picture and they check it from more than one side.\n\nThe room was ordinary. A table, a recorder, water. That surprised me most: I had imagined something much more frightening than what it was.', now() - interval '23 days'),
+  ('f5000000-0000-4000-8000-000000000004', 'f4000000-0000-4000-8000-000000000003', 'f2000000-0000-4000-8000-000000000002', 'Mine stopped twice for breaks. Both times because I asked. Nobody minded.', now() - interval '23 days'),
+  ('f5000000-0000-4000-8000-000000000005', 'f4000000-0000-4000-8000-000000000003', 'aaaaaaaa-0000-4000-8000-000000000003', 'Thank you both. Genuinely. I have been imagining it much worse than this.', now() - interval '22 days'),
+
+  ('f5000000-0000-4000-8000-000000000006', 'f4000000-0000-4000-8000-000000000004', 'f2000000-0000-4000-8000-000000000003', 'The shape thing is right. I started swimming once a week and it is the only hour where I am not waiting.', now() - interval '17 days'),
+  ('f5000000-0000-4000-8000-000000000007', 'f4000000-0000-4000-8000-000000000004', 'aaaaaaaa-0000-4000-8000-000000000002', 'I volunteer two mornings. It does not make it shorter but it makes it mine.', now() - interval '16 days'),
+  ('f5000000-0000-4000-8000-000000000008', 'f4000000-0000-4000-8000-000000000004', 'f2000000-0000-4000-8000-000000000005', 'Eleven months for me too. It ends. That is all I can usefully say, but it does end.', now() - interval '12 days'),
+
+  ('f5000000-0000-4000-8000-000000000009', 'f4000000-0000-4000-8000-000000000005', 'f2000000-0000-4000-8000-000000000003', 'Saving this. The "I do not remember" one especially — I have been rehearsing answers I do not actually have.', now() - interval '14 days'),
+  ('f5000000-0000-4000-8000-00000000000a', 'f4000000-0000-4000-8000-000000000005', 'aaaaaaaa-0000-4000-8000-000000000001', 'Adding one: eat something first. I did not, and by the second hour I was not thinking straight.', now() - interval '13 days'),
+  ('f5000000-0000-4000-8000-00000000000b', 'f4000000-0000-4000-8000-000000000005', 'f2000000-0000-4000-8000-000000000004', 'Thank you for writing it down while it was fresh. Most people do not.', now() - interval '10 days'),
+
+  ('f5000000-0000-4000-8000-00000000000c', 'f4000000-0000-4000-8000-000000000006', 'f2000000-0000-4000-8000-000000000001', 'Completely normal. It happened to me and to everyone I have spoken to. Answering consistently is the whole point of it.', now() - interval '10 days'),
+  ('f5000000-0000-4000-8000-00000000000d', 'f4000000-0000-4000-8000-000000000006', 'f2000000-0000-4000-8000-000000000005', 'Yes. And the shaken feeling afterwards is normal too. It is not evidence that you did badly.', now() - interval '9 days'),
+
+  ('f5000000-0000-4000-8000-00000000000e', 'f4000000-0000-4000-8000-000000000007', 'f2000000-0000-4000-8000-000000000001', E'It is not a failure on your part. Documents being unobtainable is an ordinary situation, not a rare one.\n\nWhat I was told to do was write down exactly what I had tried and why it could not be done — who I approached, what happened. The attempt itself is worth something.', now() - interval '8 days'),
+  ('f5000000-0000-4000-8000-00000000000f', 'f4000000-0000-4000-8000-000000000007', 'aaaaaaaa-0000-4000-8000-000000000002', 'Please do put this to a lawyer rather than only to us. It is exactly the kind of thing they deal with often.', now() - interval '8 days'),
+  ('f5000000-0000-4000-8000-000000000010', 'f4000000-0000-4000-8000-000000000007', 'f2000000-0000-4000-8000-000000000004', 'Thank you. I have been carrying this one around for weeks.', now() - interval '6 days'),
+
+  ('f5000000-0000-4000-8000-000000000011', 'f4000000-0000-4000-8000-000000000008', 'f2000000-0000-4000-8000-000000000002', 'I use a photo of every page before it goes. Costs nothing and I have needed it twice.', now() - interval '6 days'),
+  ('f5000000-0000-4000-8000-000000000012', 'f4000000-0000-4000-8000-000000000008', 'aaaaaaaa-0000-4000-8000-000000000003', 'Starting this today.', now() - interval '5 days'),
+
+  ('f5000000-0000-4000-8000-000000000013', 'f4000000-0000-4000-8000-000000000009', 'f2000000-0000-4000-8000-000000000001', E'I asked two things. How many cases like mine have you handled, and what would you need from me in the first month.\n\nThe answers mattered less than whether they answered plainly. The one I chose said "I do not know yet" to something, and that is when I trusted her.', now() - interval '5 days'),
+  ('f5000000-0000-4000-8000-000000000014', 'f4000000-0000-4000-8000-000000000009', 'aaaaaaaa-0000-4000-8000-000000000001', 'Ask who you actually speak to day to day. Mine was one person in the meeting and a different one for a year afterwards.', now() - interval '4 days'),
+  ('f5000000-0000-4000-8000-000000000015', 'f4000000-0000-4000-8000-000000000009', 'f2000000-0000-4000-8000-000000000003', 'Feeling like a number in the first meeting is worth listening to. I ignored it once and regretted the year.', now() - interval '3 days'),
+
+  ('f5000000-0000-4000-8000-000000000016', 'f4000000-0000-4000-8000-00000000000a', 'f2000000-0000-4000-8000-000000000003', 'I did not know you could ask either. I have been nodding along for months.', now() - interval '4 days'),
+  ('f5000000-0000-4000-8000-000000000017', 'f4000000-0000-4000-8000-00000000000a', 'aaaaaaaa-0000-4000-8000-000000000003', 'This is the most useful thing I have read here.', now() - interval '2 days'),
+
+  ('f5000000-0000-4000-8000-000000000018', 'f4000000-0000-4000-8000-00000000000b', 'f2000000-0000-4000-8000-000000000004', 'The library one. I sat in one every afternoon for a winter.', now() - interval '3 days'),
+  ('f5000000-0000-4000-8000-000000000019', 'f4000000-0000-4000-8000-00000000000b', 'f2000000-0000-4000-8000-000000000005', 'Finding one food from home that I could actually buy here. It sounds small. It was not.', now() - interval '2 days'),
+
+  ('f5000000-0000-4000-8000-00000000001a', 'f4000000-0000-4000-8000-00000000000c', 'f2000000-0000-4000-8000-000000000001', E'Mine were similar ages. What worked was answering the question actually asked rather than the whole thing.\n\nChildren notice being managed. Mine coped much better once I stopped pretending everything was ordinary.', now() - interval '2 days'),
+  ('f5000000-0000-4000-8000-00000000001b', 'f4000000-0000-4000-8000-00000000000c', 'aaaaaaaa-0000-4000-8000-000000000002', 'I told mine what was happening and that I did not know how it would end. She was relieved. She had assumed worse.', now() - interval '1 day'),
+
+  ('f5000000-0000-4000-8000-00000000001c', 'f4000000-0000-4000-8000-00000000000d', 'f2000000-0000-4000-8000-000000000001', 'Thank you for saying this. Everyone talks about the decision and nobody talks about the day after it.', now() - interval '1 day'),
+  ('f5000000-0000-4000-8000-00000000001d', 'f4000000-0000-4000-8000-00000000000d', 'f2000000-0000-4000-8000-000000000003', 'Flatness. That is the word I could not find.', now() - interval '18 hours'),
+
+  ('f5000000-0000-4000-8000-00000000001e', 'f4000000-0000-4000-8000-00000000000e', 'f2000000-0000-4000-8000-000000000002', 'Not just you. Talking is a story; forms are an exam. They are not the same skill and nobody says so.', now() - interval '20 hours'),
+  ('f5000000-0000-4000-8000-00000000001f', 'f4000000-0000-4000-8000-00000000000e', 'f2000000-0000-4000-8000-000000000001', 'One box at a time, and leave the ones that stop you. Going back to three hard boxes is easier than facing forty.', now() - interval '8 hours')
+ON CONFLICT (id) DO NOTHING;
+
+-- The trigger sets last_activity_at from whichever reply was inserted last;
+-- recompute it from the data so ordering does not depend on insert order.
+UPDATE public.community_posts p
+SET last_activity_at = GREATEST(
+      p.created_at,
+      COALESCE((SELECT max(c.created_at) FROM public.community_comments c WHERE c.post_id = p.id), p.created_at)
+    ),
+    reply_count = COALESCE((SELECT count(*) FROM public.community_comments c WHERE c.post_id = p.id), 0);
+
+-- A few likes, so the counts are not all zero.
+INSERT INTO public.community_likes (post_id, user_id)
+SELECT p.id, u.id
+FROM public.community_posts p
+CROSS JOIN (VALUES
+  ('aaaaaaaa-0000-4000-8000-000000000001'::uuid),
+  ('aaaaaaaa-0000-4000-8000-000000000002'::uuid),
+  ('f2000000-0000-4000-8000-000000000001'::uuid),
+  ('f2000000-0000-4000-8000-000000000003'::uuid)
+) AS u(id)
+WHERE p.id IN (
+  'f4000000-0000-4000-8000-000000000005',
+  'f4000000-0000-4000-8000-000000000007',
+  'f4000000-0000-4000-8000-00000000000a',
+  'f4000000-0000-4000-8000-00000000000d'
+)
+AND p.author_id <> u.id
+ON CONFLICT DO NOTHING;
+
 RESET search_path;
