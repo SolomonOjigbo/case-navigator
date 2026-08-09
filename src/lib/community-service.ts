@@ -12,24 +12,18 @@ export type CommunityProfile = {
   bio: string | null;
   /** Who may start a new conversation with this person (S5-3). */
   dm_policy: DmPolicy;
+  /** In-app notifications when someone replies (S7-1). */
+  notify_replies: boolean;
+  /** One digest email a day when something is unread (S7-2). */
+  email_digest: boolean;
+  /** In-app notifications when someone sends a direct message (S8-1). */
+  notify_messages: boolean;
 };
 
 export type PostAuthor = Pick<
   CommunityProfile,
   "user_id" | "handle" | "display_name" | "avatar_url"
 >;
-
-export type PostWithMeta = {
-  id: string;
-  author_id: string;
-  body: string;
-  image_url: string | null;
-  created_at: string;
-  author: PostAuthor | null;
-  like_count: number;
-  liked_by_me: boolean;
-  comment_count: number;
-};
 
 export type CommunityComment = {
   id: string;
@@ -61,7 +55,9 @@ export const HANDLE_RE = /^[a-z0-9_]{3,20}$/;
 export async function getMyCommunityProfile(userId: string) {
   const { data, error } = await supabase
     .from("community_profiles")
-    .select("id,user_id,handle,display_name,avatar_url,bio,dm_policy")
+    .select(
+      "id,user_id,handle,display_name,avatar_url,bio,dm_policy,notify_replies,email_digest,notify_messages",
+    )
     .eq("user_id", userId)
     .maybeSingle();
   if (error) throw error;
@@ -74,6 +70,9 @@ export async function upsertCommunityProfile(input: {
   displayName: string | null;
   bio: string | null;
   dmPolicy?: DmPolicy;
+  notifyReplies?: boolean;
+  emailDigest?: boolean;
+  notifyMessages?: boolean;
 }) {
   const existing = await getMyCommunityProfile(input.userId);
   if (existing) {
@@ -84,6 +83,9 @@ export async function upsertCommunityProfile(input: {
         display_name: input.displayName,
         bio: input.bio,
         ...(input.dmPolicy ? { dm_policy: input.dmPolicy } : {}),
+        ...(input.notifyReplies === undefined ? {} : { notify_replies: input.notifyReplies }),
+        ...(input.emailDigest === undefined ? {} : { email_digest: input.emailDigest }),
+        ...(input.notifyMessages === undefined ? {} : { notify_messages: input.notifyMessages }),
       })
       .eq("user_id", input.userId);
     if (error) throw error;
@@ -94,9 +96,23 @@ export async function upsertCommunityProfile(input: {
       display_name: input.displayName,
       bio: input.bio,
       dm_policy: input.dmPolicy ?? "anyone",
+      notify_replies: input.notifyReplies ?? true,
+      email_digest: input.emailDigest ?? true,
+      notify_messages: input.notifyMessages ?? true,
     });
     if (error) throw error;
   }
+}
+
+/**
+ * Community handles for a set of user ids.
+ *
+ * Exported as `fetchAuthors` for the forum service: one lookup, so the rule
+ * that a community identity is a handle and never a real name is enforced in
+ * one place.
+ */
+export async function fetchAuthors(userIds: string[]) {
+  return fetchAuthorsByUserIds(userIds);
 }
 
 async function fetchAuthorsByUserIds(userIds: string[]) {
@@ -112,66 +128,10 @@ async function fetchAuthorsByUserIds(userIds: string[]) {
   return map;
 }
 
-export async function listFeed(currentUserId: string): Promise<PostWithMeta[]> {
-  // Two independent filters. hidden_at is a moderator decision and applies to
-  // everyone; blocks are personal and apply only to this reader.
-  const [{ data: posts, error }, blocked] = await Promise.all([
-    supabase
-      .from("community_posts")
-      .select("id,author_id,body,image_url,created_at")
-      .is("hidden_at", null)
-      .order("created_at", { ascending: false })
-      .limit(100),
-    listBlockedIds(currentUserId).catch(() => new Set<string>()),
-  ]);
-  if (error) throw error;
-  const list = withoutBlocked(
-    (posts ?? []) as Array<{
-      id: string;
-      author_id: string;
-      body: string;
-      image_url: string | null;
-      created_at: string;
-    }>,
-    blocked,
-  );
-  if (list.length === 0) return [];
-
-  const ids = list.map((p) => p.id);
-  const authors = await fetchAuthorsByUserIds(list.map((p) => p.author_id));
-
-  const [{ data: likes }, { data: comments }] = await Promise.all([
-    supabase.from("community_likes").select("post_id,user_id").in("post_id", ids),
-    supabase.from("community_comments").select("post_id").in("post_id", ids),
-  ]);
-
-  const likeCount = new Map<string, number>();
-  const likedByMe = new Set<string>();
-  for (const l of (likes ?? []) as Array<{ post_id: string; user_id: string }>) {
-    likeCount.set(l.post_id, (likeCount.get(l.post_id) ?? 0) + 1);
-    if (l.user_id === currentUserId) likedByMe.add(l.post_id);
-  }
-  const commentCount = new Map<string, number>();
-  for (const c of (comments ?? []) as Array<{ post_id: string }>) {
-    commentCount.set(c.post_id, (commentCount.get(c.post_id) ?? 0) + 1);
-  }
-
-  return list.map((p) => ({
-    ...p,
-    author: authors.get(p.author_id) ?? null,
-    like_count: likeCount.get(p.id) ?? 0,
-    liked_by_me: likedByMe.has(p.id),
-    comment_count: commentCount.get(p.id) ?? 0,
-  }));
-}
-
-export async function createPost(input: { authorId: string; body: string }) {
-  const { error } = await supabase.from("community_posts").insert({
-    author_id: input.authorId,
-    body: input.body,
-  });
-  if (error) throw error;
-}
+// listFeed() and createPost() lived here to serve the flat feed, which the
+// forums replaced in S6-3. Creating and listing topics now lives in
+// forum-service, so there is one way to make a post rather than two that
+// drift apart.
 
 export async function deletePost(postId: string) {
   const { error } = await supabase.from("community_posts").delete().eq("id", postId);
@@ -223,7 +183,12 @@ export async function addComment(input: { postId: string; authorId: string; body
     author_id: input.authorId,
     body: input.body,
   });
-  if (error) throw error;
+  // The posting rate limit surfaces here as well as on topics; the screen
+  // needs a sentence, not "rate_limited".
+  if (error) {
+    const { asPostingError } = await import("./forum-service");
+    throw asPostingError(error);
+  }
 }
 
 export async function listRooms(): Promise<Room[]> {

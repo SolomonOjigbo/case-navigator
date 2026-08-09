@@ -152,3 +152,48 @@ export function reminderMessage(f: AppointmentFacts, forRole: "applicant" | "pro
     ].join("\n"),
   };
 }
+
+// -------------------------------------------------------------------------
+// The community digest (S7-2).
+//
+// One message a day at most, and only when something is unread. It names who
+// replied and where, and carries nothing else — no case material, and no
+// excerpt of the reply itself. Someone's inbox may be shared, read over their
+// shoulder, or synced to a device they do not control; "Maryam K. replied to
+// your topic" is enough to bring them back, and is safe to be seen.
+// -------------------------------------------------------------------------
+
+export type DigestItem = {
+  who: string;
+  /** The topic title, or null for a direct message. */
+  topic: string | null;
+};
+
+export function digestMessage(input: { items: DigestItem[]; appUrl: string }): {
+  subject: string;
+  text: string;
+} {
+  const count = input.items.length;
+  // A direct message says only that one arrived. The in-app list shows a line
+  // of it; an inbox does not get that, because an inbox may be shared, read
+  // over a shoulder, or synced to a device the person does not control.
+  const lines = input.items
+    .slice(0, 10)
+    .map((i) => (i.topic ? `- ${i.who} replied in "${i.topic}"` : `- ${i.who} sent you a message`));
+  const more = count > 10 ? [`...and ${count - 10} more.`] : [];
+
+  return {
+    subject:
+      count === 1 ? "Someone is waiting for you on CaseMap" : `${count} things waiting on CaseMap`,
+    text: [
+      count === 1 ? "Someone is waiting for you." : `There are ${count} things waiting for you.`,
+      ``,
+      ...lines,
+      ...more,
+      ``,
+      `Read them here: ${input.appUrl}`,
+      ``,
+      `To stop these emails, turn off the daily digest on your community profile.`,
+    ].join("\n"),
+  };
+}

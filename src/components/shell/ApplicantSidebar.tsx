@@ -1,5 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { LayoutGrid } from "lucide-react";
 
 import { dirFor } from "@/i18n";
 import { BrandMark } from "@/components/BrandMark";
@@ -86,6 +87,24 @@ export function ApplicantSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
         ))}
+
+        {/* Back to the forums. Since S6-3 the community is where people start
+            and return to; the case workspace is somewhere they come to do a
+            particular piece of work, not somewhere to be stranded. */}
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/community" onClick={dismissIfMobile}>
+                    <LayoutGrid className="h-[1.125rem] w-[1.125rem] shrink-0" aria-hidden="true" />
+                    <span className="truncate">{t("app_shell.back_to_community")}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
     </Sidebar>
   );

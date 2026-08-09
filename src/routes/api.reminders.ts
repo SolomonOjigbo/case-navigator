@@ -1,4 +1,4 @@
-// The reminder job (S5-2).
+// The daily sweep: appointment reminders (S5-2) and community digests (S7-2).
 //
 // Called on a schedule by Vercel Cron (see vercel.json). Once a day, because
 // the Hobby plan allows no more than that — an hourly schedule is rejected at
@@ -44,8 +44,21 @@ async function run(request: Request): Promise<Response> {
 
   // Imported here, not at module scope: the module reaches for the service
   // role and the provider key, and must never be pulled into a client bundle.
-  const { sendDueReminders } = await import("@/lib/notify.functions");
-  const tally = await sendDueReminders();
+  const { sendDueReminders, sendCommunityDigests } = await import("@/lib/notify.functions");
+
+  // Both jobs in one sweep. The Hobby plan allows very few cron entries, and
+  // one endpoint that does the day's work is one fewer thing to discover has
+  // silently stopped. A failure in one must not skip the other.
+  const [reminders, digests] = await Promise.allSettled([
+    sendDueReminders(),
+    sendCommunityDigests(),
+  ]);
+
+  const tally = {
+    reminders:
+      reminders.status === "fulfilled" ? reminders.value : { error: String(reminders.reason) },
+    digests: digests.status === "fulfilled" ? digests.value : { error: String(digests.reason) },
+  };
 
   return new Response(JSON.stringify(tally), {
     status: 200,

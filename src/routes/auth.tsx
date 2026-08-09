@@ -68,7 +68,10 @@ function AuthView() {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       // auth.login is audited by the root onAuthStateChange listener.
-      navigate({ to: search.next ?? "/app/story" });
+      // S6-3: the community is the front door. Someone signing in for the
+      // first time lands among people rather than in front of a blank form
+      // asking what happened to them.
+      navigate({ to: search.next ?? "/community" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -104,7 +107,7 @@ function AuthView() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}${search.next ?? "/app/story"}`,
+        redirectTo: `${window.location.origin}${search.next ?? "/community"}`,
       },
     });
     if (error) {

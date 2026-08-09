@@ -1,21 +1,19 @@
-import { createFileRoute, Outlet, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { CommunitySidebar } from "@/components/shell/CommunitySidebar";
+import { CommunityTabBar } from "@/components/shell/CommunityTabBar";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/hooks/use-session";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+// No redirect: since S6-3 `/community` is the forum index itself and the
+// first thing a signed-in person sees, so there is nowhere to send them.
 export const Route = createFileRoute("/community")({
   ssr: false,
-  beforeLoad: ({ location }) => {
-    if (location.pathname === "/community" || location.pathname === "/community/") {
-      throw redirect({ to: "/community/feed", replace: true });
-    }
-  },
   component: CommunityLayout,
 });
 
@@ -26,7 +24,7 @@ function CommunityLayout() {
 
   useEffect(() => {
     if (!loading && !user) {
-      navigate({ to: "/auth", search: { next: "/community/feed" } });
+      navigate({ to: "/auth", search: { next: "/community" } });
     }
   }, [loading, user, navigate]);
 
@@ -65,10 +63,13 @@ function CommunityLayout() {
           >
             {t("community.banner")}
           </div>
-          <main className="flex-1 px-4 py-6">
+          {/* pb-safe-nav keeps the last row clear of the mobile tab bar. */}
+          <main className="pb-safe-nav flex-1 px-4 py-6 md:pb-6">
             <Outlet />
           </main>
         </div>
+
+        <CommunityTabBar />
       </div>
     </SidebarProvider>
   );

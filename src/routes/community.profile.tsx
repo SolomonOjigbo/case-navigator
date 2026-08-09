@@ -30,6 +30,9 @@ function View() {
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
   const [dmPolicy, setDmPolicy] = useState<DmPolicy>("anyone");
+  const [notifyReplies, setNotifyReplies] = useState(true);
+  const [emailDigest, setEmailDigest] = useState(true);
+  const [notifyMessages, setNotifyMessages] = useState(true);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -38,6 +41,9 @@ function View() {
       setDisplayName(data.display_name ?? "");
       setBio(data.bio ?? "");
       setDmPolicy(data.dm_policy ?? "anyone");
+      setNotifyReplies(data.notify_replies ?? true);
+      setEmailDigest(data.email_digest ?? true);
+      setNotifyMessages(data.notify_messages ?? true);
     }
   }, [data]);
 
@@ -56,6 +62,9 @@ function View() {
         displayName: displayName.trim() || null,
         bio: bio.trim() || null,
         dmPolicy,
+        notifyReplies,
+        emailDigest,
+        notifyMessages,
       });
       toast.success(t("community.profile_saved"));
       qc.invalidateQueries({ queryKey: ["community-profile", user.id] });
@@ -134,6 +143,44 @@ function View() {
           </label>
           <p className="m-0 text-[0.8125rem] text-muted-foreground">
             {t("community.dm_policy_help")}
+          </p>
+        </fieldset>
+
+        {/* S7-1. Both default on: a reply to your own question is the thing
+            you wanted when you asked it. */}
+        <fieldset className="surface-card m-0 grid gap-2 border-0 p-4">
+          <legend className="px-1 text-[0.9375rem] font-semibold text-foreground">
+            {t("notif.prefs_label")}
+          </legend>
+          <label className="flex items-start gap-2.5 text-sm">
+            <input
+              type="checkbox"
+              className="mt-1"
+              checked={notifyReplies}
+              onChange={(e) => setNotifyReplies(e.target.checked)}
+            />
+            <span>{t("notif.prefs_in_app")}</span>
+          </label>
+          <label className="flex items-start gap-2.5 text-sm">
+            <input
+              type="checkbox"
+              className="mt-1"
+              checked={notifyMessages}
+              onChange={(e) => setNotifyMessages(e.target.checked)}
+            />
+            <span>{t("notif.prefs_messages")}</span>
+          </label>
+          <label className="flex items-start gap-2.5 text-sm">
+            <input
+              type="checkbox"
+              className="mt-1"
+              checked={emailDigest}
+              onChange={(e) => setEmailDigest(e.target.checked)}
+            />
+            <span>{t("notif.prefs_email")}</span>
+          </label>
+          <p className="m-0 text-[0.8125rem] text-muted-foreground">
+            {t("notif.prefs_email_help")}
           </p>
         </fieldset>
 

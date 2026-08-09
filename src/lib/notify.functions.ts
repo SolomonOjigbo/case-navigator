@@ -303,3 +303,148 @@ export async function sendDueReminders(): Promise<{
   }
   return tally;
 }
+
+// -------------------------------------------------------------------------
+// The community digest (S7-2).
+//
+// Runs in the same daily sweep as the appointment reminders rather than on its
+// own schedule. Not for elegance: Vercel's Hobby plan allows very few cron
+// jobs, and one endpoint that does the day's work is one fewer thing to
+// discover has silently stopped.
+//
+// "Once a day" is enforced by stamping `emailed_at` on the notifications the
+// message covered, not by the schedule — running the sweep twice sends one
+// digest, and the second run has nothing left to report.
+// -------------------------------------------------------------------------
+
+export async function sendCommunityDigests(): Promise<{
+  recipients: number;
+  sent: number;
+  skipped: number;
+  failed: number;
+}> {
+  const db = await admin();
+  const tally = { recipients: 0, sent: 0, skipped: 0, failed: 0 };
+
+  // Unread, never emailed. A notification someone already read in the app is
+  // not something to email them about.
+  const { data: pending } = await db
+    .from("community_notifications")
+    .select("id, recipient_id, actor_id, topic_id, kind")
+    .is("read_at", null)
+    .is("emailed_at", null)
+    .limit(2000);
+
+  if (!pending?.length) return tally;
+
+  const byRecipient = new Map<string, typeof pending>();
+  for (const row of pending) {
+    if (!row.recipient_id) continue;
+    const list = byRecipient.get(row.recipient_id) ?? [];
+    list.push(row);
+    byRecipient.set(row.recipient_id, list);
+  }
+
+  const { digestMessage, sendEmail } = await import("./email.server");
+
+  for (const [recipientId, rows] of byRecipient) {
+    tally.recipients += 1;
+
+    // The switch on the community profile, checked here rather than in the
+    // query so that turning it off stops the mail without losing the
+    // notifications themselves.
+    const { data: profile } = await db
+      .from("community_profiles")
+      .select("email_digest")
+      .eq("user_id", recipientId)
+      .maybeSingle();
+    if (profile?.email_digest === false) {
+      // Stamp them anyway: they have been considered and declined, and
+      // leaving them unstamped means reconsidering the same rows every day.
+      await db
+        .from("community_notifications")
+        .update({ emailed_at: new Date().toISOString() })
+        .in(
+          "id",
+          rows.map((r) => r.id),
+        );
+      tally.skipped += 1;
+      continue;
+    }
+
+    const to = await emailOf(recipientId);
+    if (!to) {
+      tally.failed += 1;
+      continue;
+    }
+
+    // Handles, never names: the digest speaks the language of the forum.
+    const actorIds = [...new Set(rows.map((r) => r.actor_id))];
+    const topicIds = [...new Set(rows.map((r) => r.topic_id).filter(Boolean))] as string[];
+
+    const [{ data: handles }, { data: topics }] = await Promise.all([
+      db.from("community_profiles").select("user_id, display_name, handle").in("user_id", actorIds),
+      topicIds.length
+        ? db.from("community_posts").select("id, title").in("id", topicIds)
+        : Promise.resolve({ data: [] as Array<{ id: string; title: string | null }> }),
+    ]);
+
+    const nameOf = new Map(
+      (handles ?? []).map((h) => [h.user_id, h.display_name?.trim() || `@${h.handle}`]),
+    );
+    const titleOf = new Map((topics ?? []).map((t) => [t.id, t.title ?? "a topic"]));
+
+    const items = rows.map((r) => ({
+      who: nameOf.get(r.actor_id) ?? "Someone",
+      // Null for a direct message: the digest says one arrived and stops
+      // there. Naming the conversation would name the other person twice and
+      // say nothing useful.
+      topic:
+        r.kind === "direct_message"
+          ? null
+          : ((r.topic_id ? titleOf.get(r.topic_id) : null) ?? "a topic"),
+    }));
+
+    const message = digestMessage({
+      items,
+      appUrl: `${APP_URL()}/community/notifications`,
+    });
+
+    const result = await sendEmail({ to, ...message });
+    if (result.status === "sent") tally.sent += 1;
+    else if (result.status === "skipped") tally.skipped += 1;
+    else tally.failed += 1;
+
+    // Recorded like every other message this product sends. Without this the
+    // only trace of a failure is a number in a cron response nobody kept —
+    // which is exactly how the first live send sat unexplained.
+    await db.from("email_deliveries").insert({
+      kind: "community_digest",
+      consultation_id: null,
+      recipient_id: recipientId,
+      recipient_role: "member",
+      status: result.status,
+      provider: result.status === "sent" ? result.provider : null,
+      provider_ref: result.status === "sent" ? result.ref : null,
+      error:
+        result.status === "failed"
+          ? result.error
+          : result.status === "skipped"
+            ? result.reason
+            : null,
+      sent_at: result.status === "sent" ? new Date().toISOString() : null,
+    });
+
+    // Stamped whatever happened. A provider outage should not mean tomorrow's
+    // digest repeats today's — the notifications are still in the app.
+    await db
+      .from("community_notifications")
+      .update({ emailed_at: new Date().toISOString() })
+      .in(
+        "id",
+        rows.map((r) => r.id),
+      );
+  }
+
+  return tally;
+}

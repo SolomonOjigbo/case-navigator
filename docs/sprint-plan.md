@@ -437,6 +437,246 @@ least able to work out what it meant.
 
 ---
 
+### Sprint 6 — The community becomes the centre of gravity
+
+A repositioning rather than a feature. The community moves from a side room to
+the front door: CaseMap becomes a place where people going through asylum and
+immigration share what they have been through, with the private case tools
+alongside rather than in front.
+
+The reasoning is about who arrives. Someone signing up today landed on a blank
+form asking them to write down what happened to them — the hardest thing in
+the product, on day one, before any reason to trust it. The community is the
+part that is useful to a person who is not ready for that yet, and the part
+where they can be useful to someone else.
+
+| Ticket | Description | Est. |
+|---|---|---|
+| S6-1 | Forums: categories, titled topics, replies, activity ordering, search. | 4d |
+| S6-2 | Forum screens: index, category, thread, composer, search. | 4d |
+| S6-3 | Re-centre the app: sign-in lands in the community, one navigation with the forums first and the case tools as a section. | 2d |
+| S6-4 | Safety for a bigger front door: what not to write in public, and the wall between community identity and case. | 2d |
+
+**Acceptance:** a signed-in person lands in the forums, finds a category, reads
+a thread and replies; the reply bumps the topic; nothing from anyone's case is
+reachable from any community screen.
+
+#### Delivered
+
+**Topics are `community_posts` rows with a title and a category, and replies
+are `community_comments`.** That is the load-bearing decision. Everything built
+in Sprints 2 to 5 sits on those two tables — the moderation queue's
+`hidden_at`, the `is_blocked_pair` read policy, reporting, report excerpts. A
+parallel `forum_topics` table would have needed a parallel copy of all of it,
+and a moderation path that only some content passes through is worse than
+none.
+
+- Ten seeded categories, named to avoid two traps: they promise no answers
+  ("Legal advice") and they do not label people by status ("Refused
+  claimants"). Nobody should have to file themselves under a setback to ask a
+  question.
+- Ordering is by last activity, not creation: a question answered this morning
+  is more use than one posted this morning and ignored. A trigger maintains
+  `last_activity_at` and `reply_count` so the index does not count replies per
+  row.
+- Search is `websearch_to_tsquery` over a generated `tsvector`, title weighted
+  above body, `simple` rather than `english` — the forum is multilingual and
+  English stemming applied to Arabic does more harm than none.
+- Pinning is an RPC, not an UPDATE policy. A policy letting admins update posts
+  would also let them rewrite the body of someone's post, which is not a power
+  worth handing out to make a topic sticky. Pins apply in a category and
+  deliberately not in "recently active", where they would contradict the
+  heading.
+- The old flat feed is a redirect. It was one chronological stream in which
+  the same questions were asked weekly with the answers already scrolled away.
+  The route stays because people share links.
+
+**The composer carries the safety work.** A notice above the form, every time
+rather than dismissed forever — someone who posted about housing in March is
+in a different position in June when they write about the people who threatened
+them. It names the specific things that identify a person rather than saying
+"be careful", covers other people who cannot consent to being written about,
+states the wall in both directions, and offers a direct message as the place
+for what should not be public. Eighteen tests hold that copy and the wall.
+
+**The wall itself is tested, not just asserted.** `forum-service` may not read
+any case-scoped table, and may not read `profiles` — the real name given at
+signup — only `community_profiles`, the handle. Every listing function must
+apply both the moderator filter and the personal block filter.
+
+**Demo content.** Fourteen topics and thirty-one replies across the categories,
+written as seed data rather than poked into the database, with fixed UUID
+prefixes so the whole set is removable. Seed content in a forum is not filler:
+it is the first thing a new member reads, and people match the register of what
+is already there. So the posts model the behaviour the notice asks for — no
+names, places, dates or file numbers — and they answer each other.
+
+#### Known limits
+
+- **Signed-in and pseudonymous, by default.** The forums are not publicly
+  readable. Opening them to search engines would bring people who need this
+  and cannot yet sign up, and is also a materially different safety posture for
+  a population whose posts could reach the wrong readers. That decision is not
+  mine to take silently; the schema supports either.
+- **No notifications.** Someone who answers a question does not know whether
+  the person came back. Email exists as of Sprint 5, and a "someone replied to
+  you" digest is the natural next use of it.
+- **Moderation is reactive.** Reports and blocks work; nothing scans a post
+  before it appears. For a forum this size that is the right trade, and it will
+  not stay right as it grows.
+
+---
+
+### Sprint 7 — The community holds together as it grows
+
+Two problems that only appear once people actually use a forum. Someone asks a
+question, a stranger spends twenty minutes writing a careful answer, and the
+person who asked never finds out — the answer sits unread and both of them
+conclude the place is empty. And one account can post as fast as it can type.
+
+| Ticket | Description | Est. |
+|---|---|---|
+| S7-1 | Reply notifications: in-app, block-aware, with an unread count. | 3d |
+| S7-2 | A daily digest email, folded into the existing sweep, with a switch. | 2d |
+| S7-3 | Look at a draft for identifying details before it becomes public. | 3d |
+| S7-4 | Posting rate limits in the database. | 1d |
+
+**Acceptance:** a reply notifies the topic author and everyone who replied
+before, and nobody else; a blocked person's reply notifies nothing; a draft
+containing a phone number pauses before publishing and can still be published;
+a seventh topic in an hour is refused with a sentence a person can read.
+
+#### Delivered
+
+**Notifications are written by a trigger and never by a client.** There is no
+INSERT policy on the table, deliberately — if the client could write them,
+anyone could put text in front of a person who had blocked them. The trigger
+fans out to the topic author and to everyone who replied before, minus the
+writer, minus anyone who turned notifications off, and minus either side of a
+block. Verified against the live project: `reply_to_topic` to the author,
+`reply_after_you` to earlier repliers, nothing to the writer, nothing readable
+by anyone else, and nothing at all once a block exists.
+
+**The digest runs in the same daily sweep as the appointment reminders.** Not
+for elegance: the Hobby plan allows very few cron entries, and one endpoint
+that does the day's work is one fewer thing to discover has silently stopped.
+Both jobs run under `Promise.allSettled`, so a failure in one cannot skip the
+other. "Once a day" comes from stamping `emailed_at` on the notifications a
+message covered, not from the schedule — the second run of the sweep found
+nothing left to send.
+
+The digest names who replied and where, and carries nothing else: no case
+material, and — unlike the in-app screen — no excerpt of the reply. The app is
+behind a sign-in; an inbox may be shared, read over a shoulder, or synced to a
+device the person does not control.
+
+**The draft check (S7-3) is the piece worth arguing about.** It looks for email
+addresses, phone numbers, case and reference numbers, links, full dates and
+postcodes, and it never blocks, never accuses, and runs entirely on the device
+— a privacy check that transmits the text being checked is not one. It stays
+silent unless it has something, because warning on every post is how a check
+teaches people to dismiss it before the night it matters.
+
+The false-positive tests matter more than the true-positive ones, and they are
+written from sentences people in this forum actually write: "I have been
+waiting 11 months", "my children are 8 and 13", "there were 3 of us in the
+room". None of them trips it. "+44 7700 900123" and "my file number is
+A-1234567" both do.
+
+**Rate limits** are six topics and forty replies an hour, set far above what a
+person does and far below what a script does, enforced in the database because
+the client is not the only way to reach the table. The refusal reaches someone
+as a sentence rather than as `rate_limited`.
+
+**The email provider question from Sprint 5 is now answered.** The first live
+send returned `403 ... domain is not verified` from the provider. The key
+works and the path works; the sending domain needs verifying with the
+provider. That failure was visible only as a number in a cron response, which
+is why digest sends now join `email_deliveries` with their reason — the same
+record every other message this product sends already had.
+
+#### Known limits
+
+- **Nothing verifies the sending domain for you.** Until it is verified at the
+  provider, every digest and every appointment email records `failed` with that
+  403. The app is unaffected; the mail simply does not go.
+- **The draft check is patterns, not understanding.** It will not notice a
+  village named in prose, or "the man who ran the checkpoint on my street". The
+  composer notice is still the primary defence; this catches the mechanical
+  cases.
+- **Moderation is still reactive.** Reports, blocks and rate limits work;
+  nothing reads a post before it appears, and at this size that remains the
+  right trade.
+- **No notification for direct messages.** Only forum replies notify. A DM
+  arriving is arguably more urgent, and is the obvious next addition.
+
+---
+
+### Sprint 8 — Direct messages notify, and the front door gets a door handle
+
+Sprint 7 notified forum replies and left direct messages silent, which is the
+wrong way round: a forum reply can wait, and a message from one person to one
+person usually cannot. And the community became the front door in Sprint 6
+while keeping the navigation of a side room — a hamburger, on the surface most
+people reach first and most of them on a phone.
+
+| Ticket | Description | Est. |
+|---|---|---|
+| S8-1 | Direct message notifications, with their own preference. | 2d |
+| S8-2 | Unread counts per surface, and opening a thread clears its own. | 1d |
+| S8-3 | Mobile navigation for the community. | 2d |
+
+**Acceptance:** a direct message notifies its recipient and nobody else; a room
+message notifies no one; opening a conversation clears its count; the community
+has a tab bar on a phone.
+
+#### Delivered
+
+**Direct messages notify, under the same rule as S7-1**: written by a trigger,
+no INSERT policy, so a notification cannot become a way around a block. The
+preference is separate from `notify_replies` on purpose — wanting to know when
+a person writes to you is a different appetite from wanting a badge whenever a
+thread moves, and one switch cannot express both.
+
+Room messages deliberately do not notify. A room is live chat, and a
+notification per line is noise that teaches people to ignore the badge that
+matters. Verified along with the rest: the recipient is told, the sender is
+not, a third party sees nothing, the preference suppresses it, and a room line
+notifies no one.
+
+**The two surfaces carry their own counts.** "Three things happened" and
+"someone is waiting for you to answer" are different pieces of news, and the
+second is the one people act on, so Messages has its own number. Opening a
+conversation or a topic clears that conversation's notifications — a count
+that does not go down when you have read the thing is a count people stop
+believing.
+
+**The digest covers both, and says less about the private one.** A forum entry
+names the topic; a direct message says only that one arrived, from whom. The
+in-app list shows a line of it and the email does not, because the app is
+behind a sign-in and an inbox may be shared, read over a shoulder, or synced to
+a device the person does not control. The subject line moved from "replied" to
+"waiting" to cover both.
+
+**The community has a tab bar on phones** — Forums, Activity, Messages, Search,
+More — matching the applicant bar so the two shells feel like one product, with
+counts on the icons because on a phone the sidebar is a sheet nobody has open.
+"Notifications" became "Activity" in the bar: a five-slot bar truncated it to
+"Notificati…", and a truncated word is a worse label than a shorter one.
+
+#### Known limits
+
+- **No push, and no unread-since marker inside a thread.** Someone returning to
+  a long conversation still has to find their place by memory.
+- **The digest is still the only email.** There is no per-notification email and
+  should not be; one message a day is the right ceiling for this.
+- **Sending domain still unverified**, carried from Sprint 7 — mail records
+  `failed` until that is done at the provider.
+- **Moderation remains reactive**, unchanged and still the right trade at this
+  size.
+
+---
+
 ## 4. Sequencing rationale
 
 Sprint 1 first because it is the only one of the four features with a
@@ -457,7 +697,7 @@ but S4-1 (verification) then has to move ahead of S3, not after it. Putting an
 unverified name in front of an asylum claimant is the real exposure in the
 booking model, and it is cheap to prevent.
 
-**Status: Sprints 1–5 shipped.** Sprints 1 and 2 on 2026-08-08 (`39334ea`, `709b1bd`) — documentation
+**Status: Sprints 1–8 shipped.** Sprints 1 and 2 on 2026-08-08 (`39334ea`, `709b1bd`) — documentation
 advisor, narrative intake, guardrail tests, plus two bugs found on the way (a
 missing `<Outlet />` that made the story sections unreachable, and a delete in
 analyzeGaps that would have wiped the advisor's output). Sprint 2 surfaced the

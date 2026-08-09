@@ -21,6 +21,7 @@ import { ProfileGate } from "@/components/community/ProfileGate";
 import { useSession } from "@/hooks/use-session";
 import { supabase } from "@/integrations/supabase/client";
 import { displayNameOf, getDmThread, listDmMessages, sendDmMessage } from "@/lib/community-service";
+import { markThreadRead } from "@/lib/notification-service";
 
 function ThreadView() {
   return (
@@ -71,6 +72,20 @@ function Conversation() {
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messagesQ.data?.length]);
+
+  // Reading the conversation is reading the messages. Runs whenever new ones
+  // arrive as well as on open, so a message that lands while the thread is on
+  // screen does not leave a badge behind.
+  useEffect(() => {
+    if (!user?.id || !messagesQ.data?.length) return;
+    void markThreadRead(threadId)
+      .then(() => {
+        qc.invalidateQueries({ queryKey: ["notifications-unread"] });
+        qc.invalidateQueries({ queryKey: ["notifications-unread-dm"] });
+        qc.invalidateQueries({ queryKey: ["notifications"] });
+      })
+      .catch(() => {});
+  }, [threadId, user?.id, messagesQ.data?.length, qc]);
 
   const sendMut = useMutation({
     mutationFn: () => sendDmMessage({ threadId, authorId: user!.id, body: body.trim() }),
