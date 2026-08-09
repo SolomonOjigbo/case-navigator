@@ -16,29 +16,50 @@ function shortRef(prefix: string, id: string) {
   return `${prefix}-${id.replace(/-/g, "").slice(0, 8).toUpperCase()}`;
 }
 
-export async function getOrCreateOwnCase(userId: string) {
-  const { data: existing, error: readErr } = await supabase
-    .from("cases")
-    .select("id, jurisdiction, reference_code, status, preferred_language, created_at")
-    .eq("applicant_id", userId)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-  if (readErr) throw readErr;
-  if (existing) return existing;
+export type OwnCase = {
+  id: string;
+  jurisdiction: string;
+  reference_code: string | null;
+  status: string;
+  preferred_language: string | null;
+  created_at: string;
+};
 
-  const newId = crypto.randomUUID();
-  const { data: created, error: insErr } = await supabase
-    .from("cases")
-    .insert({
-      id: newId,
-      applicant_id: userId,
-      reference_code: shortRef("C", newId),
-    })
-    .select("id, jurisdiction, reference_code, status, preferred_language, created_at")
-    .single();
-  if (insErr) throw insErr;
-  return created;
+/**
+ * The applicant's case, created on first use.
+ *
+ * One database call, not a read followed by an insert. The old shape raced
+ * itself: this is called from `audit-service` on sign-in and from the consent
+ * screen as well as from route queries, and those first two do not share React
+ * Query's cache — so two copies could be in flight, both find nothing, and both
+ * insert. That produced two cases for one person, and every screen that reads
+ * the case with `.maybeSingle()` then failed on a case that plainly existed.
+ * Reproduced in this project's own data before the fix.
+ *
+ * `cases_one_per_applicant` now makes a second case impossible, and
+ * `get_or_create_own_case()` returns the same row to whichever caller arrives
+ * second. See 20260810100000_one_case_per_applicant.sql.
+ *
+ * The `userId` argument is kept for call-site readability but is not trusted:
+ * the function reads `auth.uid()` itself, so nobody can ask for someone else's.
+ */
+const inFlight = new Map<string, Promise<OwnCase>>();
+
+export async function getOrCreateOwnCase(userId: string): Promise<OwnCase> {
+  // Collapse concurrent calls within one tab as well. The database is safe
+  // either way; this just avoids two round trips for the same answer.
+  const pending = inFlight.get(userId);
+  if (pending) return pending;
+
+  const promise = (async () => {
+    const { data, error } = await supabase.rpc("get_or_create_own_case");
+    if (error) throw error;
+    if (!data) throw new Error("no_case");
+    return data as OwnCase;
+  })().finally(() => inFlight.delete(userId));
+
+  inFlight.set(userId, promise);
+  return promise;
 }
 
 export async function listLatestResponses(caseId: string) {

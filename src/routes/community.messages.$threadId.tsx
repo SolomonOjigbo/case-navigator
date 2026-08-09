@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { EmptyState } from "@/components/shell/EmptyState";
 import { ReportBlockMenu } from "@/components/community/ReportBlockMenu";
+import { ReportConversation } from "@/components/community/ReportConversation";
 import { ProfileGate } from "@/components/community/ProfileGate";
 import { useSession } from "@/hooks/use-session";
 import { supabase } from "@/integrations/supabase/client";
@@ -109,12 +110,17 @@ function Conversation() {
           </Link>
         </Button>
         <h1 className="text-section-title m-0">{displayNameOf(other)}</h1>
-        <div className="ms-auto">
+        <div className="ms-auto flex items-center gap-1">
+          {/* Reporting a conversation is its own control, not the generic
+              overflow menu: it has to let the person choose which messages a
+              moderator sees, because nothing else can show them. */}
+          <ReportConversation otherUserId={threadQ.data.other_user_id} messages={messages} />
           <ReportBlockMenu
             targetType="profile"
             targetId={threadQ.data.other_user_id}
             authorId={threadQ.data.other_user_id}
             invalidateKey={["dm-threads"]}
+            hideReport
           />
         </div>
       </header>

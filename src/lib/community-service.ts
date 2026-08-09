@@ -1,6 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 import { listBlockedIds, withoutBlocked } from "./moderation-service";
 
+export type DmPolicy = "anyone" | "nobody";
+
 export type CommunityProfile = {
   id: string;
   user_id: string;
@@ -8,6 +10,8 @@ export type CommunityProfile = {
   display_name: string | null;
   avatar_url: string | null;
   bio: string | null;
+  /** Who may start a new conversation with this person (S5-3). */
+  dm_policy: DmPolicy;
 };
 
 export type PostAuthor = Pick<
@@ -57,7 +61,7 @@ export const HANDLE_RE = /^[a-z0-9_]{3,20}$/;
 export async function getMyCommunityProfile(userId: string) {
   const { data, error } = await supabase
     .from("community_profiles")
-    .select("id,user_id,handle,display_name,avatar_url,bio")
+    .select("id,user_id,handle,display_name,avatar_url,bio,dm_policy")
     .eq("user_id", userId)
     .maybeSingle();
   if (error) throw error;
@@ -69,6 +73,7 @@ export async function upsertCommunityProfile(input: {
   handle: string;
   displayName: string | null;
   bio: string | null;
+  dmPolicy?: DmPolicy;
 }) {
   const existing = await getMyCommunityProfile(input.userId);
   if (existing) {
@@ -78,6 +83,7 @@ export async function upsertCommunityProfile(input: {
         handle: input.handle,
         display_name: input.displayName,
         bio: input.bio,
+        ...(input.dmPolicy ? { dm_policy: input.dmPolicy } : {}),
       })
       .eq("user_id", input.userId);
     if (error) throw error;
@@ -87,6 +93,7 @@ export async function upsertCommunityProfile(input: {
       handle: input.handle,
       display_name: input.displayName,
       bio: input.bio,
+      dm_policy: input.dmPolicy ?? "anyone",
     });
     if (error) throw error;
   }
@@ -409,9 +416,16 @@ export async function openDmThread(input: {
         .maybeSingle();
       if (raced?.id) return raced.id;
     }
-    // The INSERT policy refuses a blocked pair, so this is the ordinary way a
-    // blocked conversation fails to start.
-    throw new Error("dm_blocked");
+    // The INSERT policy refuses both a blocked pair and a closed inbox, and
+    // gives the same error for either. Ask which it was, so the person trying
+    // to write gets an accurate sentence — "they are not accepting messages"
+    // is true and says nothing about whether they blocked you.
+    const { data: theirProfile } = await supabase
+      .from("community_profiles")
+      .select("dm_policy")
+      .eq("user_id", input.otherUserId)
+      .maybeSingle();
+    throw new Error(theirProfile?.dm_policy === "nobody" ? "dm_closed" : "dm_blocked");
   }
   return data!.id;
 }
@@ -466,4 +480,70 @@ export async function findProfileByHandle(handle: string): Promise<PostAuthor | 
     .maybeSingle();
   if (error) throw error;
   return (data as PostAuthor) ?? null;
+}
+
+/**
+ * Report a conversation, attaching the messages being reported (S5-3).
+ *
+ * A moderator cannot read a private thread — the policies show it to the two
+ * participants only, and that does not change. So the reporter chooses what
+ * travels, and those messages are copied into the report. Copied rather than
+ * referenced: the author can delete a message, and a report about a message
+ * that no longer exists cannot be judged.
+ */
+export async function reportConversation(input: {
+  reporterId: string;
+  otherUserId: string;
+  reason: string;
+  messages: DmMessage[];
+}) {
+  const { data: report, error } = await supabase
+    .from("community_reports")
+    .insert({
+      reporter_id: input.reporterId,
+      target_type: "profile",
+      target_id: input.otherUserId,
+      reason: input.reason,
+    })
+    .select("id")
+    .single();
+  if (error) {
+    if (/duplicate key|unique/i.test(error.message)) throw new Error("already_reported");
+    throw error;
+  }
+
+  if (input.messages.length > 0) {
+    const { error: exErr } = await supabase.from("community_report_excerpts").insert(
+      input.messages.map((m) => ({
+        report_id: report.id,
+        message_id: m.id,
+        author_id: m.author_id,
+        body: m.body,
+        sent_at: m.created_at,
+      })),
+    );
+    // The report itself is filed either way. A failure to attach context is
+    // worth surfacing but must not lose the report.
+    if (exErr) throw new Error("excerpts_failed");
+  }
+  return report.id;
+}
+
+export type ReportExcerpt = {
+  id: string;
+  report_id: string;
+  message_id: string | null;
+  author_id: string;
+  body: string;
+  sent_at: string;
+};
+
+export async function listReportExcerpts(reportId: string): Promise<ReportExcerpt[]> {
+  const { data, error } = await supabase
+    .from("community_report_excerpts")
+    .select("id,report_id,message_id,author_id,body,sent_at")
+    .eq("report_id", reportId)
+    .order("sent_at", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as ReportExcerpt[];
 }

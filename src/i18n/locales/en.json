@@ -122,7 +122,11 @@
     "just_now": "just now",
     "nav_moderation": "Reports",
     "nav_admin_professionals": "Professionals",
-    "nav_messages": "Messages"
+    "nav_messages": "Messages",
+    "dm_policy_label": "Who can message you",
+    "dm_policy_anyone": "Anyone here can start a conversation with me.",
+    "dm_policy_nobody": "Nobody can start a new conversation with me.",
+    "dm_policy_help": "This only affects new conversations. People you are already talking to can still reach you, and you can still write to anyone."
   },
   "auth_page": {
     "heading_signin": "Sign in",
@@ -946,7 +950,9 @@
     "note_label": "Note",
     "note_placeholder": "Why you decided this (kept on the report)",
     "resolved": "Report closed.",
-    "resolve_failed": "That report could not be closed."
+    "resolve_failed": "That report could not be closed.",
+    "excerpts_label": "{{count}} message(s) the reporter chose to show you",
+    "no_excerpts": "The reporter attached no messages. Private conversations are not readable here."
   },
   "consult": {
     "title": "Talk to a lawyer",
@@ -1120,6 +1126,20 @@
     "back": "Back to messages",
     "placeholder": "Write a message",
     "send": "Send",
-    "send_failed": "That message could not be sent."
+    "send_failed": "That message could not be sent.",
+    "closed": "This person is not accepting new messages.",
+    "report": "Report this conversation",
+    "report_title": "Report this conversation",
+    "report_intro": "A moderator cannot read your messages. They will see only what you tick below, and what you write here.",
+    "report_reason": "What is happening?",
+    "report_note": "Anything else the moderator should know (optional)",
+    "report_pick": "Messages to show the moderator",
+    "report_pick_help": "Tick only what you want them to see. Nothing else from this conversation is shared.",
+    "report_nothing_to_pick": "There is nothing from this person to attach yet.",
+    "report_send": "Send the report",
+    "reported": "Reported. A moderator will look at it.",
+    "already_reported": "You have already reported this person.",
+    "report_failed": "That report could not be sent.",
+    "report_partial": "The report was filed, but the messages could not be attached."
   }
 }

@@ -20,6 +20,7 @@ import { Route as ProRouteImport } from './routes/pro'
 import { Route as RecoveryCodesRouteImport } from './routes/recovery-codes'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AdminProfessionalsRouteImport } from './routes/admin.professionals'
+import { Route as ApiRemindersRouteImport } from './routes/api.reminders'
 import { Route as AppActivityRouteImport } from './routes/app.activity'
 import { Route as AppClarifyRouteImport } from './routes/app.clarify'
 import { Route as AppConsultationsRouteImport } from './routes/app.consultations'
@@ -106,6 +107,11 @@ const AdminProfessionalsRoute = AdminProfessionalsRouteImport.update({
   id: '/professionals',
   path: '/professionals',
   getParentRoute: () => AdminRoute,
+} as any)
+const ApiRemindersRoute = ApiRemindersRouteImport.update({
+  id: '/api/reminders',
+  path: '/api/reminders',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AppActivityRoute = AppActivityRouteImport.update({
   id: '/activity',
@@ -277,6 +283,7 @@ export interface FileRoutesByFullPath {
   '/recovery-codes': typeof RecoveryCodesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/professionals': typeof AdminProfessionalsRoute
+  '/api/reminders': typeof ApiRemindersRoute
   '/app/activity': typeof AppActivityRoute
   '/app/clarify': typeof AppClarifyRoute
   '/app/consultations': typeof AppConsultationsRoute
@@ -321,6 +328,7 @@ export interface FileRoutesByTo {
   '/recovery-codes': typeof RecoveryCodesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/professionals': typeof AdminProfessionalsRoute
+  '/api/reminders': typeof ApiRemindersRoute
   '/app/activity': typeof AppActivityRoute
   '/app/clarify': typeof AppClarifyRoute
   '/app/consultations': typeof AppConsultationsRoute
@@ -363,6 +371,7 @@ export interface FileRoutesById {
   '/recovery-codes': typeof RecoveryCodesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/professionals': typeof AdminProfessionalsRoute
+  '/api/reminders': typeof ApiRemindersRoute
   '/app/activity': typeof AppActivityRoute
   '/app/clarify': typeof AppClarifyRoute
   '/app/consultations': typeof AppConsultationsRoute
@@ -409,6 +418,7 @@ export interface FileRouteTypes {
     | '/recovery-codes'
     | '/sitemap.xml'
     | '/admin/professionals'
+    | '/api/reminders'
     | '/app/activity'
     | '/app/clarify'
     | '/app/consultations'
@@ -453,6 +463,7 @@ export interface FileRouteTypes {
     | '/recovery-codes'
     | '/sitemap.xml'
     | '/admin/professionals'
+    | '/api/reminders'
     | '/app/activity'
     | '/app/clarify'
     | '/app/consultations'
@@ -494,6 +505,7 @@ export interface FileRouteTypes {
     | '/recovery-codes'
     | '/sitemap.xml'
     | '/admin/professionals'
+    | '/api/reminders'
     | '/app/activity'
     | '/app/clarify'
     | '/app/consultations'
@@ -538,6 +550,7 @@ export interface RootRouteChildren {
   ProRoute: typeof ProRouteWithChildren
   RecoveryCodesRoute: typeof RecoveryCodesRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiRemindersRoute: typeof ApiRemindersRoute
   DebugGuardrailsRoute: typeof DebugGuardrailsRoute
 }
 
@@ -619,6 +632,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/professionals'
       preLoaderRoute: typeof AdminProfessionalsRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/api/reminders': {
+      id: '/api/reminders'
+      path: '/api/reminders'
+      fullPath: '/api/reminders'
+      preLoaderRoute: typeof ApiRemindersRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/app/activity': {
       id: '/app/activity'
@@ -1006,6 +1026,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProRoute: ProRouteWithChildren,
   RecoveryCodesRoute: RecoveryCodesRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiRemindersRoute: ApiRemindersRoute,
   DebugGuardrailsRoute: DebugGuardrailsRoute,
 }
 export const routeTree = rootRouteImport

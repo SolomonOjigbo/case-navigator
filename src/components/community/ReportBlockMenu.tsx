@@ -45,12 +45,19 @@ export function ReportBlockMenu({
   targetId,
   authorId,
   invalidateKey,
+  hideReport = false,
 }: {
   targetType: ReportTarget;
   targetId: string;
   authorId: string;
   /** Query key to refresh once content disappears behind a block. */
   invalidateKey: readonly unknown[];
+  /**
+   * Drop the report item, leaving only block. Used in a direct-message thread,
+   * where reporting needs its own control so the person can choose which
+   * messages a moderator is shown — see ReportConversation.
+   */
+  hideReport?: boolean;
 }) {
   const { t } = useTranslation();
   const { user } = useSession();
@@ -103,10 +110,12 @@ export function ReportBlockMenu({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuItem onSelect={() => setReporting(true)}>
-            <Flag className="h-4 w-4" aria-hidden="true" />
-            {t("moderation.report")}
-          </DropdownMenuItem>
+          {hideReport ? null : (
+            <DropdownMenuItem onSelect={() => setReporting(true)}>
+              <Flag className="h-4 w-4" aria-hidden="true" />
+              {t("moderation.report")}
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onSelect={() => blockMut.mutate()}>
             <UserX className="h-4 w-4" aria-hidden="true" />
             {t("moderation.block")}

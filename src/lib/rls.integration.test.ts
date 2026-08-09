@@ -569,3 +569,137 @@ d4("direct messages are private to the two people in them", () => {
     }
   });
 });
+
+// -------------------------------------------------------------------------
+// Sprint 5 acceptance.
+// -------------------------------------------------------------------------
+
+d("one case per applicant, whatever the client does", () => {
+  it("returns the same case to twelve simultaneous callers", async () => {
+    // This is the bug, reproduced: `getOrCreateOwnCase` used to read then
+    // insert, and is called from places that do not share a query cache, so
+    // two copies in flight produced two cases. Twelve at once is the same
+    // race with the volume turned up.
+    const applicant = await signIn(env.RLS_APPLICANT_A_EMAIL!, env.RLS_APPLICANT_A_PASSWORD!);
+
+    const results = await Promise.all(
+      Array.from({ length: 12 }, () => applicant.rpc("get_or_create_own_case")),
+    );
+
+    const errors = results.filter((r) => r.error).map((r) => r.error!.message);
+    expect(errors, `get_or_create_own_case errored: ${errors[0]}`).toHaveLength(0);
+
+    const ids = new Set(results.map((r) => (r.data as { id: string } | null)?.id));
+    expect(ids.size, "concurrent callers were given different cases").toBe(1);
+
+    const { data: mine } = await applicant.from("cases").select("id");
+    expect(mine ?? [], "an applicant ended up with more than one case").toHaveLength(1);
+  });
+});
+
+d4("who may start a conversation", () => {
+  it("refuses a new thread to a closed inbox, and leaves existing ones alone", async () => {
+    const a = await signIn(env.RLS_APPLICANT_A_EMAIL!, env.RLS_APPLICANT_A_PASSWORD!);
+    const b = await signIn(env.RLS_APPLICANT_B_EMAIL!, env.RLS_APPLICANT_B_PASSWORD!);
+    const outsider = await signIn(env.RLS_ADMIN_EMAIL!, env.RLS_ADMIN_PASSWORD!);
+
+    const aId = (await a.auth.getUser()).data.user!.id;
+    const bId = (await b.auth.getUser()).data.user!.id;
+    const oId = (await outsider.auth.getUser()).data.user!.id;
+    const pair = (x: string, y: string) =>
+      x < y ? { user_low: x, user_high: y } : { user_low: y, user_high: x };
+
+    // B closes their inbox.
+    const { error: setErr } = await b
+      .from("community_profiles")
+      .update({ dm_policy: "nobody" })
+      .eq("user_id", bId)
+      .select("dm_policy");
+    if (setErr) return; // B has no community profile in this fixture; nothing to prove.
+
+    try {
+      const { error: refused } = await outsider
+        .from("community_dm_threads")
+        .insert(pair(oId, bId))
+        .select("id");
+      expect(refused, "a closed inbox still accepted a new conversation").not.toBeNull();
+
+      // A conversation that already exists is untouched: closing an inbox is
+      // not a way to silently end conversations already under way.
+      const { data: existing } = await a
+        .from("community_dm_threads")
+        .select("id")
+        .eq("user_low", pair(aId, bId).user_low)
+        .eq("user_high", pair(aId, bId).user_high)
+        .maybeSingle();
+      if (existing?.id) {
+        const { error: stillSends } = await a
+          .from("community_messages")
+          .insert({ dm_thread_id: existing.id, author_id: aId, body: "RLS: still reachable." })
+          .select("id");
+        expect(stillSends, "closing an inbox broke an existing conversation").toBeNull();
+      }
+    } finally {
+      await b.from("community_profiles").update({ dm_policy: "anyone" }).eq("user_id", bId);
+    }
+  });
+});
+
+d4("a reported conversation shows a moderator only what was handed over", () => {
+  it("lets the reporter and a moderator read the excerpts, and nobody else", async () => {
+    const reporter = await signIn(env.RLS_APPLICANT_A_EMAIL!, env.RLS_APPLICANT_A_PASSWORD!);
+    const reported = await signIn(env.RLS_APPLICANT_B_EMAIL!, env.RLS_APPLICANT_B_PASSWORD!);
+    const moderator = await signIn(env.RLS_ADMIN_EMAIL!, env.RLS_ADMIN_PASSWORD!);
+
+    const reporterId = (await reporter.auth.getUser()).data.user!.id;
+    const reportedId = (await reported.auth.getUser()).data.user!.id;
+
+    const { data: report } = await reporter
+      .from("community_reports")
+      .insert({
+        reporter_id: reporterId,
+        target_type: "profile",
+        target_id: reportedId,
+        reason: "harassment: RLS integration test",
+      })
+      .select("id")
+      .maybeSingle();
+    if (!report?.id) return; // an open report already exists for this pair
+
+    try {
+      const { error: attachErr } = await reporter.from("community_report_excerpts").insert({
+        report_id: report.id,
+        author_id: reportedId,
+        body: "RLS test excerpt.",
+        sent_at: new Date().toISOString(),
+      });
+      expect(attachErr, "the reporter could not attach their own excerpt").toBeNull();
+
+      for (const [who, client, expected] of [
+        ["the reporter", reporter, 1],
+        ["a moderator", moderator, 1],
+        ["the person reported", reported, 0],
+      ] as const) {
+        const { data } = await client
+          .from("community_report_excerpts")
+          .select("id")
+          .eq("report_id", report.id);
+        expect(data ?? [], `${who} saw the wrong number of excerpts`).toHaveLength(expected);
+      }
+
+      // Nobody can attach to a report that is not theirs.
+      const { error: forged } = await reported.from("community_report_excerpts").insert({
+        report_id: report.id,
+        author_id: reporterId,
+        body: "forged",
+        sent_at: new Date().toISOString(),
+      });
+      expect(forged, "someone attached an excerpt to another person's report").not.toBeNull();
+    } finally {
+      await moderator
+        .from("community_reports")
+        .update({ status: "dismissed", resolution_note: "RLS test cleanup" })
+        .eq("id", report.id);
+    }
+  });
+});

@@ -574,6 +574,7 @@ export type Database = {
           bio: string | null;
           created_at: string;
           display_name: string | null;
+          dm_policy: string;
           handle: string;
           id: string;
           updated_at: string;
@@ -584,6 +585,7 @@ export type Database = {
           bio?: string | null;
           created_at?: string;
           display_name?: string | null;
+          dm_policy?: string;
           handle: string;
           id?: string;
           updated_at?: string;
@@ -594,12 +596,51 @@ export type Database = {
           bio?: string | null;
           created_at?: string;
           display_name?: string | null;
+          dm_policy?: string;
           handle?: string;
           id?: string;
           updated_at?: string;
           user_id?: string;
         };
         Relationships: [];
+      };
+      community_report_excerpts: {
+        Row: {
+          author_id: string;
+          body: string;
+          created_at: string;
+          id: string;
+          message_id: string | null;
+          report_id: string;
+          sent_at: string;
+        };
+        Insert: {
+          author_id: string;
+          body: string;
+          created_at?: string;
+          id?: string;
+          message_id?: string | null;
+          report_id: string;
+          sent_at: string;
+        };
+        Update: {
+          author_id?: string;
+          body?: string;
+          created_at?: string;
+          id?: string;
+          message_id?: string | null;
+          report_id?: string;
+          sent_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "community_report_excerpts_report_id_fkey";
+            columns: ["report_id"];
+            isOneToOne: false;
+            referencedRelation: "community_reports";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       community_reports: {
         Row: {
@@ -1015,6 +1056,63 @@ export type Database = {
             columns: ["duplicate_of_id"];
             isOneToOne: false;
             referencedRelation: "documents";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      email_deliveries: {
+        Row: {
+          consultation_id: string | null;
+          created_at: string;
+          error: string | null;
+          id: string;
+          kind: string;
+          provider: string | null;
+          provider_ref: string | null;
+          recipient_id: string;
+          recipient_role: string;
+          sent_at: string | null;
+          status: string;
+        };
+        Insert: {
+          consultation_id?: string | null;
+          created_at?: string;
+          error?: string | null;
+          id?: string;
+          kind: string;
+          provider?: string | null;
+          provider_ref?: string | null;
+          recipient_id: string;
+          recipient_role: string;
+          sent_at?: string | null;
+          status?: string;
+        };
+        Update: {
+          consultation_id?: string | null;
+          created_at?: string;
+          error?: string | null;
+          id?: string;
+          kind?: string;
+          provider?: string | null;
+          provider_ref?: string | null;
+          recipient_id?: string;
+          recipient_role?: string;
+          sent_at?: string | null;
+          status?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "email_deliveries_consultation_id_fkey";
+            columns: ["consultation_id"];
+            isOneToOne: false;
+            referencedRelation: "consultations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "email_deliveries_consultation_id_fkey";
+            columns: ["consultation_id"];
+            isOneToOne: false;
+            referencedRelation: "consultations_with_slot";
             referencedColumns: ["id"];
           },
         ];
@@ -2652,6 +2750,10 @@ export type Database = {
       };
     };
     Functions: {
+      accepts_dm_from: {
+        Args: { _recipient: string; _sender: string };
+        Returns: boolean;
+      };
       applicant_has_grant_to_professional: {
         Args: { p_professional_id: string };
         Returns: boolean;
@@ -2667,6 +2769,26 @@ export type Database = {
       decide_professional_verification: {
         Args: { p_approve: boolean; p_note?: string; p_verification_id: string };
         Returns: undefined;
+      };
+      get_or_create_own_case: {
+        Args: never;
+        Returns: {
+          applicant_id: string;
+          created_at: string;
+          current_stage: string | null;
+          id: string;
+          jurisdiction: string;
+          preferred_language: string;
+          reference_code: string;
+          status: string;
+          updated_at: string;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "cases";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
       };
       has_active_consent: {
         Args: { _consent_type: string; _user_id: string };

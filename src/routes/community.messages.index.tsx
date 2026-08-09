@@ -62,9 +62,11 @@ function MessagesList() {
           ? t("dm.no_such_handle")
           : msg === "dm_self"
             ? t("dm.cannot_message_self")
-            : msg === "dm_blocked"
-              ? t("dm.blocked")
-              : t("dm.start_failed"),
+            : msg === "dm_closed"
+              ? t("dm.closed")
+              : msg === "dm_blocked"
+                ? t("dm.blocked")
+                : t("dm.start_failed"),
       );
     },
   });

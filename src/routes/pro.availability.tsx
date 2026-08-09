@@ -30,6 +30,7 @@ import {
   completeConsultation,
   type ConsultationMode,
 } from "@/lib/consultation-service";
+import { notifyConsultationCancelled as notifyCancelled } from "@/lib/notify.functions";
 import { useSession } from "@/hooks/use-session";
 
 /** Same format as the applicant side, so both parties read one shape of date. */
@@ -124,10 +125,13 @@ function AvailabilityView() {
   const cancelMut = useMutation({
     mutationFn: (id: string) =>
       cancelConsultation({ consultationId: id, byUserId: user!.id, reason: "" }),
-    onSuccess: () => {
+    onSuccess: (_data, consultationId) => {
       qc.invalidateQueries({ queryKey: ["pro-consultations"] });
       qc.invalidateQueries({ queryKey: ["my-slots"] });
       toast.success(t("pro_avail.booking_cancelled"));
+      // The applicant needs to know their appointment is gone. Not awaited:
+      // see the note on the applicant side.
+      void notifyCancelled({ data: { consultationId } }).catch(() => {});
     },
   });
 

@@ -51,6 +51,10 @@ import {
   type ConsultationMode,
   type OpenSlot,
 } from "@/lib/consultation-service";
+import {
+  notifyConsultationBooked as notifyBooked,
+  notifyConsultationCancelled as notifyCancelled,
+} from "@/lib/notify.functions";
 
 /**
  * One format for every appointment time on this screen. A person comparing a
@@ -117,12 +121,17 @@ function ConsultationsView() {
         displayName,
         language: i18n.language,
       }),
-    onSuccess: () => {
+    onSuccess: (created) => {
       setBooking(null);
       setTopic("");
       qc.invalidateQueries({ queryKey: ["my-consultations"] });
       qc.invalidateQueries({ queryKey: ["open-slots"] });
       toast.success(t("consult.booked"));
+      // Deliberately not awaited, and deliberately not surfaced. A booking is
+      // already saved by this point; a mail server having a bad day must not
+      // turn a successful booking into an error message. Failures are recorded
+      // in email_deliveries.
+      void notifyBooked({ data: { consultationId: created.id } }).catch(() => {});
     },
     onError: (e) =>
       toast.error(
@@ -135,10 +144,11 @@ function ConsultationsView() {
   const cancelMut = useMutation({
     mutationFn: (id: string) =>
       cancelConsultation({ consultationId: id, byUserId: user!.id, reason: "" }),
-    onSuccess: () => {
+    onSuccess: (_data, consultationId) => {
       qc.invalidateQueries({ queryKey: ["my-consultations"] });
       qc.invalidateQueries({ queryKey: ["open-slots"] });
       toast.success(t("consult.cancelled"));
+      void notifyCancelled({ data: { consultationId } }).catch(() => {});
     },
     onError: () => toast.error(t("consult.cancel_failed")),
   });

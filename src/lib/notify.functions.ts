@@ -1,0 +1,286 @@
+// Appointment notifications (S5-2, carried from S3-5).
+//
+// These run on the server because they need two things the browser must never
+// have: the service role (to read an email address, which no RLS policy
+// exposes to anyone) and the provider key.
+//
+// The order of operations matters and is the same in all three: claim the
+// delivery row first, send second. The unique index on
+// (kind, consultation_id, recipient_id) means a second attempt fails to claim
+// and returns without sending, so an hourly reminder job reminds once.
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+
+/**
+ * The service-role client, loaded on demand.
+ *
+ * A top-level import would be wrong here: this file is a `.functions.ts` and
+ * so is reachable from the client bundle, and `client.server` reaches for
+ * SUPABASE_SERVICE_ROLE_KEY. Same reason the AI gateway is imported this way.
+ */
+async function admin() {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin;
+}
+
+type Role = "applicant" | "professional";
+type Kind = "consultation_booked" | "consultation_cancelled" | "consultation_reminder";
+
+const APP_URL = () => process.env.APP_URL ?? "https://casemap.app";
+
+/** How far ahead a reminder goes out. */
+export const REMINDER_LEAD_HOURS = 24;
+
+function formatWhen(iso: string, language: string | null): string {
+  // The recipient's own language where we know it, and a fixed, unambiguous
+  // shape either way: "Sat, 9 Aug 2026, 14:00". Numeric-only dates are read
+  // differently in different countries and this is a date people plan around.
+  try {
+    return new Intl.DateTimeFormat(language ?? "en", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZoneName: "short",
+    }).format(new Date(iso));
+  } catch {
+    return new Date(iso).toISOString();
+  }
+}
+
+const MODE_TEXT: Record<string, string> = {
+  video: "Video call",
+  phone: "Phone call",
+  in_person: "In person",
+};
+
+type Loaded = {
+  consultation: {
+    id: string;
+    applicant_id: string;
+    professional_id: string;
+    topic: string | null;
+    language: string | null;
+    applicant_display_name: string | null;
+    starts_at: string;
+    mode: string;
+  };
+  professionalUserId: string;
+  professionalName: string;
+};
+
+async function load(consultationId: string): Promise<Loaded | null> {
+  const db = await admin();
+
+  const { data: c } = await db
+    .from("consultations_with_slot")
+    .select(
+      "id, applicant_id, professional_id, topic, language, applicant_display_name, starts_at, mode",
+    )
+    .eq("id", consultationId)
+    .maybeSingle();
+  // Every column on the view is nullable to TypeScript because a view has no
+  // NOT NULL metadata; the join guarantees these in practice.
+  if (!c || !c.starts_at || !c.professional_id || !c.applicant_id || !c.mode) return null;
+
+  const { data: pro } = await db
+    .from("professionals")
+    .select("user_id, display_name")
+    .eq("id", c.professional_id)
+    .maybeSingle();
+  if (!pro?.user_id) return null;
+
+  return {
+    consultation: c as Loaded["consultation"],
+    professionalUserId: pro.user_id,
+    professionalName: pro.display_name ?? "your lawyer",
+  };
+}
+
+async function emailOf(userId: string): Promise<string | null> {
+  const { data } = await (await admin()).auth.admin.getUserById(userId);
+  return data?.user?.email ?? null;
+}
+
+/**
+ * Claim the right to send. Returns the row id, or null if someone (or an
+ * earlier run) already claimed it.
+ */
+async function claim(input: {
+  kind: Kind;
+  consultationId: string;
+  recipientId: string;
+  role: Role;
+}): Promise<string | null> {
+  const { data, error } = await (
+    await admin()
+  )
+    .from("email_deliveries")
+    .insert({
+      kind: input.kind,
+      consultation_id: input.consultationId,
+      recipient_id: input.recipientId,
+      recipient_role: input.role,
+      status: "queued",
+    })
+    .select("id")
+    .single();
+  if (error) return null; // unique violation: already handled
+  return data.id;
+}
+
+async function finish(
+  deliveryId: string,
+  result: {
+    status: "sent" | "skipped" | "failed";
+    provider?: string;
+    ref?: string | null;
+    error?: string;
+  },
+) {
+  await (
+    await admin()
+  )
+    .from("email_deliveries")
+    .update({
+      status: result.status,
+      provider: result.provider ?? null,
+      provider_ref: result.ref ?? null,
+      error: result.error ?? null,
+      sent_at: result.status === "sent" ? new Date().toISOString() : null,
+    })
+    .eq("id", deliveryId);
+}
+
+/**
+ * Send one message about one appointment to one person.
+ *
+ * Every failure is recorded and none is thrown: a booking must not fail
+ * because a mail server was down.
+ */
+async function notifyOne(input: {
+  kind: Kind;
+  role: Role;
+  loaded: Loaded;
+}): Promise<"sent" | "skipped" | "failed" | "already"> {
+  const { kind, role, loaded } = input;
+  const { consultation } = loaded;
+
+  const recipientId = role === "applicant" ? consultation.applicant_id : loaded.professionalUserId;
+  const deliveryId = await claim({
+    kind,
+    consultationId: consultation.id,
+    recipientId,
+    role,
+  });
+  if (!deliveryId) return "already";
+
+  const to = await emailOf(recipientId);
+  if (!to) {
+    await finish(deliveryId, { status: "failed", error: "no email address" });
+    return "failed";
+  }
+
+  const { bookedMessage, cancelledMessage, reminderMessage, sendEmail } =
+    await import("./email.server");
+
+  const facts = {
+    when: formatWhen(consultation.starts_at, role === "applicant" ? consultation.language : "en"),
+    mode: MODE_TEXT[consultation.mode] ?? consultation.mode,
+    otherName:
+      role === "applicant"
+        ? loaded.professionalName
+        : consultation.applicant_display_name?.trim() || "Someone",
+    // The professional's copy carries the subject line the applicant wrote;
+    // the applicant's copy echoes their own words back. Neither carries case
+    // material, because the field itself cannot hold any.
+    topic: consultation.topic,
+    appUrl:
+      role === "applicant" ? `${APP_URL()}/app/consultations` : `${APP_URL()}/pro/availability`,
+  };
+
+  const message =
+    kind === "consultation_booked"
+      ? bookedMessage(facts, role)
+      : kind === "consultation_cancelled"
+        ? cancelledMessage(facts, role)
+        : reminderMessage(facts, role);
+
+  const result = await sendEmail({ to, ...message });
+  if (result.status === "sent") {
+    await finish(deliveryId, { status: "sent", provider: result.provider, ref: result.ref });
+    return "sent";
+  }
+  if (result.status === "skipped") {
+    await finish(deliveryId, { status: "skipped", error: result.reason });
+    return "skipped";
+  }
+  await finish(deliveryId, { status: "failed", error: result.error });
+  return "failed";
+}
+
+const ConsultationInput = z.object({ consultationId: z.string().uuid() });
+
+export const notifyConsultationBooked = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => ConsultationInput.parse(d))
+  .handler(async ({ data }) => {
+    const loaded = await load(data.consultationId);
+    if (!loaded) return { ok: false as const, reason: "not_found" };
+    const results = await Promise.all([
+      notifyOne({ kind: "consultation_booked", role: "applicant", loaded }),
+      notifyOne({ kind: "consultation_booked", role: "professional", loaded }),
+    ]);
+    return { ok: true as const, results };
+  });
+
+export const notifyConsultationCancelled = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => ConsultationInput.parse(d))
+  .handler(async ({ data }) => {
+    const loaded = await load(data.consultationId);
+    if (!loaded) return { ok: false as const, reason: "not_found" };
+    const results = await Promise.all([
+      notifyOne({ kind: "consultation_cancelled", role: "applicant", loaded }),
+      notifyOne({ kind: "consultation_cancelled", role: "professional", loaded }),
+    ]);
+    return { ok: true as const, results };
+  });
+
+/**
+ * Every appointment starting within the reminder window that nobody has been
+ * reminded about. Safe to run as often as you like — the claim step is what
+ * stops a second reminder, not the schedule.
+ */
+export async function sendDueReminders(): Promise<{
+  considered: number;
+  sent: number;
+  skipped: number;
+  failed: number;
+  already: number;
+}> {
+  const db = await admin();
+  const now = Date.now();
+  const horizon = new Date(now + REMINDER_LEAD_HOURS * 3600_000).toISOString();
+
+  const { data: due } = await db
+    .from("consultations_with_slot")
+    .select("id, starts_at")
+    .eq("status", "booked")
+    .gte("starts_at", new Date(now).toISOString())
+    .lte("starts_at", horizon)
+    .limit(500);
+
+  const tally = { considered: (due ?? []).length, sent: 0, skipped: 0, failed: 0, already: 0 };
+
+  for (const row of due ?? []) {
+    if (!row.id) continue;
+    const loaded = await load(row.id);
+    if (!loaded) continue;
+    for (const role of ["applicant", "professional"] as const) {
+      const outcome = await notifyOne({ kind: "consultation_reminder", role, loaded });
+      tally[outcome] += 1;
+    }
+  }
+  return tally;
+}

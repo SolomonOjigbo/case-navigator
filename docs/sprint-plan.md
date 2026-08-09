@@ -345,6 +345,86 @@ tests pass live; 143 unit tests pass.
 
 ---
 
+### Sprint 5 — Loose ends that reach a real person
+
+Not in the original four. This sprint is what §2 and the "Known limits" notes
+from Sprints 3 and 4 had accumulated: the things that would be felt by someone
+actually using the product.
+
+| Ticket | Description | Est. |
+|---|---|---|
+| S5-1 | Duplicate case creation: find the cause and make it impossible. | 2d |
+| S5-2 | Transactional email for appointments — the S3-5 carry-over. | 4d |
+| S5-3 | Who may message you, and reports that carry the messages they are about. | 3d |
+| S5-4 | Make the Arabic gap measurable and stop it widening. | 1d |
+
+**Acceptance:** twelve simultaneous callers get one case; a booking, a
+cancellation and a reminder each record exactly one delivery per person; a
+closed inbox refuses a new conversation without touching existing ones; a
+moderator sees only the messages a reporter chose to show them.
+
+#### Delivered
+
+**S5-1 — the duplicate case, cause found.** Reported in an earlier sprint and
+not diagnosed at the time. It is a read-then-insert race with two writers: the
+`handle_new_user` trigger creates a draft case on signup, and
+`getOrCreateOwnCase` creates one if it does not find one — and that function is
+called from `audit-service` on sign-in and from the consent screen as well as
+from route queries. The first two do not share React Query's cache, so two
+copies could be in flight, both find nothing, and both insert. Reproduced in
+this project's own data: the seed professional had two cases created 279ms
+apart. Clarify reads the case with `.maybeSingle()`, which is why the symptom
+was "No case yet" on a case that plainly existed.
+
+Fixed in three layers: existing duplicates merged (audit history moved, and the
+migration refuses to run if any duplicate holds real case material), a unique
+index so a second case is impossible, and `get_or_create_own_case()` doing the
+whole thing in one statement. Twelve simultaneous calls now return one id.
+
+**S5-2 — email.** Off unless `RESEND_API_KEY` is set; without it every message
+is recorded as `skipped` rather than silently dropped. Confirmation on booking,
+notice on cancellation from either side, and a reminder 24 hours ahead driven by
+a Vercel cron. The endpoint fails closed without `CRON_SECRET` — an open
+endpoint that sends mail is a way to mail people repeatedly.
+
+Two constraints in the messages themselves: no case material (the fields they
+draw on cannot hold any), and no tracking pixels, remote images or click
+wrapping — all three tell a third party when a refugee opened their mail. Send
+once is enforced by claiming a row in `email_deliveries` before sending, so the
+hourly job reminds once; proved by running it twice.
+
+**S5-3 — message controls.** `dm_policy` on a community profile decides who may
+*start* a conversation; existing threads are untouched, because closing an inbox
+should not silently end conversations already under way. And a reported
+conversation now carries the specific messages the reporter ticked. A moderator
+still cannot read a thread — the excerpts are copied into the report, only the
+reporter can attach them, and only their own messages from that person are
+offered. This is the one path by which anything private becomes visible, and
+the screen says so before anything is sent.
+
+**S5-4 — the Arabic gap, measured.** `npm run i18n:report` gives the real
+number: **571 strings need a translator** — 424 missing outright and 147 present
+but still in English, which the earlier "424 missing" count had not caught. Five
+tests hold the line: namespaces added since Sprint 3 must be complete in both
+languages, no English may sit in `ar.json` for those, the overall gap has a
+ceiling that may only fall, no orphan keys, and interpolation variables must
+match — `{{when}}` rendered as anything else prints a placeholder to the person
+least able to work out what it meant.
+
+#### Known limits
+
+- **Email is built but unproven against a real provider.** Every path was
+  exercised with no key configured, which exercises everything except the
+  provider call itself. The first deployment with `RESEND_API_KEY` set should
+  book one appointment and check the mail arrives.
+- **Reminders are a single 24-hour notice.** No second reminder, no per-person
+  preference, no unsubscribe link — the only mail this sends is about an
+  appointment the person booked themselves.
+- **The Arabic ceiling is 430, not 0.** The check stops the gap widening; it
+  does not close it. That still needs a translator.
+
+---
+
 ## 4. Sequencing rationale
 
 Sprint 1 first because it is the only one of the four features with a
@@ -365,7 +445,7 @@ but S4-1 (verification) then has to move ahead of S3, not after it. Putting an
 unverified name in front of an asylum claimant is the real exposure in the
 booking model, and it is cheap to prevent.
 
-**Status: Sprints 1 and 2 shipped 2026-08-08** (`39334ea`, `709b1bd`) — documentation
+**Status: Sprints 1–5 shipped.** Sprints 1 and 2 on 2026-08-08 (`39334ea`, `709b1bd`) — documentation
 advisor, narrative intake, guardrail tests, plus two bugs found on the way (a
 missing `<Outlet />` that made the story sections unreachable, and a delete in
 analyzeGaps that would have wiped the advisor's output). Sprint 2 surfaced the
