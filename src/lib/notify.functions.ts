@@ -7,7 +7,8 @@
 // The order of operations matters and is the same in all three: claim the
 // delivery row first, send second. The unique index on
 // (kind, consultation_id, recipient_id) means a second attempt fails to claim
-// and returns without sending, so an hourly reminder job reminds once.
+// and returns without sending, so the reminder job reminds once however often
+// it runs.
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
@@ -28,8 +29,26 @@ type Kind = "consultation_booked" | "consultation_cancelled" | "consultation_rem
 
 const APP_URL = () => process.env.APP_URL ?? "https://casemap.app";
 
-/** How far ahead a reminder goes out. */
-export const REMINDER_LEAD_HOURS = 24;
+/**
+ * How far ahead the reminder job looks.
+ *
+ * This is 48 rather than 24 because the job runs **once a day** — Vercel's
+ * Hobby plan allows one cron run per day, and an hourly schedule fails the
+ * deployment outright. With a daily run and a 24-hour window, an appointment
+ * at 09:00 tomorrow would miss today's 08:00 sweep by an hour and be picked up
+ * by tomorrow's, giving the person one hour's notice for something they may
+ * need to arrange childcare or time off work for.
+ *
+ * A 48-hour window means every appointment is caught by a sweep at least a day
+ * before it starts, and at most two. Reminding slightly early is a far smaller
+ * failure than reminding an hour before.
+ *
+ * On a plan that allows an hourly cron, narrowing this to 24 and setting the
+ * schedule in vercel.json back to `0 * * * *` gives a tighter, more useful
+ * reminder. Nothing else has to change: sending once is enforced by claiming a
+ * row in email_deliveries, not by the schedule.
+ */
+export const REMINDER_WINDOW_HOURS = 48;
 
 function formatWhen(iso: string, language: string | null): string {
   // The recipient's own language where we know it, and a fixed, unambiguous
@@ -261,7 +280,7 @@ export async function sendDueReminders(): Promise<{
 }> {
   const db = await admin();
   const now = Date.now();
-  const horizon = new Date(now + REMINDER_LEAD_HOURS * 3600_000).toISOString();
+  const horizon = new Date(now + REMINDER_WINDOW_HOURS * 3600_000).toISOString();
 
   const { data: due } = await db
     .from("consultations_with_slot")

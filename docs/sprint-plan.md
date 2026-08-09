@@ -383,9 +383,20 @@ whole thing in one statement. Twelve simultaneous calls now return one id.
 
 **S5-2 — email.** Off unless `RESEND_API_KEY` is set; without it every message
 is recorded as `skipped` rather than silently dropped. Confirmation on booking,
-notice on cancellation from either side, and a reminder 24 hours ahead driven by
-a Vercel cron. The endpoint fails closed without `CRON_SECRET` — an open
-endpoint that sends mail is a way to mail people repeatedly.
+notice on cancellation from either side, and a reminder a day or two ahead
+driven by a Vercel cron. The endpoint fails closed without `CRON_SECRET` — an
+open endpoint that sends mail is a way to mail people repeatedly.
+
+The cron runs **once a day**, not hourly: Vercel's Hobby plan permits one run
+per day and rejects anything more frequent at deploy time, which fails the whole
+deployment rather than just the job. That is why the lookahead window is 48
+hours and not 24 — with a daily sweep and a 24-hour window, an appointment at
+09:00 tomorrow would miss today's run by an hour and be picked up by tomorrow's,
+giving someone one hour's notice for something they may need to take time off
+work for. A 48-hour window means every appointment is caught at least a day
+ahead, and at most two. On a plan with hourly crons, set the schedule back to
+`0 * * * *` and the window to 24; nothing else changes, because sending once is
+enforced by claiming a delivery row rather than by the schedule.
 
 Two constraints in the messages themselves: no case material (the fields they
 draw on cannot hold any), and no tracking pixels, remote images or click
@@ -417,9 +428,10 @@ least able to work out what it meant.
   exercised with no key configured, which exercises everything except the
   provider call itself. The first deployment with `RESEND_API_KEY` set should
   book one appointment and check the mail arrives.
-- **Reminders are a single 24-hour notice.** No second reminder, no per-person
-  preference, no unsubscribe link — the only mail this sends is about an
-  appointment the person booked themselves.
+- **Reminders are a single notice, one to two days ahead.** No second reminder,
+  no per-person preference, no unsubscribe link — the only mail this sends is
+  about an appointment the person booked themselves. The imprecise timing is a
+  consequence of the daily cron the Hobby plan allows.
 - **The Arabic ceiling is 430, not 0.** The check stops the gap widening; it
   does not close it. That still needs a translator.
 
