@@ -1,9 +1,14 @@
 // The reminder job (S5-2).
 //
-// Called on a schedule by Vercel Cron (see vercel.json). Guarded by a shared
-// secret rather than left open: the endpoint sends mail, so an open one is a
-// way to make this product email people repeatedly. The guard is constant-time
-// so the secret cannot be recovered a character at a time.
+// Called on a schedule by Vercel Cron (see vercel.json). Once a day, because
+// the Hobby plan allows no more than that — an hourly schedule is rejected at
+// deploy time, not at run time, so it fails the whole deployment. The daily
+// cadence is why the lookahead window in notify.functions is 48 hours.
+//
+// Guarded by a shared secret rather than left open: the endpoint sends mail,
+// so an open one is a way to make this product email people repeatedly. The
+// guard is constant-time so the secret cannot be recovered a character at a
+// time.
 //
 // Sending once is not this endpoint's job — `sendDueReminders` claims a
 // delivery row before it sends, so running this every minute would still send
