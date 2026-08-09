@@ -527,6 +527,91 @@ names, places, dates or file numbers — and they answer each other.
 
 ---
 
+### Sprint 7 — The community holds together as it grows
+
+Two problems that only appear once people actually use a forum. Someone asks a
+question, a stranger spends twenty minutes writing a careful answer, and the
+person who asked never finds out — the answer sits unread and both of them
+conclude the place is empty. And one account can post as fast as it can type.
+
+| Ticket | Description | Est. |
+|---|---|---|
+| S7-1 | Reply notifications: in-app, block-aware, with an unread count. | 3d |
+| S7-2 | A daily digest email, folded into the existing sweep, with a switch. | 2d |
+| S7-3 | Look at a draft for identifying details before it becomes public. | 3d |
+| S7-4 | Posting rate limits in the database. | 1d |
+
+**Acceptance:** a reply notifies the topic author and everyone who replied
+before, and nobody else; a blocked person's reply notifies nothing; a draft
+containing a phone number pauses before publishing and can still be published;
+a seventh topic in an hour is refused with a sentence a person can read.
+
+#### Delivered
+
+**Notifications are written by a trigger and never by a client.** There is no
+INSERT policy on the table, deliberately — if the client could write them,
+anyone could put text in front of a person who had blocked them. The trigger
+fans out to the topic author and to everyone who replied before, minus the
+writer, minus anyone who turned notifications off, and minus either side of a
+block. Verified against the live project: `reply_to_topic` to the author,
+`reply_after_you` to earlier repliers, nothing to the writer, nothing readable
+by anyone else, and nothing at all once a block exists.
+
+**The digest runs in the same daily sweep as the appointment reminders.** Not
+for elegance: the Hobby plan allows very few cron entries, and one endpoint
+that does the day's work is one fewer thing to discover has silently stopped.
+Both jobs run under `Promise.allSettled`, so a failure in one cannot skip the
+other. "Once a day" comes from stamping `emailed_at` on the notifications a
+message covered, not from the schedule — the second run of the sweep found
+nothing left to send.
+
+The digest names who replied and where, and carries nothing else: no case
+material, and — unlike the in-app screen — no excerpt of the reply. The app is
+behind a sign-in; an inbox may be shared, read over a shoulder, or synced to a
+device the person does not control.
+
+**The draft check (S7-3) is the piece worth arguing about.** It looks for email
+addresses, phone numbers, case and reference numbers, links, full dates and
+postcodes, and it never blocks, never accuses, and runs entirely on the device
+— a privacy check that transmits the text being checked is not one. It stays
+silent unless it has something, because warning on every post is how a check
+teaches people to dismiss it before the night it matters.
+
+The false-positive tests matter more than the true-positive ones, and they are
+written from sentences people in this forum actually write: "I have been
+waiting 11 months", "my children are 8 and 13", "there were 3 of us in the
+room". None of them trips it. "+44 7700 900123" and "my file number is
+A-1234567" both do.
+
+**Rate limits** are six topics and forty replies an hour, set far above what a
+person does and far below what a script does, enforced in the database because
+the client is not the only way to reach the table. The refusal reaches someone
+as a sentence rather than as `rate_limited`.
+
+**The email provider question from Sprint 5 is now answered.** The first live
+send returned `403 ... domain is not verified` from the provider. The key
+works and the path works; the sending domain needs verifying with the
+provider. That failure was visible only as a number in a cron response, which
+is why digest sends now join `email_deliveries` with their reason — the same
+record every other message this product sends already had.
+
+#### Known limits
+
+- **Nothing verifies the sending domain for you.** Until it is verified at the
+  provider, every digest and every appointment email records `failed` with that
+  403. The app is unaffected; the mail simply does not go.
+- **The draft check is patterns, not understanding.** It will not notice a
+  village named in prose, or "the man who ran the checkpoint on my street". The
+  composer notice is still the primary defence; this catches the mechanical
+  cases.
+- **Moderation is still reactive.** Reports, blocks and rate limits work;
+  nothing reads a post before it appears, and at this size that remains the
+  right trade.
+- **No notification for direct messages.** Only forum replies notify. A DM
+  arriving is arguably more urgent, and is the obvious next addition.
+
+---
+
 ## 4. Sequencing rationale
 
 Sprint 1 first because it is the only one of the four features with a
@@ -547,7 +632,7 @@ but S4-1 (verification) then has to move ahead of S3, not after it. Putting an
 unverified name in front of an asylum claimant is the real exposure in the
 booking model, and it is cheap to prevent.
 
-**Status: Sprints 1–6 shipped.** Sprints 1 and 2 on 2026-08-08 (`39334ea`, `709b1bd`) — documentation
+**Status: Sprints 1–7 shipped.** Sprints 1 and 2 on 2026-08-08 (`39334ea`, `709b1bd`) — documentation
 advisor, narrative intake, guardrail tests, plus two bugs found on the way (a
 missing `<Outlet />` that made the story sections unreachable, and a delete in
 analyzeGaps that would have wiped the advisor's output). Sprint 2 surfaced the

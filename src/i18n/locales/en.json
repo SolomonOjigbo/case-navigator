@@ -133,7 +133,8 @@
     "nav_my_case": "My case",
     "nav_talk_to_lawyer": "Talk to a lawyer",
     "section_private": "Private to you",
-    "section_moderation": "Moderation"
+    "section_moderation": "Moderation",
+    "nav_notifications": "Notifications"
   },
   "auth_page": {
     "heading_signin": "Sign in",
@@ -1207,5 +1208,36 @@
     "search_count_other": "{{count}} results",
     "days_ago_one": "active 1 day ago",
     "days_ago_other": "active {{count}} days ago"
+  },
+  "draft_check": {
+    "title": "Before you post",
+    "intro": "We noticed a few things in your draft that can identify a person. Have a look — it is your choice whether to change them.",
+    "local": "This check happened on your device. Your draft is never sent anywhere to be checked.",
+    "finding_email": "This looks like an email address.",
+    "finding_phone": "This looks like a phone number.",
+    "finding_reference_number": "This looks like a case, file or reference number.",
+    "finding_link": "This is a link. Links can carry information about who followed them.",
+    "finding_full_date": "This is a full date. A date of birth or a hearing date can identify someone.",
+    "finding_postcode": "This looks like a postcode.",
+    "go_back": "Let me edit it",
+    "post_anyway": "Post it as it is"
+  },
+  "notif": {
+    "title": "What is waiting",
+    "intro": "When someone replies to you, it shows up here.",
+    "nav": "Notifications",
+    "unread": "unread",
+    "a_topic": "a topic",
+    "kind_reply_to_topic": "{{who}} replied to your topic “{{topic}}”",
+    "kind_reply_after_you": "{{who}} replied in “{{topic}}”",
+    "mark_all_read": "Mark all as read",
+    "settings": "Notification settings",
+    "none": "Nothing waiting.",
+    "none_help": "When someone answers a question you asked, or joins a conversation you are in, you will see it here.",
+    "prefs_label": "Replies and notifications",
+    "prefs_in_app": "Tell me in the app when someone replies to me.",
+    "prefs_email": "Send me one email a day if something is waiting.",
+    "prefs_email_help": "One message a day at most, and only when there is something unread. It names who replied and where — never anything from your case.",
+    "rate_limited": "You have posted a lot in a short time. Please try again shortly."
   }
 }

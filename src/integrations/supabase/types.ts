@@ -571,6 +571,57 @@ export type Database = {
           },
         ]
       }
+      community_notifications: {
+        Row: {
+          actor_id: string
+          comment_id: string | null
+          created_at: string
+          emailed_at: string | null
+          id: string
+          kind: string
+          read_at: string | null
+          recipient_id: string
+          topic_id: string | null
+        }
+        Insert: {
+          actor_id: string
+          comment_id?: string | null
+          created_at?: string
+          emailed_at?: string | null
+          id?: string
+          kind: string
+          read_at?: string | null
+          recipient_id: string
+          topic_id?: string | null
+        }
+        Update: {
+          actor_id?: string
+          comment_id?: string | null
+          created_at?: string
+          emailed_at?: string | null
+          id?: string
+          kind?: string
+          read_at?: string | null
+          recipient_id?: string
+          topic_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_notifications_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "community_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_notifications_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_posts: {
         Row: {
           author_id: string
@@ -637,8 +688,10 @@ export type Database = {
           created_at: string
           display_name: string | null
           dm_policy: string
+          email_digest: boolean
           handle: string
           id: string
+          notify_replies: boolean
           updated_at: string
           user_id: string
         }
@@ -648,8 +701,10 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           dm_policy?: string
+          email_digest?: boolean
           handle: string
           id?: string
+          notify_replies?: boolean
           updated_at?: string
           user_id: string
         }
@@ -659,8 +714,10 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           dm_policy?: string
+          email_digest?: boolean
           handle?: string
           id?: string
+          notify_replies?: boolean
           updated_at?: string
           user_id?: string
         }
@@ -2876,6 +2933,7 @@ export type Database = {
         Args: { p_professional_id: string }
         Returns: boolean
       }
+      mark_notifications_read: { Args: never; Returns: undefined }
       revoke_professional_verification: {
         Args: { p_note?: string; p_professional_id: string }
         Returns: undefined

@@ -64,6 +64,8 @@ const KEPT_COMPLETE = [
   "admin_shell",
   "dm",
   "forum",
+  "notif",
+  "draft_check",
 ] as const;
 
 /**

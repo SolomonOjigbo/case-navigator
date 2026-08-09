@@ -234,8 +234,18 @@ export async function createTopic(input: {
     })
     .select("id")
     .single();
-  if (error) throw error;
+  if (error) throw asPostingError(error);
   return data.id;
+}
+
+/**
+ * The rate limit reaches a person, so it must not reach them as
+ * "rate_limited". Everything else is passed through unchanged.
+ */
+export function asPostingError(error: { message?: string; hint?: string | null }): Error {
+  const text = `${error.message ?? ""} ${error.hint ?? ""}`;
+  if (/rate_limited/.test(text)) return new Error("rate_limited");
+  return new Error(error.message ?? "unknown");
 }
 
 /**

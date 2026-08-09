@@ -12,6 +12,10 @@ export type CommunityProfile = {
   bio: string | null;
   /** Who may start a new conversation with this person (S5-3). */
   dm_policy: DmPolicy;
+  /** In-app notifications when someone replies (S7-1). */
+  notify_replies: boolean;
+  /** One digest email a day when something is unread (S7-2). */
+  email_digest: boolean;
 };
 
 export type PostAuthor = Pick<
@@ -49,7 +53,7 @@ export const HANDLE_RE = /^[a-z0-9_]{3,20}$/;
 export async function getMyCommunityProfile(userId: string) {
   const { data, error } = await supabase
     .from("community_profiles")
-    .select("id,user_id,handle,display_name,avatar_url,bio,dm_policy")
+    .select("id,user_id,handle,display_name,avatar_url,bio,dm_policy,notify_replies,email_digest")
     .eq("user_id", userId)
     .maybeSingle();
   if (error) throw error;
@@ -62,6 +66,8 @@ export async function upsertCommunityProfile(input: {
   displayName: string | null;
   bio: string | null;
   dmPolicy?: DmPolicy;
+  notifyReplies?: boolean;
+  emailDigest?: boolean;
 }) {
   const existing = await getMyCommunityProfile(input.userId);
   if (existing) {
@@ -72,6 +78,8 @@ export async function upsertCommunityProfile(input: {
         display_name: input.displayName,
         bio: input.bio,
         ...(input.dmPolicy ? { dm_policy: input.dmPolicy } : {}),
+        ...(input.notifyReplies === undefined ? {} : { notify_replies: input.notifyReplies }),
+        ...(input.emailDigest === undefined ? {} : { email_digest: input.emailDigest }),
       })
       .eq("user_id", input.userId);
     if (error) throw error;
@@ -82,6 +90,8 @@ export async function upsertCommunityProfile(input: {
       display_name: input.displayName,
       bio: input.bio,
       dm_policy: input.dmPolicy ?? "anyone",
+      notify_replies: input.notifyReplies ?? true,
+      email_digest: input.emailDigest ?? true,
     });
     if (error) throw error;
   }
@@ -166,7 +176,12 @@ export async function addComment(input: { postId: string; authorId: string; body
     author_id: input.authorId,
     body: input.body,
   });
-  if (error) throw error;
+  // The posting rate limit surfaces here as well as on topics; the screen
+  // needs a sentence, not "rate_limited".
+  if (error) {
+    const { asPostingError } = await import("./forum-service");
+    throw asPostingError(error);
+  }
 }
 
 export async function listRooms(): Promise<Room[]> {

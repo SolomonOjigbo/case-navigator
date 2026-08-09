@@ -26,6 +26,8 @@ import { ProfileGate } from "@/components/community/ProfileGate";
 import { useSession } from "@/hooks/use-session";
 import { getMyCommunityProfile } from "@/lib/community-service";
 import { BODY_MAX, TITLE_MAX, TITLE_MIN, createTopic, listCategories } from "@/lib/forum-service";
+import { checkDraft, type DraftFinding } from "@/lib/draft-check";
+import { DraftCheckDialog } from "@/components/community/DraftCheckDialog";
 
 type Search = { category?: string };
 
@@ -47,6 +49,10 @@ function Composer() {
   const [categoryId, setCategoryId] = useState("");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  // Findings held here rather than recomputed on every keystroke: the check
+  // runs once, when someone presses post, so nothing flickers at them while
+  // they are still deciding what to say.
+  const [findings, setFindings] = useState<DraftFinding[]>([]);
 
   const categoriesQ = useQuery({ queryKey: ["forum-categories-plain"], queryFn: listCategories });
 
@@ -76,10 +82,25 @@ function Composer() {
       toast.success(t("forum.posted"));
       navigate({ to: "/community/t/$topicId", params: { topicId: id } });
     },
-    onError: () => toast.error(t("forum.post_failed")),
+    onError: (e) =>
+      toast.error(
+        e instanceof Error && e.message === "rate_limited"
+          ? t("notif.rate_limited")
+          : t("forum.post_failed"),
+      ),
   });
 
   const canPost = title.trim().length >= TITLE_MIN && body.trim().length > 0 && categoryId !== "";
+
+  /** Look at the draft first; publish only if there is nothing to mention. */
+  function attemptPost() {
+    const found = checkDraft(`${title}\n${body}`);
+    if (found.length > 0) {
+      setFindings(found);
+      return;
+    }
+    createMut.mutate();
+  }
 
   return (
     <div className="reading-column py-2 sm:py-4">
@@ -110,7 +131,7 @@ function Composer() {
         className="grid gap-4"
         onSubmit={(e) => {
           e.preventDefault();
-          if (canPost) createMut.mutate();
+          if (canPost) attemptPost();
         }}
       >
         <div className="grid gap-1.5">
@@ -169,6 +190,15 @@ function Composer() {
           ) : null}
         </div>
       </form>
+      <DraftCheckDialog
+        open={findings.length > 0}
+        findings={findings}
+        onEdit={() => setFindings([])}
+        onPostAnyway={() => {
+          setFindings([]);
+          createMut.mutate();
+        }}
+      />
     </div>
   );
 }

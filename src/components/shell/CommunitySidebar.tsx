@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
+  Bell,
   MessagesSquare,
   Hash,
   User,
@@ -15,6 +16,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { useSession } from "@/hooks/use-session";
 import { isPlatformAdmin } from "@/lib/moderation-service";
+import { countUnread } from "@/lib/notification-service";
 import {
   Sidebar,
   SidebarContent,
@@ -51,8 +53,19 @@ export function CommunitySidebar() {
     queryFn: () => isPlatformAdmin(user!.id),
   });
 
+  // A count beside the link, so someone knows to look without being
+  // interrupted by a popup while they are reading something else.
+  const unreadQ = useQuery({
+    queryKey: ["notifications-unread", user?.id],
+    enabled: !!user?.id,
+    queryFn: countUnread,
+    refetchInterval: 60_000,
+  });
+  const unread = unreadQ.data ?? 0;
+
   const forumItems = [
     { to: "/community", key: "nav_forums", icon: LayoutGrid, exact: true },
+    { to: "/community/notifications", key: "nav_notifications", icon: Bell },
     { to: "/community/search", key: "nav_search", icon: Search },
     { to: "/community/rooms", key: "nav_rooms", icon: Hash },
     { to: "/community/messages", key: "nav_messages", icon: MessagesSquare },
@@ -92,7 +105,12 @@ export function CommunitySidebar() {
                   >
                     <Link to={to} className="flex items-center gap-2">
                       <Icon className="h-4 w-4" aria-hidden />
-                      <span>{t(`community.${key}`)}</span>
+                      <span className="flex-1">{t(`community.${key}`)}</span>
+                      {key === "nav_notifications" && unread > 0 ? (
+                        <span className="chip-brand shrink-0 px-1.5 py-0 text-[0.6875rem] tabular-nums">
+                          {unread > 99 ? "99+" : unread}
+                        </span>
+                      ) : null}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

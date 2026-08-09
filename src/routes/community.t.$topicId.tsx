@@ -26,6 +26,8 @@ import {
   toggleLike,
 } from "@/lib/community-service";
 import { getTopic, setTopicPinned, topicHeading } from "@/lib/forum-service";
+import { checkDraft, type DraftFinding } from "@/lib/draft-check";
+import { DraftCheckDialog } from "@/components/community/DraftCheckDialog";
 
 function TopicView() {
   return (
@@ -41,6 +43,8 @@ function Thread() {
   const { user } = useSession();
   const qc = useQueryClient();
   const [reply, setReply] = useState("");
+  // A reply is as public as a topic, so it gets the same look before it goes.
+  const [findings, setFindings] = useState<DraftFinding[]>([]);
 
   const topicQ = useQuery({
     queryKey: ["forum-topic", topicId, user?.id],
@@ -66,13 +70,27 @@ function Thread() {
     qc.invalidateQueries({ queryKey: ["forum-topics"] });
   };
 
+  function attemptReply() {
+    const found = checkDraft(reply);
+    if (found.length > 0) {
+      setFindings(found);
+      return;
+    }
+    replyMut.mutate();
+  }
+
   const replyMut = useMutation({
     mutationFn: () => addComment({ postId: topicId, authorId: user!.id, body: reply.trim() }),
     onSuccess: () => {
       setReply("");
       invalidate();
     },
-    onError: () => toast.error(t("forum.reply_failed")),
+    onError: (e) =>
+      toast.error(
+        e instanceof Error && e.message === "rate_limited"
+          ? t("notif.rate_limited")
+          : t("forum.reply_failed"),
+      ),
   });
 
   const likeMut = useMutation({
@@ -210,7 +228,7 @@ function Thread() {
           className="mt-4 grid gap-2"
           onSubmit={(e) => {
             e.preventDefault();
-            if (reply.trim()) replyMut.mutate();
+            if (reply.trim()) attemptReply();
           }}
         >
           <Textarea
@@ -232,6 +250,16 @@ function Thread() {
           </div>
         </form>
       </section>
+
+      <DraftCheckDialog
+        open={findings.length > 0}
+        findings={findings}
+        onEdit={() => setFindings([])}
+        onPostAnyway={() => {
+          setFindings([]);
+          replyMut.mutate();
+        }}
+      />
     </div>
   );
 }

@@ -37,6 +37,7 @@ import { Route as CommunityFeedRouteImport } from './routes/community.feed'
 import { Route as CommunityMessagesRouteImport } from './routes/community.messages'
 import { Route as CommunityModerationRouteImport } from './routes/community.moderation'
 import { Route as CommunityNewRouteImport } from './routes/community.new'
+import { Route as CommunityNotificationsRouteImport } from './routes/community.notifications'
 import { Route as CommunityProfileRouteImport } from './routes/community.profile'
 import { Route as CommunityRoomsRouteImport } from './routes/community.rooms'
 import { Route as CommunitySearchRouteImport } from './routes/community.search'
@@ -198,6 +199,11 @@ const CommunityNewRoute = CommunityNewRouteImport.update({
   path: '/new',
   getParentRoute: () => CommunityRoute,
 } as any)
+const CommunityNotificationsRoute = CommunityNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => CommunityRoute,
+} as any)
 const CommunityProfileRoute = CommunityProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -329,6 +335,7 @@ export interface FileRoutesByFullPath {
   '/community/messages': typeof CommunityMessagesRouteWithChildren
   '/community/moderation': typeof CommunityModerationRoute
   '/community/new': typeof CommunityNewRoute
+  '/community/notifications': typeof CommunityNotificationsRoute
   '/community/profile': typeof CommunityProfileRoute
   '/community/rooms': typeof CommunityRoomsRouteWithChildren
   '/community/search': typeof CommunitySearchRoute
@@ -376,6 +383,7 @@ export interface FileRoutesByTo {
   '/community/feed': typeof CommunityFeedRoute
   '/community/moderation': typeof CommunityModerationRoute
   '/community/new': typeof CommunityNewRoute
+  '/community/notifications': typeof CommunityNotificationsRoute
   '/community/profile': typeof CommunityProfileRoute
   '/community/search': typeof CommunitySearchRoute
   '/debug/guardrails': typeof DebugGuardrailsRoute
@@ -426,6 +434,7 @@ export interface FileRoutesById {
   '/community/messages': typeof CommunityMessagesRouteWithChildren
   '/community/moderation': typeof CommunityModerationRoute
   '/community/new': typeof CommunityNewRoute
+  '/community/notifications': typeof CommunityNotificationsRoute
   '/community/profile': typeof CommunityProfileRoute
   '/community/rooms': typeof CommunityRoomsRouteWithChildren
   '/community/search': typeof CommunitySearchRoute
@@ -478,6 +487,7 @@ export interface FileRouteTypes {
     | '/community/messages'
     | '/community/moderation'
     | '/community/new'
+    | '/community/notifications'
     | '/community/profile'
     | '/community/rooms'
     | '/community/search'
@@ -525,6 +535,7 @@ export interface FileRouteTypes {
     | '/community/feed'
     | '/community/moderation'
     | '/community/new'
+    | '/community/notifications'
     | '/community/profile'
     | '/community/search'
     | '/debug/guardrails'
@@ -574,6 +585,7 @@ export interface FileRouteTypes {
     | '/community/messages'
     | '/community/moderation'
     | '/community/new'
+    | '/community/notifications'
     | '/community/profile'
     | '/community/rooms'
     | '/community/search'
@@ -808,6 +820,13 @@ declare module '@tanstack/react-router' {
       path: '/new'
       fullPath: '/community/new'
       preLoaderRoute: typeof CommunityNewRouteImport
+      parentRoute: typeof CommunityRoute
+    }
+    '/community/notifications': {
+      id: '/community/notifications'
+      path: '/notifications'
+      fullPath: '/community/notifications'
+      preLoaderRoute: typeof CommunityNotificationsRouteImport
       parentRoute: typeof CommunityRoute
     }
     '/community/profile': {
@@ -1065,6 +1084,7 @@ interface CommunityRouteChildren {
   CommunityMessagesRoute: typeof CommunityMessagesRouteWithChildren
   CommunityModerationRoute: typeof CommunityModerationRoute
   CommunityNewRoute: typeof CommunityNewRoute
+  CommunityNotificationsRoute: typeof CommunityNotificationsRoute
   CommunityProfileRoute: typeof CommunityProfileRoute
   CommunityRoomsRoute: typeof CommunityRoomsRouteWithChildren
   CommunitySearchRoute: typeof CommunitySearchRoute
@@ -1078,6 +1098,7 @@ const CommunityRouteChildren: CommunityRouteChildren = {
   CommunityMessagesRoute: CommunityMessagesRouteWithChildren,
   CommunityModerationRoute: CommunityModerationRoute,
   CommunityNewRoute: CommunityNewRoute,
+  CommunityNotificationsRoute: CommunityNotificationsRoute,
   CommunityProfileRoute: CommunityProfileRoute,
   CommunityRoomsRoute: CommunityRoomsRouteWithChildren,
   CommunitySearchRoute: CommunitySearchRoute,
