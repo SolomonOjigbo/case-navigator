@@ -1,7 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
 
-const BASE_URL = "";
+import { SITE_URL } from "@/config/site";
+
+// The sitemap spec requires absolute URLs; this was empty, which made every
+// <loc> a bare path and the whole file useless to a crawler.
+const BASE_URL = SITE_URL;
 
 interface SitemapEntry {
   path: string;
@@ -13,9 +17,11 @@ export const Route = createFileRoute("/sitemap.xml")({
   server: {
     handlers: {
       GET: async () => {
-        const entries: SitemapEntry[] = [
-          { path: "/", changefreq: "weekly", priority: "1.0" },
-        ];
+        // Only what a signed-out visitor can actually reach. The forums, the
+        // case workspace, the professional and admin areas are all behind a
+        // sign-in, and listing them would advertise URLs that answer with a
+        // redirect — see public/robots.txt, which disallows the same set.
+        const entries: SitemapEntry[] = [{ path: "/", changefreq: "weekly", priority: "1.0" }];
 
         const urls = entries.map((e) =>
           [

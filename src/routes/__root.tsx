@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { initI18n, dirFor } from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
+import { SITE_URL } from "@/config/site";
 import { Toaster } from "@/components/ui/sonner";
 
 // Initialize i18n on both server (fallback lang) and client (detected lang).
@@ -95,6 +96,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content: "A private, calm space to organize your asylum or refugee protection claim.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: SITE_URL },
+      { property: "og:site_name", content: "CaseMap" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
@@ -102,6 +105,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
+      // Points at the production origin so a preview deployment does not ask
+      // to be indexed in place of it.
+      { rel: "canonical", href: SITE_URL },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" },
     ],
