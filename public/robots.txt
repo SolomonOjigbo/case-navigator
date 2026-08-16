@@ -1,6 +1,24 @@
+# CaseMap
+#
+# Everything below /app, /community, /pro and /admin is behind a sign-in, so a
+# crawler reaching them gets a redirect and nothing else. They are listed here
+# so that stays true by intention rather than by accident, and so no forum
+# thread written by someone claiming asylum can end up in a search result if
+# the auth gate is ever relaxed without thinking about it.
+#
+# If the forums are ever opened to signed-out readers, this file is the first
+# thing to revisit — not the last.
+
 User-agent: *
 Allow: /
 Disallow: /auth
-Disallow: /reset-password
-Disallow: /dashboard
-Disallow: /intake
+Disallow: /app
+Disallow: /community
+Disallow: /pro
+Disallow: /admin
+Disallow: /consent
+Disallow: /orientation
+Disallow: /recovery-codes
+Disallow: /api
+
+Sitemap: https://casemap.app/sitemap.xml
