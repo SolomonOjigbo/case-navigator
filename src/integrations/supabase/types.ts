@@ -264,6 +264,90 @@ export type Database = {
           },
         ]
       }
+      beta_reports: {
+        Row: {
+          created_at: string
+          doing: string
+          expected: string | null
+          happened: string
+          id: string
+          occurrences: string
+          path: string | null
+          reporter_id: string
+          severity: string
+          status: string
+          triage_note: string | null
+          triaged_at: string | null
+          triaged_by: string | null
+          user_agent: string | null
+          viewport: string | null
+        }
+        Insert: {
+          created_at?: string
+          doing: string
+          expected?: string | null
+          happened: string
+          id?: string
+          occurrences?: string
+          path?: string | null
+          reporter_id: string
+          severity?: string
+          status?: string
+          triage_note?: string | null
+          triaged_at?: string | null
+          triaged_by?: string | null
+          user_agent?: string | null
+          viewport?: string | null
+        }
+        Update: {
+          created_at?: string
+          doing?: string
+          expected?: string | null
+          happened?: string
+          id?: string
+          occurrences?: string
+          path?: string | null
+          reporter_id?: string
+          severity?: string
+          status?: string
+          triage_note?: string | null
+          triaged_at?: string | null
+          triaged_by?: string | null
+          user_agent?: string | null
+          viewport?: string | null
+        }
+        Relationships: []
+      }
+      beta_testers: {
+        Row: {
+          cohort: string
+          ended_at: string | null
+          invited_at: string
+          joined_at: string | null
+          note: string | null
+          persona: string | null
+          user_id: string
+        }
+        Insert: {
+          cohort?: string
+          ended_at?: string | null
+          invited_at?: string
+          joined_at?: string | null
+          note?: string | null
+          persona?: string | null
+          user_id: string
+        }
+        Update: {
+          cohort?: string
+          ended_at?: string | null
+          invited_at?: string
+          joined_at?: string | null
+          note?: string | null
+          persona?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       cases: {
         Row: {
           applicant_id: string
@@ -410,6 +494,7 @@ export type Database = {
       }
       community_categories: {
         Row: {
+          audience: string
           created_at: string
           description: string | null
           id: string
@@ -419,6 +504,7 @@ export type Database = {
           sort_order: number
         }
         Insert: {
+          audience?: string
           created_at?: string
           description?: string | null
           id?: string
@@ -428,6 +514,7 @@ export type Database = {
           sort_order?: number
         }
         Update: {
+          audience?: string
           created_at?: string
           description?: string | null
           id?: string
@@ -2900,6 +2987,7 @@ export type Database = {
         Args: { p_professional_id: string }
         Returns: boolean
       }
+      can_read_category: { Args: { p_category_id: string }; Returns: boolean }
       cascade_stale_from_fact: {
         Args: { _correction_id?: string; _fact_id: string }
         Returns: Json
@@ -2947,6 +3035,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_beta_tester: { Args: { p_user?: string }; Returns: boolean }
       is_blocked_pair: { Args: { _a: string; _b: string }; Returns: boolean }
       is_bookable_professional: {
         Args: { p_professional_id: string }

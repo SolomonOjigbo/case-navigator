@@ -19,6 +19,7 @@ import { Route as OrientationRouteImport } from './routes/orientation'
 import { Route as ProRouteImport } from './routes/pro'
 import { Route as RecoveryCodesRouteImport } from './routes/recovery-codes'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as AdminBetaRouteImport } from './routes/admin.beta'
 import { Route as AdminProfessionalsRouteImport } from './routes/admin.professionals'
 import { Route as ApiRemindersRouteImport } from './routes/api.reminders'
 import { Route as AppActivityRouteImport } from './routes/app.activity'
@@ -34,6 +35,7 @@ import { Route as AppStoryRouteImport } from './routes/app.story'
 import { Route as AppTimelineRouteImport } from './routes/app.timeline'
 import { Route as CommunityIndexRouteImport } from './routes/community.index'
 import { Route as CommunityFeedRouteImport } from './routes/community.feed'
+import { Route as CommunityFeedbackRouteImport } from './routes/community.feedback'
 import { Route as CommunityMessagesRouteImport } from './routes/community.messages'
 import { Route as CommunityModerationRouteImport } from './routes/community.moderation'
 import { Route as CommunityNewRouteImport } from './routes/community.new'
@@ -109,6 +111,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminBetaRoute = AdminBetaRouteImport.update({
+  id: '/beta',
+  path: '/beta',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminProfessionalsRoute = AdminProfessionalsRouteImport.update({
   id: '/professionals',
   path: '/professionals',
@@ -182,6 +189,11 @@ const CommunityIndexRoute = CommunityIndexRouteImport.update({
 const CommunityFeedRoute = CommunityFeedRouteImport.update({
   id: '/feed',
   path: '/feed',
+  getParentRoute: () => CommunityRoute,
+} as any)
+const CommunityFeedbackRoute = CommunityFeedbackRouteImport.update({
+  id: '/feedback',
+  path: '/feedback',
   getParentRoute: () => CommunityRoute,
 } as any)
 const CommunityMessagesRoute = CommunityMessagesRouteImport.update({
@@ -318,6 +330,7 @@ export interface FileRoutesByFullPath {
   '/pro': typeof ProRouteWithChildren
   '/recovery-codes': typeof RecoveryCodesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin/beta': typeof AdminBetaRoute
   '/admin/professionals': typeof AdminProfessionalsRoute
   '/api/reminders': typeof ApiRemindersRoute
   '/app/activity': typeof AppActivityRoute
@@ -332,6 +345,7 @@ export interface FileRoutesByFullPath {
   '/app/story': typeof AppStoryRouteWithChildren
   '/app/timeline': typeof AppTimelineRoute
   '/community/feed': typeof CommunityFeedRoute
+  '/community/feedback': typeof CommunityFeedbackRoute
   '/community/messages': typeof CommunityMessagesRouteWithChildren
   '/community/moderation': typeof CommunityModerationRoute
   '/community/new': typeof CommunityNewRoute
@@ -368,6 +382,7 @@ export interface FileRoutesByTo {
   '/pro': typeof ProRouteWithChildren
   '/recovery-codes': typeof RecoveryCodesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin/beta': typeof AdminBetaRoute
   '/admin/professionals': typeof AdminProfessionalsRoute
   '/api/reminders': typeof ApiRemindersRoute
   '/app/activity': typeof AppActivityRoute
@@ -381,6 +396,7 @@ export interface FileRoutesByTo {
   '/app/sharing': typeof AppSharingRoute
   '/app/timeline': typeof AppTimelineRoute
   '/community/feed': typeof CommunityFeedRoute
+  '/community/feedback': typeof CommunityFeedbackRoute
   '/community/moderation': typeof CommunityModerationRoute
   '/community/new': typeof CommunityNewRoute
   '/community/notifications': typeof CommunityNotificationsRoute
@@ -417,6 +433,7 @@ export interface FileRoutesById {
   '/pro': typeof ProRouteWithChildren
   '/recovery-codes': typeof RecoveryCodesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin/beta': typeof AdminBetaRoute
   '/admin/professionals': typeof AdminProfessionalsRoute
   '/api/reminders': typeof ApiRemindersRoute
   '/app/activity': typeof AppActivityRoute
@@ -431,6 +448,7 @@ export interface FileRoutesById {
   '/app/story': typeof AppStoryRouteWithChildren
   '/app/timeline': typeof AppTimelineRoute
   '/community/feed': typeof CommunityFeedRoute
+  '/community/feedback': typeof CommunityFeedbackRoute
   '/community/messages': typeof CommunityMessagesRouteWithChildren
   '/community/moderation': typeof CommunityModerationRoute
   '/community/new': typeof CommunityNewRoute
@@ -470,6 +488,7 @@ export interface FileRouteTypes {
     | '/pro'
     | '/recovery-codes'
     | '/sitemap.xml'
+    | '/admin/beta'
     | '/admin/professionals'
     | '/api/reminders'
     | '/app/activity'
@@ -484,6 +503,7 @@ export interface FileRouteTypes {
     | '/app/story'
     | '/app/timeline'
     | '/community/feed'
+    | '/community/feedback'
     | '/community/messages'
     | '/community/moderation'
     | '/community/new'
@@ -520,6 +540,7 @@ export interface FileRouteTypes {
     | '/pro'
     | '/recovery-codes'
     | '/sitemap.xml'
+    | '/admin/beta'
     | '/admin/professionals'
     | '/api/reminders'
     | '/app/activity'
@@ -533,6 +554,7 @@ export interface FileRouteTypes {
     | '/app/sharing'
     | '/app/timeline'
     | '/community/feed'
+    | '/community/feedback'
     | '/community/moderation'
     | '/community/new'
     | '/community/notifications'
@@ -568,6 +590,7 @@ export interface FileRouteTypes {
     | '/pro'
     | '/recovery-codes'
     | '/sitemap.xml'
+    | '/admin/beta'
     | '/admin/professionals'
     | '/api/reminders'
     | '/app/activity'
@@ -582,6 +605,7 @@ export interface FileRouteTypes {
     | '/app/story'
     | '/app/timeline'
     | '/community/feed'
+    | '/community/feedback'
     | '/community/messages'
     | '/community/moderation'
     | '/community/new'
@@ -696,6 +720,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/beta': {
+      id: '/admin/beta'
+      path: '/beta'
+      fullPath: '/admin/beta'
+      preLoaderRoute: typeof AdminBetaRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/professionals': {
       id: '/admin/professionals'
       path: '/professionals'
@@ -799,6 +830,13 @@ declare module '@tanstack/react-router' {
       path: '/feed'
       fullPath: '/community/feed'
       preLoaderRoute: typeof CommunityFeedRouteImport
+      parentRoute: typeof CommunityRoute
+    }
+    '/community/feedback': {
+      id: '/community/feedback'
+      path: '/feedback'
+      fullPath: '/community/feedback'
+      preLoaderRoute: typeof CommunityFeedbackRouteImport
       parentRoute: typeof CommunityRoute
     }
     '/community/messages': {
@@ -973,10 +1011,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminBetaRoute: typeof AdminBetaRoute
   AdminProfessionalsRoute: typeof AdminProfessionalsRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminBetaRoute: AdminBetaRoute,
   AdminProfessionalsRoute: AdminProfessionalsRoute,
 }
 
@@ -1081,6 +1121,7 @@ const CommunityRoomsRouteWithChildren = CommunityRoomsRoute._addFileChildren(
 
 interface CommunityRouteChildren {
   CommunityFeedRoute: typeof CommunityFeedRoute
+  CommunityFeedbackRoute: typeof CommunityFeedbackRoute
   CommunityMessagesRoute: typeof CommunityMessagesRouteWithChildren
   CommunityModerationRoute: typeof CommunityModerationRoute
   CommunityNewRoute: typeof CommunityNewRoute
@@ -1095,6 +1136,7 @@ interface CommunityRouteChildren {
 
 const CommunityRouteChildren: CommunityRouteChildren = {
   CommunityFeedRoute: CommunityFeedRoute,
+  CommunityFeedbackRoute: CommunityFeedbackRoute,
   CommunityMessagesRoute: CommunityMessagesRouteWithChildren,
   CommunityModerationRoute: CommunityModerationRoute,
   CommunityNewRoute: CommunityNewRoute,

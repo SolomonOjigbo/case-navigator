@@ -39,6 +39,9 @@ function AdminLayout() {
           >
             {t("admin_shell.nav_professionals")}
           </Link>
+          <Link to="/admin/beta" className={LINK_CLASS} activeProps={{ className: ACTIVE_CLASS }}>
+            {t("admin_shell.nav_beta")}
+          </Link>
           <Link
             to="/community/moderation"
             className={LINK_CLASS}
