@@ -11,12 +11,14 @@ import {
   LayoutGrid,
   Scale,
   Search,
+  Bug,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 import { useSession } from "@/hooks/use-session";
 import { isPlatformAdmin } from "@/lib/moderation-service";
 import { countUnread, countUnreadMessages } from "@/lib/notification-service";
+import { amIBetaTester } from "@/lib/beta-service";
 import {
   Sidebar,
   SidebarContent,
@@ -97,6 +99,7 @@ export function CommunitySidebar() {
       ? ([
           { to: "/community/moderation", key: "nav_moderation", icon: ShieldAlert },
           { to: "/admin/professionals", key: "nav_admin_professionals", icon: BadgeCheck },
+          { to: "/admin/beta", key: "nav_admin_beta", icon: Bug },
         ] as const)
       : [];
 
