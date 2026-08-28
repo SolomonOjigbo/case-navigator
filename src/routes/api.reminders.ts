@@ -45,19 +45,28 @@ async function run(request: Request): Promise<Response> {
   // Imported here, not at module scope: the module reaches for the service
   // role and the provider key, and must never be pulled into a client bundle.
   const { sendDueReminders, sendCommunityDigests } = await import("@/lib/notify.functions");
+  const { runDueDeletions } = await import("@/lib/deletion.functions");
 
-  // Both jobs in one sweep. The Hobby plan allows very few cron entries, and
+  // Every job in one sweep. The Hobby plan allows very few cron entries, and
   // one endpoint that does the day's work is one fewer thing to discover has
-  // silently stopped. A failure in one must not skip the other.
-  const [reminders, digests] = await Promise.allSettled([
+  // silently stopped. A failure in one must not skip the others — hence
+  // allSettled rather than Promise.all.
+  //
+  // The three are independent: reminders touch consultations, digests touch
+  // community notifications, deletions touch cases. Nothing one deletes is
+  // something another is about to mail about.
+  const [reminders, digests, deletions] = await Promise.allSettled([
     sendDueReminders(),
     sendCommunityDigests(),
+    runDueDeletions(),
   ]);
 
   const tally = {
     reminders:
       reminders.status === "fulfilled" ? reminders.value : { error: String(reminders.reason) },
     digests: digests.status === "fulfilled" ? digests.value : { error: String(digests.reason) },
+    deletions:
+      deletions.status === "fulfilled" ? deletions.value : { error: String(deletions.reason) },
   };
 
   return new Response(JSON.stringify(tally), {

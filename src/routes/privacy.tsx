@@ -7,9 +7,9 @@
 //
 //   * three of the nine AI paths were not checking `ai_processing` consent.
 //     Fixed in the same change as this page, so §5 is now accurate.
-//   * deletion requests are recorded but nothing executes them on a schedule.
-//     §10 says so plainly rather than promising an automatic erasure that does
-//     not happen.
+//   * deletion requests were recorded and nothing executed them. That job now
+//     exists (deletion.functions.ts), so §10 describes what happens rather than
+//     apologising for what does not.
 //
 // If you change what the product collects, shares or sends to a third party,
 // this page changes in the same commit.
@@ -200,11 +200,16 @@ function Privacy() {
           can cancel it during that period.
         </p>
         <p>
-          <strong>Please read this part carefully while CaseMap is in testing.</strong> Deletion is
-          currently carried out by a person, not automatically on that date. If you want your data
-          removed, write to <strong>mail@casemap.app</strong> as well as making the request in the
-          app, and we will confirm to you when it is done. We would rather tell you this than let
-          you assume something happened on its own.
+          On that date a scheduled job removes the case: everything you wrote, every document you
+          uploaded and every file behind it, and everything the app worked out from them. The record
+          that you asked for a deletion and that it was carried out is kept — it is the only proof
+          the deletion happened, and it no longer refers to anything.
+        </p>
+        <p>
+          Your account and anything you wrote in the community are <strong>not</strong> deleted by
+          this. The community was built to be separate from your case, and other people may be
+          mid-conversation with you. If you want your account removed as well, write to{" "}
+          <strong>mail@casemap.app</strong> and we will do it by hand.
         </p>
       </Clause>
 
