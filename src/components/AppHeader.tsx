@@ -31,7 +31,7 @@ export function AppHeader() {
               the language and account controls, and both are reachable from
               inside the app, so they step aside on small screens. */}
           <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
-            <Link to="/community/feed">{t("community.nav_feed")}</Link>
+            <Link to="/community">{t("community.nav_community")}</Link>
           </Button>
           <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
             <Link to="/app/story">{t("app_shell.brand")}</Link>
