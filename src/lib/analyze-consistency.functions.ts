@@ -110,6 +110,16 @@ export const analyzeConsistency = createServerFn({ method: "POST" })
       .eq("id", data.caseId)
       .maybeSingle();
     if (!caseRow || caseRow.applicant_id !== userId) throw new Error("case_not_found");
+    // Same gate as every other path that sends case material to the model.
+    // The consent screen tells people their story and documents are only sent
+    // to an AI service if they allow it; three functions were not checking,
+    // which made that promise untrue on those paths.
+    const { data: consentOk, error: consentErr } = await supabase.rpc("has_active_consent", {
+      _user_id: userId,
+      _consent_type: "ai_processing",
+    });
+    if (consentErr) throw consentErr;
+    if (!consentOk) throw new Error("consent_required:ai_processing");
 
     const [
       { data: events },

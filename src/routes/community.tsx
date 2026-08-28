@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { CommunitySidebar } from "@/components/shell/CommunitySidebar";
 import { CommunityTabBar } from "@/components/shell/CommunityTabBar";
+import { SiteFooter } from "@/components/shell/SiteFooter";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/hooks/use-session";
@@ -67,6 +68,7 @@ function CommunityLayout() {
           <main className="pb-safe-nav flex-1 px-4 py-6 md:pb-6">
             <Outlet />
           </main>
+          <SiteFooter variant="slim" />
         </div>
 
         <CommunityTabBar />

@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { ApplicantSidebar } from "@/components/shell/ApplicantSidebar";
 import { MobileTabBar } from "@/components/shell/MobileTabBar";
+import { SiteFooter } from "@/components/shell/SiteFooter";
 import { AppDisclosure } from "@/components/shell/AppDisclosure";
 import { SyntheticDataBanner } from "@/components/shell/SyntheticDataBanner";
 import { PauseButton } from "@/components/shell/PauseButton";
@@ -57,6 +58,8 @@ function ApplicantLayout() {
           <main className="pb-safe-nav flex-1 px-4 py-6 md:pb-10">
             <Outlet />
           </main>
+
+          <SiteFooter variant="slim" />
 
           <HelpAskPanel />
         </div>

@@ -53,7 +53,7 @@ export function HeroPreview() {
         <div className="mt-4 space-y-2.5 pb-2">
           {[
             { done: true, label: t("landing.preview_story") },
-            { done: false, label: t("landing.step2_title") },
+            { done: false, label: t("landing.preview_section2") },
           ].map((row, i) => (
             <div
               key={i}
