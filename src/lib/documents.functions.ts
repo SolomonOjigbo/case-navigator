@@ -101,6 +101,16 @@ export const processDocument = createServerFn({ method: "POST" })
       .eq("id", doc.case_id)
       .single();
     if (!kase || kase.applicant_id !== userId) throw new Error("Forbidden");
+    // Same gate as every other path that sends case material to the model.
+    // The consent screen tells people their story and documents are only sent
+    // to an AI service if they allow it; three functions were not checking,
+    // which made that promise untrue on those paths.
+    const { data: consentOk, error: consentErr } = await supabase.rpc("has_active_consent", {
+      _user_id: userId,
+      _consent_type: "ai_processing",
+    });
+    if (consentErr) throw consentErr;
+    if (!consentOk) throw new Error("consent_required:ai_processing");
 
     async function markStatus(patch: Record<string, string | number | boolean | null>) {
       await supabase.from("documents").update(patch as never).eq("id", data.documentId);

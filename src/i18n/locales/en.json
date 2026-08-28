@@ -1346,6 +1346,16 @@
     "nav_professionals": "For legal professionals",
     "safety": "If you are in immediate danger, contact your local emergency services. CaseMap cannot help in an emergency, and nothing here should delay you getting help.",
     "copyright": "© {{year}} CaseMap",
-    "built_for": "Built for people in the middle of the process."
+    "built_for": "Built for people in the middle of the process.",
+    "heading_legal": "The small print",
+    "nav_privacy_policy": "Privacy",
+    "nav_terms": "Terms of use",
+    "nav_contact": "Contact us"
+  },
+  "legal": {
+    "last_updated": "Last updated {{date}}",
+    "interim_notice": "These are interim documents for the testing period. CaseMap is still being built and reviewed, and this page will be replaced before the product opens to the public. It has not yet been reviewed by a lawyer.",
+    "questions": "Questions about anything on this page?",
+    "contact_link": "Contact us"
   }
 }

@@ -12,11 +12,10 @@
 // it is either covered by it or pushes it off — neither is worth the two lines
 // of text on the screen size where space is scarcest.
 //
-// What is deliberately NOT here: links to a privacy policy or terms of
-// service. Those pages do not exist in this codebase yet, and a footer link to
-// a 404 is worse than no link — on a product handling asylum material it reads
-// as an outright claim that the policy exists. When they are written, they go
-// here.
+// The policy links below were held back until the pages existed — a footer
+// link to a 404 is worse than no link, and on a product handling asylum
+// material it reads as a claim that the policy exists. They are interim
+// documents for the testing period; the pages say so themselves.
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 
@@ -33,8 +32,14 @@ export function SiteFooter({ variant = "full" }: Props) {
       <footer className="mt-auto hidden border-t border-border/60 bg-surface-sunken/40 px-4 py-4 md:block">
         <div className="content-column flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[0.8125rem] text-muted-foreground">
           <span>{t("footer.not_advice_short")}</span>
-          <Link to="/community" className="hover:text-foreground">
-            {t("footer.nav_community")}
+          <Link to="/privacy" className="hover:text-foreground">
+            {t("footer.nav_privacy_policy")}
+          </Link>
+          <Link to="/terms" className="hover:text-foreground">
+            {t("footer.nav_terms")}
+          </Link>
+          <Link to="/contact" className="hover:text-foreground">
+            {t("footer.nav_contact")}
           </Link>
           <span className="ms-auto">{t("footer.copyright", { year })}</span>
         </div>
@@ -45,7 +50,7 @@ export function SiteFooter({ variant = "full" }: Props) {
   return (
     <footer className="border-t border-border/60 bg-surface-sunken/40">
       <div className="content-column py-12 md:py-14">
-        <div className="grid gap-10 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)] md:gap-12">
+        <div className="grid gap-10 md:grid-cols-[minmax(0,1.3fr)_repeat(3,minmax(0,1fr))] md:gap-12">
           {/* Who this is */}
           <div>
             <BrandMark className="h-7 w-auto" />
@@ -93,6 +98,39 @@ export function SiteFooter({ variant = "full" }: Props) {
                   className="text-muted-foreground no-underline hover:text-foreground"
                 >
                   {t("footer.nav_privacy")}
+                </Link>
+              </li>
+            </ul>
+          </nav>
+
+          {/* The documents */}
+          <nav aria-labelledby="footer-nav-legal">
+            <h2 id="footer-nav-legal" className="text-eyebrow m-0">
+              {t("footer.heading_legal")}
+            </h2>
+            <ul className="m-0 mt-3 grid list-none gap-2 p-0 text-sm">
+              <li>
+                <Link
+                  to="/privacy"
+                  className="text-muted-foreground no-underline hover:text-foreground"
+                >
+                  {t("footer.nav_privacy_policy")}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/terms"
+                  className="text-muted-foreground no-underline hover:text-foreground"
+                >
+                  {t("footer.nav_terms")}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/contact"
+                  className="text-muted-foreground no-underline hover:text-foreground"
+                >
+                  {t("footer.nav_contact")}
                 </Link>
               </li>
             </ul>

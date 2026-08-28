@@ -15,10 +15,13 @@ import { Route as AppRouteImport } from './routes/app'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as ConsentRouteImport } from './routes/consent'
+import { Route as ContactRouteImport } from './routes/contact'
 import { Route as OrientationRouteImport } from './routes/orientation'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProRouteImport } from './routes/pro'
 import { Route as RecoveryCodesRouteImport } from './routes/recovery-codes'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AdminBetaRouteImport } from './routes/admin.beta'
 import { Route as AdminProfessionalsRouteImport } from './routes/admin.professionals'
 import { Route as ApiRemindersRouteImport } from './routes/api.reminders'
@@ -91,9 +94,19 @@ const ConsentRoute = ConsentRouteImport.update({
   path: '/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OrientationRoute = OrientationRouteImport.update({
   id: '/orientation',
   path: '/orientation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProRoute = ProRouteImport.update({
@@ -109,6 +122,11 @@ const RecoveryCodesRoute = RecoveryCodesRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminBetaRoute = AdminBetaRouteImport.update({
@@ -326,10 +344,13 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/community': typeof CommunityRouteWithChildren
   '/consent': typeof ConsentRoute
+  '/contact': typeof ContactRoute
   '/orientation': typeof OrientationRoute
+  '/privacy': typeof PrivacyRoute
   '/pro': typeof ProRouteWithChildren
   '/recovery-codes': typeof RecoveryCodesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/admin/beta': typeof AdminBetaRoute
   '/admin/professionals': typeof AdminProfessionalsRoute
   '/api/reminders': typeof ApiRemindersRoute
@@ -378,10 +399,13 @@ export interface FileRoutesByTo {
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/consent': typeof ConsentRoute
+  '/contact': typeof ContactRoute
   '/orientation': typeof OrientationRoute
+  '/privacy': typeof PrivacyRoute
   '/pro': typeof ProRouteWithChildren
   '/recovery-codes': typeof RecoveryCodesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/admin/beta': typeof AdminBetaRoute
   '/admin/professionals': typeof AdminProfessionalsRoute
   '/api/reminders': typeof ApiRemindersRoute
@@ -429,10 +453,13 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/community': typeof CommunityRouteWithChildren
   '/consent': typeof ConsentRoute
+  '/contact': typeof ContactRoute
   '/orientation': typeof OrientationRoute
+  '/privacy': typeof PrivacyRoute
   '/pro': typeof ProRouteWithChildren
   '/recovery-codes': typeof RecoveryCodesRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/admin/beta': typeof AdminBetaRoute
   '/admin/professionals': typeof AdminProfessionalsRoute
   '/api/reminders': typeof ApiRemindersRoute
@@ -484,10 +511,13 @@ export interface FileRouteTypes {
     | '/auth'
     | '/community'
     | '/consent'
+    | '/contact'
     | '/orientation'
+    | '/privacy'
     | '/pro'
     | '/recovery-codes'
     | '/sitemap.xml'
+    | '/terms'
     | '/admin/beta'
     | '/admin/professionals'
     | '/api/reminders'
@@ -536,10 +566,13 @@ export interface FileRouteTypes {
     | '/app'
     | '/auth'
     | '/consent'
+    | '/contact'
     | '/orientation'
+    | '/privacy'
     | '/pro'
     | '/recovery-codes'
     | '/sitemap.xml'
+    | '/terms'
     | '/admin/beta'
     | '/admin/professionals'
     | '/api/reminders'
@@ -586,10 +619,13 @@ export interface FileRouteTypes {
     | '/auth'
     | '/community'
     | '/consent'
+    | '/contact'
     | '/orientation'
+    | '/privacy'
     | '/pro'
     | '/recovery-codes'
     | '/sitemap.xml'
+    | '/terms'
     | '/admin/beta'
     | '/admin/professionals'
     | '/api/reminders'
@@ -640,10 +676,13 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   CommunityRoute: typeof CommunityRouteWithChildren
   ConsentRoute: typeof ConsentRoute
+  ContactRoute: typeof ContactRoute
   OrientationRoute: typeof OrientationRoute
+  PrivacyRoute: typeof PrivacyRoute
   ProRoute: typeof ProRouteWithChildren
   RecoveryCodesRoute: typeof RecoveryCodesRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  TermsRoute: typeof TermsRoute
   ApiRemindersRoute: typeof ApiRemindersRoute
   DebugGuardrailsRoute: typeof DebugGuardrailsRoute
 }
@@ -692,11 +731,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/orientation': {
       id: '/orientation'
       path: '/orientation'
       fullPath: '/orientation'
       preLoaderRoute: typeof OrientationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pro': {
@@ -718,6 +771,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/beta': {
@@ -1188,10 +1248,13 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   CommunityRoute: CommunityRouteWithChildren,
   ConsentRoute: ConsentRoute,
+  ContactRoute: ContactRoute,
   OrientationRoute: OrientationRoute,
+  PrivacyRoute: PrivacyRoute,
   ProRoute: ProRouteWithChildren,
   RecoveryCodesRoute: RecoveryCodesRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  TermsRoute: TermsRoute,
   ApiRemindersRoute: ApiRemindersRoute,
   DebugGuardrailsRoute: DebugGuardrailsRoute,
 }

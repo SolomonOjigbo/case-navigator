@@ -21,7 +21,12 @@ export const Route = createFileRoute("/sitemap.xml")({
         // case workspace, the professional and admin areas are all behind a
         // sign-in, and listing them would advertise URLs that answer with a
         // redirect — see public/robots.txt, which disallows the same set.
-        const entries: SitemapEntry[] = [{ path: "/", changefreq: "weekly", priority: "1.0" }];
+        const entries: SitemapEntry[] = [
+          { path: "/", changefreq: "weekly", priority: "1.0" },
+          { path: "/privacy", changefreq: "monthly", priority: "0.4" },
+          { path: "/terms", changefreq: "monthly", priority: "0.4" },
+          { path: "/contact", changefreq: "monthly", priority: "0.5" },
+        ];
 
         const urls = entries.map((e) =>
           [
