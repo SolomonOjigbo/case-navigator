@@ -15,11 +15,13 @@ project_id = "zgbyfqncdxksfmykcnke"
 #
 # Why both hostnames. Sign-in builds its redirect from
 # `window.location.origin` (see src/routes/auth.tsx), and Supabase refuses any
-# redirect not on the allow list. Vercel currently serves www.casemap.app as
-# the primary domain and 308-redirects the apex to it, so today that origin is
-# `https://www.casemap.app`. Allow-listing only the apex would break Google
-# sign-in and magic links for every user. Both stay listed until the primary
-# domain is settled, and the loser can be removed afterwards.
+# redirect not on the allow list.
+#
+# The apex is now the primary: casemap.app serves 200 and www redirects to it,
+# so the origin a browser reports is the apex before the app has even loaded.
+# Strictly, only the apex needs listing. www stays anyway — it costs nothing,
+# and it is the difference between "someone changed a redirect" and "nobody can
+# sign in".
 # ---------------------------------------------------------------------------
 [auth]
 enabled = true
