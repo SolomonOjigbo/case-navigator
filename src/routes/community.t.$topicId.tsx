@@ -236,31 +236,46 @@ function Thread() {
           </ul>
         )}
 
-        <form
-          className="mt-4 grid gap-2"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (reply.trim()) attemptReply();
-          }}
-        >
-          <Textarea
-            rows={3}
-            maxLength={2000}
-            value={reply}
-            placeholder={t("forum.reply_placeholder")}
-            onChange={(e) => setReply(e.target.value)}
-          />
-          <div>
-            <Button type="submit" disabled={!reply.trim() || replyMut.isPending}>
-              {replyMut.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-              ) : (
-                <Send className="h-4 w-4" aria-hidden="true" />
-              )}
-              {t("forum.reply")}
-            </Button>
-          </div>
-        </form>
+        {/* Reply form sits in a card so it reads as an action area, not a
+            continuation of the content. Without visual separation testers
+            scrolled past it — 0/7 replied despite 21 open threads. */}
+        <div className="mt-6 rounded-lg border-2 border-primary/20 bg-surface-raised p-4">
+          <h3 className="text-[0.9375rem] font-semibold text-foreground mb-3">
+            {t("forum.reply_heading")}
+          </h3>
+          <form
+            className="grid gap-3"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (reply.trim()) attemptReply();
+            }}
+          >
+            <Textarea
+              rows={4}
+              maxLength={2000}
+              value={reply}
+              placeholder={t("forum.reply_placeholder")}
+              onChange={(e) => setReply(e.target.value)}
+              className="resize-none"
+              aria-label={t("forum.reply_heading")}
+            />
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs text-muted-foreground">
+                {reply.length > 0
+                  ? t("forum.reply_chars_left", { n: 2000 - reply.length })
+                  : t("forum.reply_hint")}
+              </span>
+              <Button type="submit" disabled={!reply.trim() || replyMut.isPending}>
+                {replyMut.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                ) : (
+                  <Send className="h-4 w-4" aria-hidden="true" />
+                )}
+                {t("forum.reply")}
+              </Button>
+            </div>
+          </form>
+        </div>
       </section>
 
       <DraftCheckDialog

@@ -94,6 +94,12 @@ function View() {
             required
           />
           <p className="mt-1 text-xs text-muted-foreground">{t("community.handle_hint")}</p>
+          {/* Testers used their real Gmail usernames — the format hint alone
+              was not enough. This note is shown every time, not just once:
+              someone's situation can change between visits. */}
+          <p className="mt-1.5 rounded-md bg-attention/15 px-3 py-2 text-xs font-medium text-foreground">
+            {t("community.handle_privacy_warning")}
+          </p>
         </div>
         <div>
           <Label htmlFor="display_name">{t("community.display_name_label")}</Label>
