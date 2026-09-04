@@ -156,10 +156,35 @@ function RootComponent() {
   }, []);
 
   // Cache invalidation on identity transitions only.
+  //
+  // Supabase re-fires SIGNED_IN on every silent token refresh and on OAuth
+  // redirects. Calling invalidateQueries() unconditionally on SIGNED_IN
+  // cancels in-flight mutations (e.g. a publish that takes a few seconds),
+  // which is what caused testers to be "kicked out" mid-publish.
+  //
+  // We track the last known user id so we can distinguish a real sign-in
+  // (identity changed) from a token refresh (same user, new JWT). Only a
+  // real identity change justifies nuking the cache.
   useEffect(() => {
+    let lastUserId: string | null = null;
+    // Seed the last-known id from the current session so the first SIGNED_IN
+    // event (always fired on mount) is treated correctly.
+    supabase.auth.getSession().then(({ data }) => {
+      lastUserId = data.session?.user.id ?? null;
+    });
+
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
-      if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
+
+      const nextUserId = session?.user.id ?? null;
+      const identityChanged = nextUserId !== lastUserId;
+      lastUserId = nextUserId;
+
+      // Only invalidate when the logged-in user actually changes, not on a
+      // silent token refresh for the same user.
+      if (event === "SIGNED_OUT" || identityChanged) {
+        queryClient.invalidateQueries();
+      }
 
       // Audit sign-ins that arrive via OAuth / magic-link redirect. Dedupe
       // per browser session so a tab refocus (which re-fires SIGNED_IN)

@@ -8,7 +8,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Search } from "lucide-react";
+import { ArrowLeft, PenLine, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -72,11 +72,24 @@ function SearchForum() {
       {query.length < 2 ? null : resultsQ.isLoading ? (
         <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
       ) : (resultsQ.data?.length ?? 0) === 0 ? (
-        <EmptyState
-          icon={Search}
-          title={t("forum.search_none", { query })}
-          body={t("forum.search_none_help")}
-        />
+        <div className="space-y-4">
+          <EmptyState
+            icon={Search}
+            title={t("forum.search_none", { query })}
+            body={t("forum.search_none_help")}
+          />
+          {/* The natural next move when a search comes up empty is to ask the
+              question yourself. Surface this directly so the person doesn't
+              have to navigate back and find the button. */}
+          <div className="flex justify-center">
+            <Button asChild variant="outline">
+              <Link to="/community/new">
+                <PenLine className="h-4 w-4" aria-hidden="true" />
+                {t("forum.search_start_topic")}
+              </Link>
+            </Button>
+          </div>
+        </div>
       ) : (
         <>
           <p className="mb-3 text-sm text-muted-foreground">

@@ -1,1 +1,44 @@
 project_id = "zgbyfqncdxksfmykcnke"
+
+# ---------------------------------------------------------------------------
+# Auth.
+#
+# This block configures a LOCAL stack (`supabase start`). The hosted project's
+# equivalent settings live in the dashboard under Authentication → URL
+# Configuration, and are NOT changed by anything in this file unless somebody
+# runs `supabase config push` — which would also push CLI defaults for every
+# setting this file does not mention, and so could quietly reset live auth
+# configuration. Do not run it against production without diffing first.
+#
+# The list below is recorded here so the intended configuration is in version
+# control rather than only in one person's browser.
+#
+# Why both hostnames. Sign-in builds its redirect from
+# `window.location.origin` (see src/routes/auth.tsx), and Supabase refuses any
+# redirect not on the allow list.
+#
+# The apex is now the primary: casemap.app serves 200 and www redirects to it,
+# so the origin a browser reports is the apex before the app has even loaded.
+# Strictly, only the apex needs listing. www stays anyway — it costs nothing,
+# and it is the difference between "someone changed a redirect" and "nobody can
+# sign in".
+# ---------------------------------------------------------------------------
+[auth]
+enabled = true
+site_url = "https://casemap.app"
+additional_redirect_urls = [
+  "https://casemap.app/**",
+  "https://www.casemap.app/**",
+  "http://localhost:8080/**",
+]
+# Magic links and OAuth both come back to the origin the person started from.
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+enable_confirmations = false
+
+[auth.external.google]
+enabled = true
+client_id = "env(SUPABASE_AUTH_GOOGLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_GOOGLE_SECRET)"

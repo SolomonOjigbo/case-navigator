@@ -288,6 +288,11 @@ export async function listDmThreads(currentUserId: string): Promise<DmThread[]> 
     supabase
       .from("community_dm_threads")
       .select("id,user_low,user_high,created_at")
+      // Only fetch threads this user is a participant in.
+      // Without this filter the query returns every thread in the table
+      // (limited only by RLS), then fetches a second round of messages for
+      // ALL of them — which is what caused the multi-minute loading spinner.
+      .or(`user_low.eq.${currentUserId},user_high.eq.${currentUserId}`)
       .order("created_at", { ascending: false })
       .limit(200),
     listBlockedIds(currentUserId).catch(() => new Set<string>()),
