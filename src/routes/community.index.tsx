@@ -9,13 +9,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
-import { MessagesSquare, PenLine, Search } from "lucide-react";
+import { Bug, MessagesSquare, PenLine, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shell/PageHeader";
 import { ProfileGate } from "@/components/community/ProfileGate";
 import { TopicRow } from "@/components/community/TopicRow";
 import { useSession } from "@/hooks/use-session";
+import { amIBetaTester } from "@/lib/beta-service";
 import { listCategoriesWithActivity, listTopics } from "@/lib/forum-service";
 
 function ForumHome() {
@@ -51,6 +52,16 @@ function Home() {
     queryFn: () => listTopics({ currentUserId: user!.id, limit: 8, respectPins: false }),
   });
 
+  // Testers only, and only while the round is running. The sidebar carries
+  // this link too, but on a phone the sidebar is a sheet behind "More" — and
+  // a testing round whose feedback form takes two taps to find is how the
+  // first round collected nothing.
+  const betaQ = useQuery({
+    queryKey: ["is-beta-tester", user?.id],
+    enabled: !!user?.id,
+    queryFn: amIBetaTester,
+  });
+
   return (
     <div className="content-column py-2 sm:py-4">
       <PageHeader title={t("forum.title")} intro={t("forum.intro")} />
@@ -68,6 +79,14 @@ function Home() {
             {t("forum.search")}
           </Link>
         </Button>
+        {betaQ.data === true ? (
+          <Button asChild variant="outline">
+            <Link to="/community/feedback">
+              <Bug className="h-4 w-4" aria-hidden="true" />
+              {t("community.nav_feedback")}
+            </Link>
+          </Button>
+        ) : null}
       </div>
 
       <section aria-labelledby="forum-categories">

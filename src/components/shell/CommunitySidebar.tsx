@@ -12,6 +12,7 @@ import {
   Scale,
   Search,
   Bug,
+  ClipboardList,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
@@ -73,6 +74,20 @@ export function CommunitySidebar() {
   });
   const unreadDm = unreadDmQ.data ?? 0;
 
+  // Whether to offer the feedback form. The form and its INSERT policy both
+  // refuse anyone not on the round, so this only keeps the nav honest — it is
+  // not what protects the table.
+  //
+  // Without this link the form had no entrance at all: it was reachable only
+  // by typing the URL, and in nine days of the first round not one report was
+  // filed. The label and this import were already here; the item between them
+  // was never added.
+  const betaQ = useQuery({
+    queryKey: ["is-beta-tester", user?.id],
+    enabled: !!user?.id,
+    queryFn: amIBetaTester,
+  });
+
   /** Which links carry a count, and which count. */
   function badgeFor(key: string): number {
     if (key === "nav_notifications") return unread;
@@ -80,7 +95,7 @@ export function CommunitySidebar() {
     return 0;
   }
 
-  const forumItems = [
+  const baseForumItems = [
     { to: "/community", key: "nav_forums", icon: LayoutGrid, exact: true },
     { to: "/community/notifications", key: "nav_notifications", icon: Bell },
     { to: "/community/search", key: "nav_search", icon: Search },
@@ -88,6 +103,13 @@ export function CommunitySidebar() {
     { to: "/community/messages", key: "nav_messages", icon: MessagesSquare },
     { to: "/community/profile", key: "nav_profile", icon: User },
   ] as const;
+
+  // Last, because reporting a problem is something you turn to rather than
+  // something you came for.
+  const forumItems =
+    betaQ.data === true
+      ? ([...baseForumItems, { to: "/community/feedback", key: "nav_feedback", icon: Bug }] as const)
+      : baseForumItems;
 
   const caseItems = [
     { to: "/app/story", key: "nav_my_case", icon: BookOpen },
@@ -99,7 +121,9 @@ export function CommunitySidebar() {
       ? ([
           { to: "/community/moderation", key: "nav_moderation", icon: ShieldAlert },
           { to: "/admin/professionals", key: "nav_admin_professionals", icon: BadgeCheck },
-          { to: "/admin/beta", key: "nav_admin_beta", icon: Bug },
+          // A list of other people's reports, not a way to file one — the Bug
+          // icon belongs to the tester's "Report a problem" above.
+          { to: "/admin/beta", key: "nav_admin_beta", icon: ClipboardList },
         ] as const)
       : [];
 
