@@ -104,7 +104,7 @@ export function ReportConversation({
               id="report-reason"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              className="min-h-10 rounded-md border border-input bg-surface-raised px-2 text-sm"
+              className="min-h-10 rounded-md border border-input bg-surface-raised px-2 text-base md:text-sm"
             >
               {REPORT_REASONS.map((r) => (
                 <option key={r.id} value={r.id}>

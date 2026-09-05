@@ -198,7 +198,7 @@ function VerificationView() {
                 id="v-jurisdiction"
                 value={jurisdiction}
                 onChange={(e) => setJurisdiction(e.target.value)}
-                className="min-h-10 rounded-md border border-input bg-surface-raised px-2 text-sm"
+                className="min-h-10 rounded-md border border-input bg-surface-raised px-2 text-base md:text-sm"
               >
                 <option value="">{t("pro_verify.choose")}</option>
                 {(jurisdictionsQ.data ?? []).map((j) => (

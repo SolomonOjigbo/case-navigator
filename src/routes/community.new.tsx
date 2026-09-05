@@ -140,7 +140,7 @@ function Composer() {
             id="topic-category"
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
-            className="min-h-10 rounded-md border border-input bg-surface-raised px-2 text-sm"
+            className="min-h-10 rounded-md border border-input bg-surface-raised px-2 text-base md:text-sm"
           >
             {(categoriesQ.data ?? []).map((c) => (
               <option key={c.id} value={c.id}>

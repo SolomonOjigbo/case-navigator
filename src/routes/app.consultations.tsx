@@ -202,7 +202,7 @@ function ConsultationsView() {
                 <select
                   value={jurisdiction}
                   onChange={(e) => setJurisdiction(e.target.value)}
-                  className="min-h-9 rounded-md border border-input bg-surface-raised px-2 text-sm"
+                  className="min-h-9 rounded-md border border-input bg-surface-raised px-2 text-base md:text-sm"
                 >
                   <option value="">{t("consult.filter_any")}</option>
                   {jurisdictions.map((j) => (
@@ -217,7 +217,7 @@ function ConsultationsView() {
                 <select
                   value={language}
                   onChange={(e) => setLanguage(e.target.value)}
-                  className="min-h-9 rounded-md border border-input bg-surface-raised px-2 text-sm"
+                  className="min-h-9 rounded-md border border-input bg-surface-raised px-2 text-base md:text-sm"
                 >
                   <option value="">{t("consult.filter_any")}</option>
                   {languages.map((l) => (

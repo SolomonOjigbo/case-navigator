@@ -49,7 +49,9 @@ function CommunityLayout() {
         <CommunitySidebar />
         <div className="flex min-h-dvh flex-1 flex-col">
           <header className="flex h-14 items-center gap-3 border-b bg-surface-raised px-4">
-            <SidebarTrigger aria-label={t("nav.openMenu")} />
+            {/* shrink-0 or the brand text beside it squeezes the button to
+                23px wide, which is under the WCAG minimum target size. */}
+            <SidebarTrigger aria-label={t("nav.openMenu")} className="shrink-0" />
             <div className="text-sm font-semibold tracking-tight">{t("community.brand")}</div>
             <div className="ms-auto flex items-center gap-2">
               <LanguageSwitcher />

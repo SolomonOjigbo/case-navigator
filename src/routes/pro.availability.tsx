@@ -288,7 +288,7 @@ function AvailabilityView() {
                 id="slot-mode"
                 value={mode}
                 onChange={(e) => setMode(e.target.value as ConsultationMode)}
-                className="min-h-10 rounded-md border border-input bg-surface-raised px-2 text-sm"
+                className="min-h-10 rounded-md border border-input bg-surface-raised px-2 text-base md:text-sm"
               >
                 <option value="video">{t("consult.mode_video")}</option>
                 <option value="phone">{t("consult.mode_phone")}</option>
