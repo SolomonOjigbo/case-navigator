@@ -308,6 +308,29 @@
 }
 
 /* ---------------------------------------------------------------------------
+ * Text a person typed, rendered verbatim.
+ *
+ * `whitespace-pre-wrap` marks every place the product shows someone's own
+ * words with their line breaks intact — forum posts and replies, direct
+ * messages, story answers, professional notes, moderation excerpts, beta
+ * reports. All of it is arbitrary input, and the browser's default
+ * `overflow-wrap: normal` refuses to break inside a "word".
+ *
+ * So one pasted URL — the single most likely thing anyone pastes into a
+ * forum — is an unbreakable 200-character token that widens its container,
+ * widens the page, and leaves every screen scrolling sideways. On a phone
+ * that is the whole layout gone, caused by one ordinary message.
+ *
+ * `anywhere` rather than `break-word`: it also lets the long token count
+ * toward the container's intrinsic size, which is what stops a flex or grid
+ * child from being sized by its longest word.
+ * ------------------------------------------------------------------------ */
+
+.whitespace-pre-wrap {
+  overflow-wrap: anywhere;
+}
+
+/* ---------------------------------------------------------------------------
  * Type scale — fluid, so headings shrink on a 375px phone instead of eating
  * the first screen. Applied deliberately rather than to bare elements.
  * ------------------------------------------------------------------------ */

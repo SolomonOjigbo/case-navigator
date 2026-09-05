@@ -181,7 +181,7 @@ function FeedbackView() {
             id="beta-occurrences"
             value={occurrences}
             onChange={(e) => setOccurrences(e.target.value as Occurrences)}
-            className="min-h-10 w-fit rounded-md border border-input bg-surface-raised px-2 text-sm"
+            className="min-h-10 w-fit rounded-md border border-input bg-surface-raised px-2 text-base md:text-sm"
           >
             {OCCURRENCES.map((o) => (
               <option key={o.id} value={o.id}>

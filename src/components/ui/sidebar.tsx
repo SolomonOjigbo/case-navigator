@@ -269,7 +269,11 @@ const SidebarTrigger = React.forwardRef<
       data-sidebar="trigger"
       variant="ghost"
       size="icon"
-      className={cn("h-7 w-7", className)}
+      // 28px is the shadcn default and is a fine mouse target, but this is the
+      // menu button in the mobile header — the one control someone taps with a
+      // thumb — and 28px is under the 44px Apple asks for and close enough to
+      // the 24px WCAG floor that a flex row squeezing it puts it below.
+      className={cn("h-9 w-9 md:h-7 md:w-7", className)}
       onClick={(event) => {
         onClick?.(event);
         toggleSidebar();

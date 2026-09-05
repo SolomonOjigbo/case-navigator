@@ -144,7 +144,7 @@ function ShareTab({ caseId, userId }: { caseId: string; userId: string }) {
               id="pro"
               value={proId}
               onChange={(e) => setProId(e.target.value)}
-              className="mt-1 block w-full rounded-md border bg-background px-3 py-2 text-sm"
+              className="mt-1 block w-full rounded-md border bg-background px-3 py-2 text-base md:text-sm"
             >
               <option value="">{t("sharing.pick_placeholder")}</option>
               {(pros.data ?? []).map((p) => (
